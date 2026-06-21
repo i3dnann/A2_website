@@ -9,6 +9,7 @@ import { Card } from "../components/Card.jsx";
 export function LoginPage() {
   const { user, setUser } = useApp();
   const [error, setError] = useState("");
+  const [apiBase, setApiBase] = useState(localStorage.getItem("a2_api_base_url") || "");
   if (user) return <Navigate to="/player/dashboard" replace />;
 
   const devLogin = async () => {
@@ -33,6 +34,25 @@ export function LoginPage() {
         <div className="mt-6 grid gap-3">
           <Button as="a" href={apiUrl("/api/auth/discord")}><LogIn size={16} /> Discord OAuth2 login</Button>
           <Button variant="ghost" onClick={devLogin}>Development master login</Button>
+        </div>
+        <div className="mt-6 rounded-lg border border-a2-border bg-black/35 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-white/45">Backend API URL</p>
+          <p className="mt-1 break-all text-xs text-white/55">{apiUrl("/api/auth/discord")}</p>
+          {!apiUrl("/api/auth/discord").startsWith("https://stupor-monologue-raffle.ngrok-free.dev") && (
+            <div className="mt-3 grid gap-2">
+              <input className="form-input py-2 text-sm" value={apiBase} onChange={(event) => setApiBase(event.target.value)} placeholder="https://stupor-monologue-raffle.ngrok-free.dev" />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  localStorage.setItem("a2_api_base_url", apiBase.replace(/\/$/, ""));
+                  window.location.reload();
+                }}
+              >
+                Save API URL locally
+              </Button>
+            </div>
+          )}
         </div>
         {error && <p className="mt-4 rounded-lg border border-a2-danger/40 bg-a2-danger/10 p-3 text-sm text-a2-danger">{error}</p>}
       </Card>

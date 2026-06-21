@@ -1,4 +1,9 @@
-export const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const runtimeBase =
+  typeof window !== "undefined"
+    ? window.__A2_API_BASE_URL__ || localStorage.getItem("a2_api_base_url") || ""
+    : "";
+
+export const API_BASE = runtimeBase || import.meta.env.VITE_API_BASE_URL || "";
 
 export function apiUrl(path) {
   return `${API_BASE}${path}`;
