@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Disc3, Languages, LogIn } from "lucide-react";
-import { api } from "../lib/api.js";
+import { api, apiUrl } from "../lib/api.js";
 import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
@@ -31,7 +31,7 @@ export function LoginPage() {
         <h1 className="text-3xl font-black">Login with Discord</h1>
         <p className="mt-3 text-sm leading-6 text-white/56">Discord OAuth is used for identity, roles, permissions, language preference, and secure access to the portal.</p>
         <div className="mt-6 grid gap-3">
-          <Button as="a" href="/api/auth/discord"><LogIn size={16} /> Discord OAuth2 login</Button>
+          <Button as="a" href={apiUrl("/api/auth/discord")}><LogIn size={16} /> Discord OAuth2 login</Button>
           <Button variant="ghost" onClick={devLogin}>Development master login</Button>
         </div>
         {error && <p className="mt-4 rounded-lg border border-a2-danger/40 bg-a2-danger/10 p-3 text-sm text-a2-danger">{error}</p>}
