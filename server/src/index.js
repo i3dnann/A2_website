@@ -22,6 +22,8 @@ import playerRouter from "./routes/player.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, "..", "..");
+const clientDistPath = path.resolve(projectRoot, "client", "dist");
 const app = express();
 
 fs.mkdirSync(path.resolve(process.cwd(), "uploads"), { recursive: true });
@@ -74,6 +76,14 @@ app.use("/api/auth", authRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/player", playerRouter);
 app.use("/api/admin", adminRouter);
+
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/uploads") || req.path === "/health") return next();
+    return res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
 
 app.use((_req, res) => {
   res.status(404).json({ error: "not_found" });

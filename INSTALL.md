@@ -1,5 +1,7 @@
 # Install A2 Studio Website
 
+If your VPS is Windows Server and you connect with Remote Desktop, use [docs/WINDOWS_VPS_INSTALL.md](docs/WINDOWS_VPS_INSTALL.md) instead of the Ubuntu/Nginx section.
+
 ## Requirements
 
 - Node.js 20+

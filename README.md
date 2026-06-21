@@ -120,3 +120,5 @@ The default settings use those files as the hero background, site logo, and favi
 ## Deployment
 
 Frontend deploys from `/client` to Netlify. Backend runs separately on a VPS with Node.js and MySQL access. See [INSTALL.md](INSTALL.md) and [DEPLOY_NETLIFY.md](DEPLOY_NETLIFY.md).
+
+For a Windows Server VPS, use [docs/WINDOWS_VPS_INSTALL.md](docs/WINDOWS_VPS_INSTALL.md). The backend can serve the built React frontend directly after `npm run build --prefix client`.
