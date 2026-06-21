@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, RefreshCw, Save, Settings, ShieldAlert } from "lucide-react";
+import { Plus, RefreshCw, Save, Settings, ShieldAlert, Trash2, UserPlus } from "lucide-react";
 import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { staffResources } from "../data/modules.js";
@@ -176,20 +176,191 @@ export function SettingsPage() {
 
 export function PermissionsPage() {
   const { data } = useApi(() => api.get("/api/admin/permissions"), [], { roles: [], permissions: [], defaults: {} });
+  const users = useApi(() => api.get("/api/admin/users"), [], { rows: [] });
+  const roleMappings = useApi(() => api.get("/api/admin/discord-role-mappings"), [], { mappings: [] });
+  const [userForm, setUserForm] = useState({ discord_id: "", username: "", roles: ["Player"], permissions: [] });
+  const [mappingForm, setMappingForm] = useState({ discord_role_id: "", label: "", roles: [], permissions: [] });
+  const [status, setStatus] = useState("");
+  const permissions = data?.permissions || [];
+  const roles = data?.roles || [];
+
+  const toggleList = (target, key, value) => {
+    target((current) => {
+      const list = current[key] || [];
+      return {
+        ...current,
+        [key]: list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
+      };
+    });
+  };
+
+  const saveUser = async (event) => {
+    event.preventDefault();
+    setStatus("");
+    try {
+      const saved = await api.post("/api/admin/users", {
+        ...userForm,
+        reason: "admin panel permission update"
+      });
+      users.setData((current) => ({
+        ...current,
+        rows: [saved.user, ...(current?.rows || []).filter((row) => row.discord_id !== saved.user.discord_id)]
+      }));
+      setUserForm({ discord_id: "", username: "", roles: ["Player"], permissions: [] });
+      setStatus("User permissions saved.");
+    } catch (error) {
+      setStatus(error.message);
+    }
+  };
+
+  const disableUser = async (id) => {
+    setStatus("");
+    try {
+      const saved = await api.delete(`/api/admin/users/${encodeURIComponent(id)}`, { reason: "disabled from admin panel" });
+      users.setData((current) => ({
+        ...current,
+        rows: (current?.rows || []).map((row) => (row.id === saved.user.id ? saved.user : row))
+      }));
+      setStatus("User disabled.");
+    } catch (error) {
+      setStatus(error.message);
+    }
+  };
+
+  const addMapping = () => {
+    if (!mappingForm.discord_role_id) return;
+    const next = [
+      ...(roleMappings.data?.mappings || []).filter((mapping) => mapping.discord_role_id !== mappingForm.discord_role_id),
+      mappingForm
+    ];
+    roleMappings.setData({ mappings: next });
+    setMappingForm({ discord_role_id: "", label: "", roles: [], permissions: [] });
+  };
+
+  const removeMapping = (roleId) => {
+    roleMappings.setData({
+      mappings: (roleMappings.data?.mappings || []).filter((mapping) => mapping.discord_role_id !== roleId)
+    });
+  };
+
+  const saveMappings = async () => {
+    setStatus("");
+    try {
+      const saved = await api.put("/api/admin/discord-role-mappings", {
+        mappings: roleMappings.data?.mappings || [],
+        reason: "discord role permission update"
+      });
+      roleMappings.setData(saved);
+      setStatus("Discord role mappings saved.");
+    } catch (error) {
+      setStatus(error.message);
+    }
+  };
+
   return (
-    <WorkspaceHeader title="Roles & Permissions" description="Role defaults are configurable in the backend and ready for an admin editing workflow. Master Admin keeps dangerous access.">
-      <Card>
-        <div className="mb-4 flex items-center gap-2 text-a2-warning"><ShieldAlert size={18} /> Dangerous settings should stay Master Admin only.</div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {(data?.roles || []).map((role) => (
-            <div key={role} className="rounded-lg border border-a2-border p-4">
-              <p className="font-black">{role}</p>
-              <p className="mt-2 text-xs leading-5 text-white/48">{(data?.defaults?.[role] || []).join(", ") || "No default permissions"}</p>
+    <WorkspaceHeader title="Admins & Permissions" description="Add admins by Discord ID, choose exact access, or map Discord role IDs to website permissions. Master Admin keeps dangerous access.">
+      {status && <div className="mb-4 rounded-lg border border-a2-border bg-white/[0.03] p-3 text-sm text-white/70">{status}</div>}
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <Card>
+          <div className="mb-4 flex items-center gap-2 text-a2-warning"><ShieldAlert size={18} /> Only trusted owners should receive `master_access`.</div>
+          <h2 className="text-xl font-black">Add / Update User By Discord ID</h2>
+          <form className="mt-4 grid gap-4" onSubmit={saveUser}>
+            <label className="grid gap-2 text-sm font-bold text-white/70">
+              Discord user ID
+              <input className="form-input" value={userForm.discord_id} onChange={(event) => setUserForm((current) => ({ ...current, discord_id: event.target.value }))} required />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-white/70">
+              Display name optional
+              <input className="form-input" value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} />
+            </label>
+            <CheckGrid title="Roles" items={roles} selected={userForm.roles} onToggle={(value) => toggleList(setUserForm, "roles", value)} />
+            <CheckGrid title="Extra permissions" items={permissions} selected={userForm.permissions} onToggle={(value) => toggleList(setUserForm, "permissions", value)} compact />
+            <Button><UserPlus size={16} /> Save user access</Button>
+          </form>
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-black">Current Website Users</h2>
+              <p className="mt-1 text-sm text-white/48">Disable removes access without deleting their history.</p>
             </div>
-          ))}
+          </div>
+          <div className="mt-4 grid gap-3">
+            {(users.data?.rows || []).map((user) => (
+              <div key={user.id} className="rounded-lg border border-a2-border p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black">{user.username || user.discord_username || user.discord_id}</p>
+                    <p className="text-xs text-white/45">Discord ID: {user.discord_id}</p>
+                    <p className="mt-2 text-xs text-white/52">Roles: {(user.roles || []).join(", ") || "None"}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-white/40">Permissions: {(user.permissions || []).join(", ") || "None"}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full border border-a2-border px-2 py-1 text-xs text-white/55">{user.account_status}</span>
+                    <Button type="button" variant="danger" onClick={() => disableUser(user.id)}><Trash2 size={14} /></Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {(users.data?.rows || []).length === 0 && <p className="rounded-lg border border-a2-border p-4 text-sm text-white/50">No website users yet. Login once or add a Discord ID manually.</p>}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="mt-5">
+        <h2 className="text-xl font-black">Discord Role ID Mappings</h2>
+        <p className="mt-1 text-sm text-white/50">When a Discord login includes one of these guild role IDs, these roles and permissions are added automatically.</p>
+        <div className="mt-4 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
+          <div className="grid gap-4">
+            <label className="grid gap-2 text-sm font-bold text-white/70">
+              Discord role ID
+              <input className="form-input" value={mappingForm.discord_role_id} onChange={(event) => setMappingForm((current) => ({ ...current, discord_role_id: event.target.value }))} />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-white/70">
+              Label
+              <input className="form-input" value={mappingForm.label} onChange={(event) => setMappingForm((current) => ({ ...current, label: event.target.value }))} />
+            </label>
+            <CheckGrid title="Roles to grant" items={roles} selected={mappingForm.roles} onToggle={(value) => toggleList(setMappingForm, "roles", value)} />
+            <CheckGrid title="Permissions to grant" items={permissions} selected={mappingForm.permissions} onToggle={(value) => toggleList(setMappingForm, "permissions", value)} compact />
+            <Button type="button" variant="ghost" onClick={addMapping}><Plus size={16} /> Add mapping</Button>
+          </div>
+          <div className="grid gap-3">
+            {(roleMappings.data?.mappings || []).map((mapping) => (
+              <div key={mapping.discord_role_id} className="rounded-lg border border-a2-border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-black">{mapping.label || mapping.discord_role_id}</p>
+                    <p className="text-xs text-white/45">Role ID: {mapping.discord_role_id}</p>
+                    <p className="mt-2 text-xs text-white/52">Roles: {(mapping.roles || []).join(", ") || "None"}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-white/40">Permissions: {(mapping.permissions || []).join(", ") || "None"}</p>
+                  </div>
+                  <Button type="button" variant="danger" onClick={() => removeMapping(mapping.discord_role_id)}><Trash2 size={14} /></Button>
+                </div>
+              </div>
+            ))}
+            {(roleMappings.data?.mappings || []).length === 0 && <p className="rounded-lg border border-a2-border p-4 text-sm text-white/50">No Discord role mappings yet.</p>}
+            <Button type="button" onClick={saveMappings}><Save size={16} /> Save Discord role mappings</Button>
+          </div>
         </div>
       </Card>
     </WorkspaceHeader>
+  );
+}
+
+function CheckGrid({ title, items, selected = [], onToggle, compact = false }) {
+  return (
+    <div>
+      <p className="mb-2 text-sm font-black text-white/72">{title}</p>
+      <div className={`grid gap-2 ${compact ? "max-h-56 overflow-y-auto rounded-lg border border-a2-border p-2 md:grid-cols-2" : "md:grid-cols-2"}`}>
+        {items.map((item) => (
+          <label key={item} className="flex items-center gap-2 rounded-lg border border-a2-border bg-white/[0.03] p-2 text-xs text-white/62">
+            <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} />
+            <span>{item}</span>
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }
 

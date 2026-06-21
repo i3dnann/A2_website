@@ -8,7 +8,8 @@ import { StatusBadge } from "../components/StatusBadge.jsx";
 
 export function PublicCollection({ type }) {
   const config = publicCollections[type] || publicCollections.news;
-  const { data, loading } = useApi(() => api.get(`/api/public/${config.api}`), [config.api], { rows: [] });
+  const { data, loading, error } = useApi(() => api.get(`/api/public/${config.api}`), [config.api], { rows: [] });
+  const rows = data?.rows || [];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
@@ -19,8 +20,15 @@ export function PublicCollection({ type }) {
           <p className="mt-3 max-w-2xl text-white/55">{config.description}</p>
         </div>
       </div>
+      {error && (
+        <Card className="mb-5">
+          <p className="font-black text-a2-warning">Could not load {config.title}</p>
+          <p className="mt-2 text-sm text-white/55">The backend API did not return this collection. Check Netlify `VITE_API_BASE_URL` and redeploy.</p>
+          <p className="mt-2 break-all text-xs text-white/35">{error.message}</p>
+        </Card>
+      )}
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {(loading ? Array.from({ length: 6 }) : data?.rows || []).map((row, index) => (
+        {(loading ? Array.from({ length: 6 }) : rows).map((row, index) => (
           <Link key={row?.id || index} to={`/${type}/${row?.id || ""}`} className="group">
             <Card className="h-full overflow-hidden p-0">
               {loading ? <div className="h-44 skeleton" /> : <img className="h-44 w-full object-cover opacity-78 transition group-hover:opacity-100" src={row.image_url || row.banner_url || row.profile_image_url || imageFallback(row.title || row.name || row.character_name || config.title)} alt="" loading="lazy" />}
@@ -36,6 +44,12 @@ export function PublicCollection({ type }) {
           </Link>
         ))}
       </div>
+      {!loading && !error && rows.length === 0 && (
+        <Card className="mt-5">
+          <p className="font-black">No {config.title.toLowerCase()} yet.</p>
+          <p className="mt-2 text-sm text-white/55">Add records from the staff CMS/admin panel and this page will fill automatically.</p>
+        </Card>
+      )}
     </main>
   );
 }

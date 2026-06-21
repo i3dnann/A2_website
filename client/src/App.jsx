@@ -41,6 +41,7 @@ export default function App() {
         <Route path="/businesses" element={<PublicCollection type="businesses" />} />
         <Route path="/businesses/:id" element={<PublicDetail type="businesses" />} />
         <Route path="/map" element={<PublicCollection type="map" />} />
+        <Route path="/map/:id" element={<PublicDetail type="map" />} />
         <Route path="/jobs" element={<PublicCollection type="jobs" />} />
         <Route path="/jobs/:id" element={<PublicDetail type="jobs" />} />
         <Route path="/characters" element={<PublicCollection type="characters" />} />
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/story" element={<PublicCollection type="story" />} />
         <Route path="/story/:campaign" element={<PublicDetail type="story" />} />
         <Route path="/shop" element={<PublicCollection type="shop" />} />
+        <Route path="/shop/:id" element={<PublicDetail type="shop" />} />
         <Route path="/403" element={<ForbiddenPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>

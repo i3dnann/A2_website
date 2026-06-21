@@ -8,6 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, deleteResource, getResource, getSettings, listResource, updateResource, updateSettings } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
 import { checkAllStreamers, checkStreamerLiveStatus, withLiveStatus } from "../services/streamerService.js";
+import { deactivateWebUser, getDiscordRoleMappings, listWebUsers, saveDiscordRoleMappings, upsertWebUserFromAdmin } from "../services/users.js";
 import { publicFileUrl } from "../utils/sanitize.js";
 
 const router = Router();
@@ -61,6 +62,98 @@ router.patch(
 router.get("/permissions", requirePermission("manage_admins"), (_req, res) => {
   res.json({ roles: ROLES, permissions: PERMISSIONS, defaults: DEFAULT_ROLE_PERMISSIONS });
 });
+
+router.get(
+  "/users",
+  requirePermission("manage_admins"),
+  asyncHandler(async (req, res) => {
+    const rows = await listWebUsers({ q: req.query.q || "", limit: req.query.limit || 100 });
+    res.json({ rows, total: rows.length });
+  })
+);
+
+router.post(
+  "/users",
+  requirePermission("manage_admins"),
+  asyncHandler(async (req, res) => {
+    const before = null;
+    const user = await upsertWebUserFromAdmin(req.body || {}, req.user);
+    await auditAction({
+      req,
+      action: "upsert_web_user",
+      targetType: "web_users",
+      targetId: user.discord_id,
+      before,
+      after: user,
+      reason: req.body?.reason || "admin permission update",
+      webhookCategory: "security"
+    });
+    res.status(201).json({ user });
+  })
+);
+
+router.patch(
+  "/users/:id",
+  requirePermission("manage_admins"),
+  asyncHandler(async (req, res) => {
+    const user = await upsertWebUserFromAdmin({ ...req.body, id: req.params.id }, req.user);
+    await auditAction({
+      req,
+      action: "update_web_user",
+      targetType: "web_users",
+      targetId: user.discord_id,
+      after: user,
+      reason: req.body?.reason || "admin permission update",
+      webhookCategory: "security"
+    });
+    res.json({ user });
+  })
+);
+
+router.delete(
+  "/users/:id",
+  requirePermission("manage_admins"),
+  asyncHandler(async (req, res) => {
+    const user = await deactivateWebUser(req.params.id, req.user);
+    if (!user) return res.status(404).json({ error: "user_not_found" });
+    await auditAction({
+      req,
+      action: "disable_web_user",
+      targetType: "web_users",
+      targetId: user.discord_id,
+      after: user,
+      reason: req.body?.reason || "admin disabled user",
+      webhookCategory: "security"
+    });
+    res.json({ user });
+  })
+);
+
+router.get(
+  "/discord-role-mappings",
+  requirePermission("manage_admins"),
+  asyncHandler(async (_req, res) => {
+    res.json({ mappings: await getDiscordRoleMappings() });
+  })
+);
+
+router.put(
+  "/discord-role-mappings",
+  requirePermission("manage_admins"),
+  asyncHandler(async (req, res) => {
+    const mappings = await saveDiscordRoleMappings(req.body?.mappings || []);
+    await auditAction({
+      req,
+      action: "update_discord_role_mappings",
+      targetType: "discord_role_mappings",
+      targetId: "global",
+      after: mappings,
+      reason: req.body?.reason || "discord role permissions update",
+      webhookCategory: "security"
+    });
+    res.json({ mappings });
+  })
+);
 
 router.patch("/dangerous/master-only", requireMaster, asyncHandler(async (req, res) => {
   await auditAction({
