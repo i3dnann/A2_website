@@ -37,21 +37,32 @@ export function PublicCollection({ type }) {
         </Card>
       )}
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {(loading ? Array.from({ length: 6 }) : rows).map((row, index) => (
-          <Link key={row?.id || index} to={`/${type}/${row?.id || ""}`} className="group">
-            <Card className="h-full overflow-hidden p-0">
-              {loading ? <div className="h-44 skeleton" /> : <img className="h-44 w-full object-cover opacity-78 transition group-hover:opacity-100" src={row.image_url || row.banner_url || row.profile_image_url || imageFallback(row.title || row.name || row.character_name || config.title)} alt="" loading="lazy" />}
-              <div className="p-5">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-xs uppercase tracking-wide text-white/42">{row.category || row.business_type || row.marker_type || row.week_number || config.singular}</p>
-                  <StatusBadge status={row.status || (row.is_approved ? "Approved" : "Published")} />
-                </div>
-                <h2 className="text-xl font-black">{row.title || row.name || row.character_name || row.display_name || "Untitled"}</h2>
-                <p className="mt-3 line-clamp-3 text-sm leading-6 text-white/55">{row.description || row.subtitle || row.content || row.backstory || row.story_summary || "No description yet."}</p>
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index} className="h-full overflow-hidden p-0">
+              <div className="h-44 skeleton" />
+              <div className="space-y-3 p-5">
+                <div className="h-3 w-24 rounded skeleton" />
+                <div className="h-6 w-3/4 rounded skeleton" />
+                <div className="h-16 rounded skeleton" />
               </div>
             </Card>
-          </Link>
-        ))}
+          ))
+          : rows.map((row, index) => (
+            <Link key={row?.id || index} to={`/${type}/${row?.id || ""}`} className="group">
+              <Card className="h-full overflow-hidden p-0">
+                <img className="h-44 w-full object-cover opacity-78 transition group-hover:opacity-100" src={row.image_url || row.banner_url || row.profile_image_url || imageFallback(row.title || row.name || row.character_name || config.title)} alt="" loading="lazy" />
+                <div className="p-5">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-wide text-white/42">{row.category || row.business_type || row.marker_type || row.week_number || config.singular}</p>
+                    <StatusBadge status={row.status || (row.is_approved ? "Approved" : "Published")} />
+                  </div>
+                  <h2 className="text-xl font-black">{row.title || row.name || row.character_name || row.display_name || "Untitled"}</h2>
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-white/55">{row.description || row.subtitle || row.content || row.backstory || row.story_summary || "No description yet."}</p>
+                </div>
+              </Card>
+            </Link>
+          ))}
       </div>
       {!loading && !error && apiRows.length === 0 && rows.length === 0 && (
         <Card className="mt-5">
