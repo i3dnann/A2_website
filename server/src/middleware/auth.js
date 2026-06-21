@@ -1,10 +1,10 @@
-import { cookieSecure } from "../config/env.js";
+import { cookieSameSite, cookieSecure } from "../config/env.js";
 import { getUserById, verifyUserToken } from "../services/users.js";
 
 export const cookieOptions = {
   httpOnly: true,
-  sameSite: "lax",
-  secure: cookieSecure,
+  sameSite: cookieSameSite,
+  secure: cookieSameSite === "none" ? true : cookieSecure,
   maxAge: 12 * 60 * 60 * 1000
 };
 

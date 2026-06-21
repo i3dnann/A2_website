@@ -24,6 +24,7 @@ const schema = z.object({
   JWT_SECRET: z.string().default("change_me_to_a_long_random_secret"),
   SESSION_SECRET: z.string().default("change_me_to_a_long_random_session_secret"),
   COOKIE_SECURE: z.string().default("false"),
+  COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   FIVEM_API_TOKEN: z.string().default("CHANGE_ME_SECURE_TOKEN"),
   FIREBASE_SERVICE_ACCOUNT_BASE64: z.string().default(""),
   FIREBASE_DATABASE_URL: z.string().default(""),
@@ -56,3 +57,4 @@ export const corsOrigins = env.CORS_ALLOWED_ORIGINS.split(",")
 export const isProduction = env.NODE_ENV === "production";
 export const databaseEnabled = env.USE_DATABASE === "true";
 export const cookieSecure = env.COOKIE_SECURE === "true" || isProduction;
+export const cookieSameSite = env.COOKIE_SAME_SITE;
