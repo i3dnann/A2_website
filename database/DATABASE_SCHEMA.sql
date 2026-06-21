@@ -1,30 +1,76 @@
--- A2 Studio website database schema.
--- This schema adds website tables next to QBCore. It does not modify core QBCore tables.
--- Import with: mysql -u root -p qbcore < database/DATABASE_SCHEMA.sql
+-- A2 Studio FiveM roleplay community website schema.
+-- Import into the same MySQL/MariaDB database used by QBCore, or into a separate website DB.
+-- This schema adds website tables only; it does not modify QBCore core tables.
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 CREATE TABLE IF NOT EXISTS web_users (
   id VARCHAR(64) PRIMARY KEY,
-  discord_id VARCHAR(32) NOT NULL UNIQUE,
-  username VARCHAR(120),
-  discord_username VARCHAR(120),
+  username VARCHAR(120) NOT NULL,
+  email VARCHAR(190) UNIQUE,
+  password_hash VARCHAR(255),
+  email_verified_at DATETIME NULL,
   avatar_url TEXT,
-  email VARCHAR(190),
   roles_json JSON,
-  discord_roles_json JSON,
   permissions_json JSON,
-  preferred_language VARCHAR(8) DEFAULT 'en',
   account_status VARCHAR(32) DEFAULT 'active',
-  first_login_at DATETIME,
-  last_login_at DATETIME,
-  linked_citizenids_json JSON,
+  admin_status VARCHAR(32) DEFAULT 'active',
+  preferred_language VARCHAR(8) DEFAULT 'en',
+  discord_id VARCHAR(32),
+  discord_username VARCHAR(120),
+  steam_id VARCHAR(32),
+  steam_persona VARCHAR(160),
+  linked_identifiers_json JSON,
+  first_login_at DATETIME NULL,
+  last_login_at DATETIME NULL,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
+  INDEX idx_web_users_email (email),
   INDEX idx_web_users_discord_id (discord_id),
-  INDEX idx_web_users_status (account_status)
+  INDEX idx_web_users_steam_id (steam_id),
+  INDEX idx_web_users_status (account_status, admin_status),
+  INDEX idx_web_users_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS web_auth_providers (
+  id VARCHAR(96) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  provider VARCHAR(40) NOT NULL,
+  provider_user_id VARCHAR(190) NOT NULL,
+  username VARCHAR(160),
+  avatar_url TEXT,
+  metadata_json JSON,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  UNIQUE KEY uniq_provider_user (provider, provider_user_id),
+  UNIQUE KEY uniq_user_provider (user_id, provider),
+  INDEX idx_auth_provider_user (user_id),
+  INDEX idx_auth_provider_provider (provider),
+  INDEX idx_auth_provider_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS web_sessions (
+  id VARCHAR(128) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  ip_address VARCHAR(80),
+  user_agent TEXT,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_web_sessions_user (user_id),
+  INDEX idx_web_sessions_expires (expires_at),
+  INDEX idx_web_sessions_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS web_roles (
@@ -33,9 +79,12 @@ CREATE TABLE IF NOT EXISTS web_roles (
   description TEXT,
   is_system TINYINT(1) DEFAULT 0,
   sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL
+  deleted_at DATETIME NULL,
+  INDEX idx_web_roles_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS web_permissions (
@@ -43,9 +92,13 @@ CREATE TABLE IF NOT EXISTS web_permissions (
   name VARCHAR(120) NOT NULL UNIQUE,
   description TEXT,
   category VARCHAR(80),
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL
+  deleted_at DATETIME NULL,
+  INDEX idx_web_permissions_category (category),
+  INDEX idx_web_permissions_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS web_user_roles (
@@ -53,31 +106,48 @@ CREATE TABLE IF NOT EXISTS web_user_roles (
   user_id VARCHAR(64) NOT NULL,
   role_id VARCHAR(64) NOT NULL,
   created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_user_role (user_id, role_id),
-  INDEX idx_user_roles_user (user_id),
-  INDEX idx_user_roles_role (role_id)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  UNIQUE KEY uniq_web_user_role (user_id, role_id),
+  INDEX idx_web_user_roles_user (user_id),
+  INDEX idx_web_user_roles_role (role_id),
+  INDEX idx_web_user_roles_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS web_role_permissions (
+CREATE TABLE IF NOT EXISTS web_user_permissions (
   id VARCHAR(64) PRIMARY KEY,
-  role_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NOT NULL,
   permission_id VARCHAR(64) NOT NULL,
   created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uniq_role_permission (role_id, permission_id)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  UNIQUE KEY uniq_web_user_permission (user_id, permission_id),
+  INDEX idx_web_user_permissions_user (user_id),
+  INDEX idx_web_user_permissions_permission (permission_id),
+  INDEX idx_web_user_permissions_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS web_sessions (
-  id VARCHAR(128) PRIMARY KEY,
-  user_id VARCHAR(64) NOT NULL,
-  ip VARCHAR(80),
-  user_agent TEXT,
-  expires_at DATETIME NOT NULL,
-  revoked_at DATETIME NULL,
+CREATE TABLE IF NOT EXISTS web_admin_status (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL UNIQUE,
+  status VARCHAR(32) DEFAULT 'active',
+  frozen_reason TEXT,
+  frozen_by VARCHAR(64),
+  frozen_at DATETIME NULL,
+  disabled_by VARCHAR(64),
+  disabled_at DATETIME NULL,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_web_sessions_user (user_id),
-  INDEX idx_web_sessions_expires (expires_at)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_web_admin_status_user (user_id),
+  INDEX idx_web_admin_status_status (status),
+  INDEX idx_web_admin_status_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS web_settings (
@@ -85,9 +155,34 @@ CREATE TABLE IF NOT EXISTS web_settings (
   setting_key VARCHAR(120) NOT NULL UNIQUE,
   setting_value JSON,
   is_secret TINYINT(1) DEFAULT 0,
+  created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_web_settings_key (setting_key),
+  INDEX idx_web_settings_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS web_theme_settings (
+  id VARCHAR(64) PRIMARY KEY,
+  primary_color VARCHAR(16),
+  background_color VARCHAR(16),
+  text_color VARCHAR(16),
+  secondary_color VARCHAR(16),
+  card_background VARCHAR(16),
+  border_color VARCHAR(16),
+  muted_text_color VARCHAR(16),
+  danger_color VARCHAR(16),
+  warning_color VARCHAR(16),
+  success_color VARCHAR(16),
+  performance_mode TINYINT(1) DEFAULT 0,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_web_theme_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS web_audit_logs (
@@ -102,818 +197,232 @@ CREATE TABLE IF NOT EXISTS web_audit_logs (
   before_json JSON,
   after_json JSON,
   status VARCHAR(40) DEFAULT 'success',
-  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
   INDEX idx_audit_action (action),
   INDEX idx_audit_staff (staff_id),
   INDEX idx_audit_target (target_type, target_id),
+  INDEX idx_audit_status (status),
   INDEX idx_audit_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS whitelist_applications (
+CREATE TABLE IF NOT EXISTS web_files (
   id VARCHAR(64) PRIMARY KEY,
-  discord_id VARCHAR(32) NOT NULL,
-  discord_username VARCHAR(120),
-  character_name VARCHAR(120),
-  age_confirmed TINYINT(1) DEFAULT 0,
-  rules_agreed TINYINT(1) DEFAULT 0,
-  terms_agreed TINYINT(1) DEFAULT 0,
-  language VARCHAR(8) DEFAULT 'en',
-  backstory MEDIUMTEXT,
-  roleplay_experience MEDIUMTEXT,
-  status VARCHAR(40) DEFAULT 'Draft',
-  review_reason TEXT,
+  owner_user_id VARCHAR(64),
+  original_name VARCHAR(255),
+  stored_name VARCHAR(255),
+  mime_type VARCHAR(120),
+  size_bytes BIGINT,
+  url TEXT,
+  storage_driver VARCHAR(40) DEFAULT 'local',
   metadata_json JSON,
-  sort_order INT DEFAULT 9999,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_whitelist_discord (discord_id),
-  INDEX idx_whitelist_status (status),
-  INDEX idx_whitelist_created (created_at)
+  INDEX idx_web_files_owner (owner_user_id),
+  INDEX idx_web_files_mime (mime_type),
+  INDEX idx_web_files_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS whitelist_reviews (
+CREATE TABLE IF NOT EXISTS user_terms_agreements (
   id VARCHAR(64) PRIMARY KEY,
-  application_id VARCHAR(64) NOT NULL,
-  reviewer_id VARCHAR(64),
-  decision VARCHAR(40),
-  note TEXT,
+  user_id VARCHAR(64) NOT NULL,
+  terms_version VARCHAR(40) NOT NULL,
+  agreed_at DATETIME NOT NULL,
+  ip_address VARCHAR(80),
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_whitelist_reviews_application (application_id)
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_terms_user (user_id),
+  INDEX idx_terms_version (terms_version),
+  INDEX idx_terms_agreed_at (agreed_at),
+  INDEX idx_terms_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS tickets (
+CREATE TABLE IF NOT EXISTS player_links (
   id VARCHAR(64) PRIMARY KEY,
-  title VARCHAR(190),
-  ticket_type VARCHAR(80),
-  description MEDIUMTEXT,
+  user_id VARCHAR(64) NOT NULL,
+  steam_id VARCHAR(32),
   discord_id VARCHAR(32),
+  license VARCHAR(120),
+  fivem_id VARCHAR(80),
   citizenid VARCHAR(64),
-  status VARCHAR(40) DEFAULT 'Open',
-  priority VARCHAR(40) DEFAULT 'Normal',
-  assigned_to VARCHAR(64),
-  compensation_status VARCHAR(80),
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
+  identifiers_json JSON,
+  verified_at DATETIME NULL,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_tickets_discord (discord_id),
-  INDEX idx_tickets_citizenid (citizenid),
-  INDEX idx_tickets_status (status),
-  INDEX idx_tickets_created (created_at)
+  INDEX idx_player_links_user (user_id),
+  INDEX idx_player_links_steam (steam_id),
+  INDEX idx_player_links_discord (discord_id),
+  INDEX idx_player_links_license (license),
+  INDEX idx_player_links_citizenid (citizenid),
+  INDEX idx_player_links_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS ticket_messages (
+CREATE TABLE IF NOT EXISTS player_ban_cache (
   id VARCHAR(64) PRIMARY KEY,
-  ticket_id VARCHAR(64) NOT NULL,
-  author_id VARCHAR(64),
-  author_type VARCHAR(40),
-  message MEDIUMTEXT,
-  internal_only TINYINT(1) DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_ticket_messages_ticket (ticket_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ticket_attachments (
-  id VARCHAR(64) PRIMARY KEY,
-  ticket_id VARCHAR(64) NOT NULL,
-  media_upload_id VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_ticket_attachments_ticket (ticket_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ban_appeals (
-  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64),
+  steam_id VARCHAR(32),
+  discord_id VARCHAR(32),
+  license VARCHAR(120),
+  citizenid VARCHAR(64),
+  status VARCHAR(40) DEFAULT 'Not banned',
   ban_id VARCHAR(120),
-  discord_id VARCHAR(32),
-  citizenid VARCHAR(64),
-  ban_reason TEXT,
-  player_explanation MEDIUMTEXT,
-  why_unban MEDIUMTEXT,
-  evidence_url TEXT,
-  status VARCHAR(40) DEFAULT 'Submitted',
-  decision_reason TEXT,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
+  reason TEXT,
+  expires_at DATETIME NULL,
+  ban_type VARCHAR(40),
+  checked_at DATETIME NULL,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_ban_appeals_ban (ban_id),
-  INDEX idx_ban_appeals_discord (discord_id),
-  INDEX idx_ban_appeals_citizenid (citizenid),
-  INDEX idx_ban_appeals_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ban_appeal_messages (
-  id VARCHAR(64) PRIMARY KEY,
-  appeal_id VARCHAR(64) NOT NULL,
-  author_id VARCHAR(64),
-  message MEDIUMTEXT,
-  internal_only TINYINT(1) DEFAULT 0,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_ban_appeal_messages_appeal (appeal_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS staff_notes (
-  id VARCHAR(64) PRIMARY KEY,
-  target_discord_id VARCHAR(32),
-  target_citizenid VARCHAR(64),
-  note MEDIUMTEXT,
-  created_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_staff_notes_discord (target_discord_id),
-  INDEX idx_staff_notes_citizenid (target_citizenid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS player_warnings (
-  id VARCHAR(64) PRIMARY KEY,
-  discord_id VARCHAR(32),
-  citizenid VARCHAR(64),
-  reason TEXT,
-  active TINYINT(1) DEFAULT 1,
-  created_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_warnings_discord (discord_id),
-  INDEX idx_warnings_citizenid (citizenid)
+  INDEX idx_ban_cache_user (user_id),
+  INDEX idx_ban_cache_steam (steam_id),
+  INDEX idx_ban_cache_discord (discord_id),
+  INDEX idx_ban_cache_license (license),
+  INDEX idx_ban_cache_citizenid (citizenid),
+  INDEX idx_ban_cache_status (status),
+  INDEX idx_ban_cache_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS player_bans (
   id VARCHAR(64) PRIMARY KEY,
+  steam_id VARCHAR(32),
   discord_id VARCHAR(32),
-  citizenid VARCHAR(64),
   license VARCHAR(120),
+  citizenid VARCHAR(64),
   reason TEXT,
   expires_at DATETIME NULL,
+  ban_type VARCHAR(40) DEFAULT 'temporary',
   active TINYINT(1) DEFAULT 1,
+  private_admin_notes TEXT,
   created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_bans_discord (discord_id),
-  INDEX idx_bans_citizenid (citizenid),
-  INDEX idx_bans_license (license)
+  INDEX idx_player_bans_steam (steam_id),
+  INDEX idx_player_bans_discord (discord_id),
+  INDEX idx_player_bans_license (license),
+  INDEX idx_player_bans_citizenid (citizenid),
+  INDEX idx_player_bans_status (active, ban_type),
+  INDEX idx_player_bans_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS player_blacklists (
   id VARCHAR(64) PRIMARY KEY,
+  steam_id VARCHAR(32),
   discord_id VARCHAR(32),
-  citizenid VARCHAR(64),
   license VARCHAR(120),
+  citizenid VARCHAR(64),
   reason TEXT,
   active TINYINT(1) DEFAULT 1,
+  private_admin_notes TEXT,
   created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   removed_by VARCHAR(64),
   removed_at DATETIME NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
+  INDEX idx_blacklists_steam (steam_id),
   INDEX idx_blacklists_discord (discord_id),
+  INDEX idx_blacklists_license (license),
   INDEX idx_blacklists_citizenid (citizenid),
-  INDEX idx_blacklists_license (license)
+  INDEX idx_blacklists_status (active),
+  INDEX idx_blacklists_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS police_reports (
+CREATE TABLE IF NOT EXISTS partners (
   id VARCHAR(64) PRIMARY KEY,
-  case_number VARCHAR(80),
-  title VARCHAR(190),
-  description MEDIUMTEXT,
-  citizenid VARCHAR(64),
-  character_name VARCHAR(120),
-  officer_name VARCHAR(120),
-  category VARCHAR(80),
-  status VARCHAR(40) DEFAULT 'Open',
-  danger_level VARCHAR(40),
-  fine_amount DECIMAL(12,2) DEFAULT 0,
-  jail_time INT DEFAULT 0,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_police_reports_case (case_number),
-  INDEX idx_police_reports_citizenid (citizenid),
-  INDEX idx_police_reports_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS police_warrants (
-  id VARCHAR(64) PRIMARY KEY,
-  citizenid VARCHAR(64),
-  character_name VARCHAR(120),
-  reason TEXT,
-  danger_level VARCHAR(40),
-  assigned_officer VARCHAR(120),
-  status VARCHAR(40) DEFAULT 'Active',
-  expires_at DATETIME NULL,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_police_warrants_citizenid (citizenid),
-  INDEX idx_police_warrants_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS police_fines (
-  id VARCHAR(64) PRIMARY KEY,
-  citizenid VARCHAR(64),
-  character_name VARCHAR(120),
-  officer_name VARCHAR(120),
-  reason TEXT,
-  amount DECIMAL(12,2) DEFAULT 0,
-  status VARCHAR(40) DEFAULT 'Issued',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_police_fines_citizenid (citizenid),
-  INDEX idx_police_fines_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS police_evidence (
-  id VARCHAR(64) PRIMARY KEY,
-  report_id VARCHAR(64),
-  title VARCHAR(190),
-  description TEXT,
-  media_upload_id VARCHAR(64),
-  created_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_police_evidence_report (report_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ems_records (
-  id VARCHAR(64) PRIMARY KEY,
-  patient_name VARCHAR(120),
-  citizenid VARCHAR(64),
-  blood_type VARCHAR(8),
-  known_injuries TEXT,
-  medical_history MEDIUMTEXT,
-  medication_notes MEDIUMTEXT,
-  treatment_notes MEDIUMTEXT,
-  assigned_doctor VARCHAR(120),
-  status VARCHAR(40) DEFAULT 'Active',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_ems_records_citizenid (citizenid),
-  INDEX idx_ems_records_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS ems_reports (
-  id VARCHAR(64) PRIMARY KEY,
-  record_id VARCHAR(64),
-  report_type VARCHAR(80),
-  title VARCHAR(190),
-  description MEDIUMTEXT,
-  created_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_ems_reports_record (record_id),
-  INDEX idx_ems_reports_type (report_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS court_cases (
-  id VARCHAR(64) PRIMARY KEY,
-  case_number VARCHAR(80),
-  title VARCHAR(190),
-  description MEDIUMTEXT,
-  defendant VARCHAR(160),
-  plaintiff VARCHAR(160),
-  judge_name VARCHAR(120),
-  lawyer_name VARCHAR(120),
-  status VARCHAR(40) DEFAULT 'Draft',
-  fine_amount DECIMAL(12,2) DEFAULT 0,
-  jail_time INT DEFAULT 0,
-  appeal_status VARCHAR(40),
-  evidence_json JSON,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_court_cases_case (case_number),
-  INDEX idx_court_cases_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS court_documents (
-  id VARCHAR(64) PRIMARY KEY,
-  case_id VARCHAR(64),
-  document_type VARCHAR(80),
-  title VARCHAR(190),
-  content MEDIUMTEXT,
-  pdf_url TEXT,
-  status VARCHAR(40) DEFAULT 'Draft',
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_court_documents_case (case_id),
-  INDEX idx_court_documents_type (document_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS businesses (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  business_type VARCHAR(80),
+  partner_name VARCHAR(160) NOT NULL,
   logo_url TEXT,
-  banner_url TEXT,
-  description MEDIUMTEXT,
-  owner_id VARCHAR(64),
-  owner_name VARCHAR(120),
-  opening_hours VARCHAR(190),
-  location VARCHAR(190),
-  weekly_rating DECIMAL(4,2) DEFAULT 0,
-  revenue_stats_json JSON,
-  is_approved TINYINT(1) DEFAULT 0,
-  status VARCHAR(40) DEFAULT 'Pending',
-  metadata_json JSON,
+  website_url TEXT,
   sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_businesses_name (name),
-  INDEX idx_businesses_type (business_type),
-  INDEX idx_businesses_status (status)
+  INDEX idx_partners_visible (is_visible),
+  INDEX idx_partners_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS business_employees (
-  id VARCHAR(64) PRIMARY KEY,
-  business_id VARCHAR(64),
-  citizenid VARCHAR(64),
-  employee_name VARCHAR(120),
-  rank_name VARCHAR(80),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_business_employees_business (business_id),
-  INDEX idx_business_employees_citizenid (citizenid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS business_menu_items (
-  id VARCHAR(64) PRIMARY KEY,
-  business_id VARCHAR(64),
-  name VARCHAR(160),
-  description TEXT,
-  price DECIMAL(12,2) DEFAULT 0,
-  available TINYINT(1) DEFAULT 1,
-  sort_order INT DEFAULT 9999,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_business_menu_business (business_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS business_reviews (
-  id VARCHAR(64) PRIMARY KEY,
-  business_id VARCHAR(64),
-  user_id VARCHAR(64),
-  rating INT,
-  review TEXT,
-  status VARCHAR(40) DEFAULT 'Published',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_business_reviews_business (business_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS business_applications (
-  id VARCHAR(64) PRIMARY KEY,
-  business_name VARCHAR(160),
-  business_type VARCHAR(80),
-  applicant_name VARCHAR(120),
-  discord_id VARCHAR(32),
-  description MEDIUMTEXT,
-  status VARCHAR(40) DEFAULT 'Submitted',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_business_applications_discord (discord_id),
-  INDEX idx_business_applications_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS gangs (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  logo_url TEXT,
-  color VARCHAR(16),
-  leader_name VARCHAR(120),
-  territory VARCHAR(160),
-  reputation INT DEFAULT 0,
-  public_description MEDIUMTEXT,
-  description MEDIUMTEXT,
-  allies_json JSON,
-  enemies_json JSON,
-  war_status VARCHAR(80),
-  warnings_json JSON,
-  admin_notes MEDIUMTEXT,
-  is_public TINYINT(1) DEFAULT 1,
-  status VARCHAR(40) DEFAULT 'Active',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_gangs_name (name),
-  INDEX idx_gangs_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS gang_members (
-  id VARCHAR(64) PRIMARY KEY,
-  gang_id VARCHAR(64),
-  citizenid VARCHAR(64),
-  member_name VARCHAR(120),
-  rank_name VARCHAR(80),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_gang_members_gang (gang_id),
-  INDEX idx_gang_members_citizenid (citizenid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS gang_territories (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  controlled_by VARCHAR(160),
-  conflict_level VARCHAR(40),
-  danger_level VARCHAR(40),
-  fear_level VARCHAR(40),
-  last_conflict_at DATETIME NULL,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_gang_territories_controlled_by (controlled_by)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS gang_war_logs (
-  id VARCHAR(64) PRIMARY KEY,
-  gang_a VARCHAR(160),
-  gang_b VARCHAR(160),
-  winner VARCHAR(160),
-  reason TEXT,
-  notes MEDIUMTEXT,
-  screenshots_json JSON,
-  created_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS news_articles (
-  id VARCHAR(64) PRIMARY KEY,
-  title VARCHAR(190),
-  subtitle VARCHAR(190),
-  image_url TEXT,
-  content MEDIUMTEXT,
-  category VARCHAR(80),
-  author_name VARCHAR(120),
-  language VARCHAR(8) DEFAULT 'en',
-  tags TEXT,
-  is_featured TINYINT(1) DEFAULT 0,
-  status VARCHAR(40) DEFAULT 'Draft',
-  publish_at DATETIME NULL,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_news_category (category),
-  INDEX idx_news_status (status),
-  INDEX idx_news_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS journey_items (
   id VARCHAR(64) PRIMARY KEY,
   title VARCHAR(190),
   description MEDIUMTEXT,
+  journey_date DATE NULL,
+  journey_time VARCHAR(20),
   image_url TEXT,
-  category VARCHAR(80),
-  starts_at DATETIME NULL,
-  ends_at DATETIME NULL,
-  location VARCHAR(190),
-  requirements TEXT,
-  allowed_jobs_json JSON,
-  max_participants INT DEFAULT 0,
-  reward VARCHAR(190),
-  host VARCHAR(120),
-  status VARCHAR(40) DEFAULT 'Draft',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_events_status (status),
-  INDEX idx_events_start (starts_at),
-  INDEX idx_events_category (category)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS event_participants (
-  id VARCHAR(64) PRIMARY KEY,
-  event_id VARCHAR(64),
-  user_id VARCHAR(64),
-  status VARCHAR(40) DEFAULT 'Registered',
-  approved_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  UNIQUE KEY uniq_event_participant (event_id, user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS character_profiles (
-  id VARCHAR(64) PRIMARY KEY,
-  user_id VARCHAR(64),
-  citizenid VARCHAR(64),
-  character_name VARCHAR(120),
-  age INT,
-  backstory MEDIUMTEXT,
-  personality TEXT,
-  job VARCHAR(120),
-  gang VARCHAR(120),
-  profile_image_url TEXT,
-  friends_json JSON,
-  enemies_json JSON,
-  family_json JSON,
-  life_events_json JSON,
-  quotes_json JSON,
-  public_reputation VARCHAR(190),
-  privacy VARCHAR(40) DEFAULT 'Public',
-  status VARCHAR(40) DEFAULT 'Published',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_character_profiles_citizenid (citizenid),
-  INDEX idx_character_profiles_privacy (privacy),
-  INDEX idx_character_profiles_name (character_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS character_gallery (
-  id VARCHAR(64) PRIMARY KEY,
-  profile_id VARCHAR(64),
-  media_upload_id VARCHAR(64),
-  caption TEXT,
-  sort_order INT DEFAULT 9999,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_character_gallery_profile (profile_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS shop_products (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  description MEDIUMTEXT,
-  image_url TEXT,
-  price DECIMAL(12,2) DEFAULT 0,
-  category VARCHAR(80),
-  availability VARCHAR(40) DEFAULT 'Available',
-  requires_approval TINYINT(1) DEFAULT 1,
-  status VARCHAR(40) DEFAULT 'Active',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_shop_products_category (category),
-  INDEX idx_shop_products_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS shop_orders (
-  id VARCHAR(64) PRIMARY KEY,
-  product_id VARCHAR(64),
-  user_id VARCHAR(64),
-  discord_id VARCHAR(32),
-  citizenid VARCHAR(64),
-  price DECIMAL(12,2) DEFAULT 0,
-  status VARCHAR(40) DEFAULT 'Pending',
-  delivery_note TEXT,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_shop_orders_discord (discord_id),
-  INDEX idx_shop_orders_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS city_archive (
-  id VARCHAR(64) PRIMARY KEY,
-  title VARCHAR(190),
-  week_number INT,
-  month VARCHAR(60),
-  major_events MEDIUMTEXT,
-  biggest_crime TEXT,
-  biggest_court_case TEXT,
-  best_police VARCHAR(120),
-  best_ems VARCHAR(120),
-  best_business VARCHAR(120),
-  best_gang VARCHAR(120),
-  best_streamer VARCHAR(120),
-  most_watched_streamer VARCHAR(120),
-  most_wanted VARCHAR(120),
-  deaths TEXT,
-  server_changes TEXT,
-  screenshots_json JSON,
-  video_links_json JSON,
-  story_summary MEDIUMTEXT,
-  status VARCHAR(40) DEFAULT 'Draft',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_archive_week (week_number),
-  INDEX idx_archive_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS map_markers (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  marker_type VARCHAR(80),
-  description MEDIUMTEXT,
-  x DECIMAL(12,4) DEFAULT 0,
-  y DECIMAL(12,4) DEFAULT 0,
-  z DECIMAL(12,4) DEFAULT 0,
   icon VARCHAR(80),
-  color VARCHAR(16),
-  image_url TEXT,
-  visibility VARCHAR(40) DEFAULT 'Public',
-  status VARCHAR(40) DEFAULT 'Published',
-  metadata_json JSON,
+  status VARCHAR(40) DEFAULT 'past',
   sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_map_markers_type (marker_type),
-  INDEX idx_map_markers_visibility (visibility)
+  INDEX idx_journey_status (status),
+  INDEX idx_journey_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS job_pages (
+CREATE TABLE IF NOT EXISTS famous_characters (
   id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
+  character_name VARCHAR(160) NOT NULL,
+  header VARCHAR(190),
+  picture_url TEXT,
+  bio TEXT,
   description MEDIUMTEXT,
-  requirements TEXT,
-  how_to_apply TEXT,
-  vehicles TEXT,
-  uniforms TEXT,
-  rules MEDIUMTEXT,
-  bosses TEXT,
-  employees_public TINYINT(1) DEFAULT 0,
-  status VARCHAR(40) DEFAULT 'Draft',
-  metadata_json JSON,
+  role_name VARCHAR(120),
+  gang_business VARCHAR(160),
+  social_links_json JSON,
+  is_featured TINYINT(1) DEFAULT 0,
   sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_job_pages_name (name),
-  INDEX idx_job_pages_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS job_ranks (
-  id VARCHAR(64) PRIMARY KEY,
-  job_page_id VARCHAR(64),
-  rank_name VARCHAR(120),
-  rank_level INT DEFAULT 0,
-  permissions_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_job_ranks_job (job_page_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS story_campaigns (
-  id VARCHAR(64) PRIMARY KEY,
-  name VARCHAR(160),
-  title VARCHAR(190),
-  description MEDIUMTEXT,
-  status VARCHAR(40) DEFAULT 'Draft',
-  start_date DATETIME NULL,
-  end_date DATETIME NULL,
-  visibility VARCHAR(40) DEFAULT 'Public',
-  linked_event_id VARCHAR(64),
-  linked_map_markers_json JSON,
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_story_campaigns_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS story_chapters (
-  id VARCHAR(64) PRIMARY KEY,
-  campaign_id VARCHAR(64),
-  title VARCHAR(190),
-  content MEDIUMTEXT,
-  release_at DATETIME NULL,
-  status VARCHAR(40) DEFAULT 'Draft',
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_story_chapters_campaign (campaign_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS story_clues (
-  id VARCHAR(64) PRIMARY KEY,
-  campaign_id VARCHAR(64),
-  title VARCHAR(190),
-  content MEDIUMTEXT,
-  clue_type VARCHAR(80),
-  encrypted_payload TEXT,
-  release_at DATETIME NULL,
-  visibility VARCHAR(40) DEFAULT 'Public',
-  status VARCHAR(40) DEFAULT 'Draft',
-  metadata_json JSON,
-  sort_order INT DEFAULT 9999,
-  created_by VARCHAR(64),
-  updated_by VARCHAR(64),
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  deleted_at DATETIME NULL,
-  INDEX idx_story_clues_campaign (campaign_id),
-  INDEX idx_story_clues_release (release_at)
+  INDEX idx_famous_name (character_name),
+  INDEX idx_famous_featured (is_featured),
+  INDEX idx_famous_visible (is_visible),
+  INDEX idx_famous_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS streamers (
   id VARCHAR(64) PRIMARY KEY,
   display_name VARCHAR(160) NOT NULL,
-  discord_id VARCHAR(32),
-  discord_username VARCHAR(120),
+  profile_image_url TEXT,
   avatar_url TEXT,
   banner_url TEXT,
   bio MEDIUMTEXT,
-  main_platform VARCHAR(40),
+  discord_id VARCHAR(32),
+  discord_username VARCHAR(120),
+  steam_id VARCHAR(32),
+  character_name VARCHAR(120),
+  category VARCHAR(80) DEFAULT 'Other',
   twitch_username VARCHAR(120),
   kick_username VARCHAR(120),
   youtube_url TEXT,
   tiktok_url TEXT,
+  instagram_url TEXT,
+  x_url TEXT,
   discord_url TEXT,
-  character_name VARCHAR(120),
-  category VARCHAR(80) DEFAULT 'Other',
   is_featured TINYINT(1) DEFAULT 0,
   is_approved TINYINT(1) DEFAULT 0,
   is_hidden TINYINT(1) DEFAULT 0,
@@ -924,10 +433,28 @@ CREATE TABLE IF NOT EXISTS streamers (
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
   INDEX idx_streamers_discord (discord_id),
+  INDEX idx_streamers_steam (steam_id),
   INDEX idx_streamers_twitch (twitch_username),
   INDEX idx_streamers_kick (kick_username),
-  INDEX idx_streamers_category (category),
-  INDEX idx_streamers_approved_hidden (is_approved, is_hidden)
+  INDEX idx_streamers_status (is_approved, is_hidden),
+  INDEX idx_streamers_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS streamer_social_links (
+  id VARCHAR(64) PRIMARY KEY,
+  streamer_id VARCHAR(64) NOT NULL,
+  platform VARCHAR(80),
+  url TEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_streamer_social_streamer (streamer_id),
+  INDEX idx_streamer_social_platform (platform),
+  INDEX idx_streamer_social_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS streamer_live_status (
@@ -942,49 +469,397 @@ CREATE TABLE IF NOT EXISTS streamer_live_status (
   started_at DATETIME NULL,
   last_checked_at DATETIME NULL,
   raw_response_json JSON,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
   UNIQUE KEY uniq_streamer_platform (streamer_id, platform),
-  INDEX idx_streamer_live_status_streamer (streamer_id),
-  INDEX idx_streamer_live_status_live (is_live),
-  INDEX idx_streamer_live_status_checked (last_checked_at)
+  INDEX idx_live_status_streamer (streamer_id),
+  INDEX idx_live_status_live (is_live),
+  INDEX idx_live_status_checked (last_checked_at),
+  INDEX idx_live_status_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS server_status_cache (
+CREATE TABLE IF NOT EXISTS team_members (
   id VARCHAR(64) PRIMARY KEY,
-  server_name VARCHAR(160),
-  online TINYINT(1) DEFAULT 0,
-  current_players INT DEFAULT 0,
-  max_players INT DEFAULT 0,
-  queue_count INT DEFAULT 0,
-  ping INT,
-  last_restart DATETIME NULL,
-  next_restart DATETIME NULL,
-  endpoint_status VARCHAR(40),
-  database_status VARCHAR(40),
-  discord_bot_status VARCHAR(40),
-  website_api_status VARCHAR(40),
-  firebase_status VARCHAR(40),
-  streamer_live_checker_status VARCHAR(40),
-  online_players_json JSON,
+  name VARCHAR(160) NOT NULL,
+  role_title VARCHAR(160),
+  category VARCHAR(80) DEFAULT 'Other',
+  profile_image_url TEXT,
+  bio TEXT,
+  discord_url TEXT,
+  twitch_url TEXT,
+  kick_url TEXT,
+  youtube_url TEXT,
+  tiktok_url TEXT,
+  instagram_url TEXT,
+  x_url TEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  deleted_at DATETIME NULL,
+  INDEX idx_team_category (category),
+  INDEX idx_team_visible (is_visible),
+  INDEX idx_team_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS media_uploads (
+CREATE TABLE IF NOT EXISTS career_jobs (
   id VARCHAR(64) PRIMARY KEY,
-  owner_user_id VARCHAR(64),
+  title VARCHAR(190) NOT NULL,
+  description MEDIUMTEXT,
+  department VARCHAR(120),
+  image_url TEXT,
+  is_open TINYINT(1) DEFAULT 1,
+  start_date DATE NULL,
+  end_date DATE NULL,
+  requirements MEDIUMTEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_jobs_status (is_open, is_visible),
+  INDEX idx_career_jobs_department (department),
+  INDEX idx_career_jobs_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS career_sections (
+  id VARCHAR(64) PRIMARY KEY,
+  job_id VARCHAR(64) NOT NULL,
+  title VARCHAR(190) NOT NULL,
+  description TEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_sections_job (job_id),
+  INDEX idx_career_sections_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS career_questions (
+  id VARCHAR(64) PRIMARY KEY,
+  job_id VARCHAR(64) NOT NULL,
+  section_id VARCHAR(64),
+  question TEXT NOT NULL,
+  help_text TEXT,
+  question_type VARCHAR(40) DEFAULT 'short_text',
+  options_json JSON,
+  is_required TINYINT(1) DEFAULT 0,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_questions_job (job_id),
+  INDEX idx_career_questions_section (section_id),
+  INDEX idx_career_questions_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS career_applications (
+  id VARCHAR(64) PRIMARY KEY,
+  job_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NOT NULL,
+  discord_id VARCHAR(32),
+  steam_id VARCHAR(32),
+  citizenid VARCHAR(64),
+  status VARCHAR(40) DEFAULT 'Submitted',
+  reviewed_by VARCHAR(64),
+  reviewed_at DATETIME NULL,
+  internal_notes TEXT,
+  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_applications_job (job_id),
+  INDEX idx_career_applications_user (user_id),
+  INDEX idx_career_applications_discord (discord_id),
+  INDEX idx_career_applications_steam (steam_id),
+  INDEX idx_career_applications_citizenid (citizenid),
+  INDEX idx_career_applications_status (status),
+  INDEX idx_career_applications_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS career_answers (
+  id VARCHAR(64) PRIMARY KEY,
+  application_id VARCHAR(64) NOT NULL,
+  section_id VARCHAR(64),
+  question_id VARCHAR(64),
+  question_snapshot TEXT,
+  answer_text MEDIUMTEXT,
+  file_url TEXT,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_answers_application (application_id),
+  INDEX idx_career_answers_question (question_id),
+  INDEX idx_career_answers_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS career_application_notes (
+  id VARCHAR(64) PRIMARY KEY,
+  application_id VARCHAR(64) NOT NULL,
+  admin_id VARCHAR(64),
+  note TEXT,
+  is_internal TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_career_notes_application (application_id),
+  INDEX idx_career_notes_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS tickets (
+  id VARCHAR(64) PRIMARY KEY,
+  ticket_number VARCHAR(80) UNIQUE,
+  user_id VARCHAR(64) NOT NULL,
+  category VARCHAR(80),
+  subject VARCHAR(190),
+  message_preview TEXT,
+  status VARCHAR(40) DEFAULT 'Open',
+  priority VARCHAR(40) DEFAULT 'Normal',
+  assigned_to VARCHAR(64),
+  closed_by VARCHAR(64),
+  closed_at DATETIME NULL,
+  discord_id VARCHAR(32),
+  steam_id VARCHAR(32),
+  citizenid VARCHAR(64),
+  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_tickets_user (user_id),
+  INDEX idx_tickets_discord (discord_id),
+  INDEX idx_tickets_steam (steam_id),
+  INDEX idx_tickets_citizenid (citizenid),
+  INDEX idx_tickets_status (status),
+  INDEX idx_tickets_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ticket_messages (
+  id VARCHAR(64) PRIMARY KEY,
+  ticket_id VARCHAR(64) NOT NULL,
+  author_id VARCHAR(64),
+  author_type VARCHAR(40),
+  message MEDIUMTEXT,
+  internal_only TINYINT(1) DEFAULT 0,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_ticket_messages_ticket (ticket_id),
+  INDEX idx_ticket_messages_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ticket_attachments (
+  id VARCHAR(64) PRIMARY KEY,
+  ticket_id VARCHAR(64) NOT NULL,
+  message_id VARCHAR(64),
+  file_url TEXT,
   original_name VARCHAR(255),
-  stored_name VARCHAR(255),
   mime_type VARCHAR(120),
   size_bytes BIGINT,
-  url TEXT,
-  storage_driver VARCHAR(40) DEFAULT 'local',
-  metadata_json JSON,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
-  INDEX idx_media_uploads_owner (owner_user_id),
-  INDEX idx_media_uploads_mime (mime_type)
+  INDEX idx_ticket_attachments_ticket (ticket_id),
+  INDEX idx_ticket_attachments_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS ticket_notes (
+  id VARCHAR(64) PRIMARY KEY,
+  ticket_id VARCHAR(64) NOT NULL,
+  admin_id VARCHAR(64),
+  note TEXT,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_ticket_notes_ticket (ticket_id),
+  INDEX idx_ticket_notes_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS news_categories (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(120) UNIQUE,
+  description TEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_news_categories_slug (slug),
+  INDEX idx_news_categories_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS news_articles (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(190),
+  subtitle VARCHAR(190),
+  content MEDIUMTEXT,
+  image_url TEXT,
+  category VARCHAR(80),
+  author_name VARCHAR(120),
+  published_at DATETIME NULL,
+  status VARCHAR(40) DEFAULT 'Draft',
+  is_featured TINYINT(1) DEFAULT 0,
+  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_news_category (category),
+  INDEX idx_news_status (status),
+  INDEX idx_news_featured (is_featured),
+  INDEX idx_news_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS map_zones (
+  id VARCHAR(64) PRIMARY KEY,
+  zone_name VARCHAR(160),
+  zone_type VARCHAR(80),
+  description MEDIUMTEXT,
+  image_url TEXT,
+  position_x DECIMAL(8,4) DEFAULT 50,
+  position_y DECIMAL(8,4) DEFAULT 50,
+  fivem_x DECIMAL(12,4) NULL,
+  fivem_y DECIMAL(12,4) NULL,
+  fivem_z DECIMAL(12,4) NULL,
+  radius DECIMAL(12,2) NULL,
+  color VARCHAR(16),
+  icon VARCHAR(80),
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_map_zones_type (zone_type),
+  INDEX idx_map_zones_visible (is_visible),
+  INDEX idx_map_zones_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS faq_categories (
+  id VARCHAR(64) PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  description TEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_faq_categories_visible (is_visible),
+  INDEX idx_faq_categories_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS faq_items (
+  id VARCHAR(64) PRIMARY KEY,
+  category_id VARCHAR(64),
+  question TEXT NOT NULL,
+  answer MEDIUMTEXT,
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_faq_items_category (category_id),
+  INDEX idx_faq_items_visible (is_visible),
+  INDEX idx_faq_items_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS terms_pages (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(190),
+  content MEDIUMTEXT,
+  version VARCHAR(40),
+  effective_date DATE NULL,
+  is_visible TINYINT(1) DEFAULT 1,
+  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_terms_pages_version (version),
+  INDEX idx_terms_pages_visible (is_visible),
+  INDEX idx_terms_pages_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS events (
+  id VARCHAR(64) PRIMARY KEY,
+  title VARCHAR(190),
+  description MEDIUMTEXT,
+  image_url TEXT,
+  location VARCHAR(190),
+  starts_at DATETIME NULL,
+  ends_at DATETIME NULL,
+  status_override VARCHAR(40),
+  category VARCHAR(80),
+  sort_order INT DEFAULT 9999,
+  is_visible TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_events_status (status_override),
+  INDEX idx_events_start (starts_at),
+  INDEX idx_events_category (category),
+  INDEX idx_events_visible (is_visible),
+  INDEX idx_events_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_invites (
+  id VARCHAR(64) PRIMARY KEY,
+  email VARCHAR(190),
+  discord_id VARCHAR(32),
+  steam_id VARCHAR(32),
+  role_name VARCHAR(120),
+  permissions_json JSON,
+  token_hash VARCHAR(255),
+  expires_at DATETIME NULL,
+  status VARCHAR(40) DEFAULT 'pending',
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_admin_invites_email (email),
+  INDEX idx_admin_invites_discord (discord_id),
+  INDEX idx_admin_invites_steam (steam_id),
+  INDEX idx_admin_invites_status (status),
+  INDEX idx_admin_invites_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 SET FOREIGN_KEY_CHECKS = 1;

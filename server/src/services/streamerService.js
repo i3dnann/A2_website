@@ -127,28 +127,24 @@ export async function checkStreamerLiveStatus(streamer) {
   const previous = getStreamerLiveStatuses(streamer.id).some((status) => status.is_live);
   const statuses = [await checkTwitch(streamer), await checkKick(streamer)];
   const current = statuses.some((status) => status.is_live);
-  const settings = getSettings();
+  const settings = await getSettings();
 
   if (current && !previous && settings.webhookStreamerGoLive) {
     await sendWebhook("streamers", {
-      Action: "Streamer live",
+      title: "Streamer went live",
       Streamer: streamer.display_name,
       Platform: statuses.find((status) => status.is_live)?.platform || streamer.main_platform,
       Channel: streamer.twitch_username || streamer.kick_username || "",
-      Admin: "system",
-      Time: new Date().toISOString(),
       Status: "live"
     });
   }
 
   if (!current && previous && settings.webhookStreamerGoOffline) {
     await sendWebhook("streamers", {
-      Action: "Streamer offline",
+      title: "Streamer went offline",
       Streamer: streamer.display_name,
-      Platform: streamer.main_platform,
+      Platform: streamer.twitch_username ? "Twitch" : "Kick",
       Channel: streamer.twitch_username || streamer.kick_username || "",
-      Admin: "system",
-      Time: new Date().toISOString(),
       Status: "offline"
     });
   }

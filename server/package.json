@@ -7,9 +7,10 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/fivem.js"
+    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/player.js && node --check src/services/qbcoreService.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",

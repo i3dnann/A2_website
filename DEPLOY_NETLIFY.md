@@ -1,38 +1,48 @@
 # Deploy Frontend to Netlify
 
-## Build Settings
+The frontend is static and deploys from `/client`. The backend must run separately on a VPS.
 
-Use these Netlify settings:
+## Netlify Settings
 
 - Base directory: `client`
 - Build command: `npm run build`
 - Publish directory: `client/dist`
+- Node version: `20`
 
-## Environment Variables
+The included `netlify.toml` already matches this setup.
 
-Add:
+## Frontend Environment Variable
 
-```text
-VITE_API_BASE_URL=https://your-api-domain.com
+Set this in Netlify:
+
+```env
+VITE_API_BASE_URL=https://your-backend-domain.com
 ```
 
-Do not add backend secrets, Discord secrets, MySQL passwords, Twitch secrets, Kick secrets, Firebase service accounts, or FiveM tokens to Netlify.
+Do not put Discord, Steam, Twitch, Kick, webhook, JWT, session, MySQL, or Firebase private values in Netlify frontend env vars.
 
-## Deploy Steps
+## Backend URLs
 
-1. Push this repository to GitHub.
-2. Create a new Netlify site from the GitHub repository.
-3. Set the base directory, build command, and publish directory above.
-4. Add `VITE_API_BASE_URL`.
-5. Deploy.
+Update backend `.env` on the VPS:
 
-## Backend CORS
-
-On the VPS `.env`, set:
-
-```text
+```env
 FRONTEND_URL=https://your-netlify-site.netlify.app
 CORS_ALLOWED_ORIGINS=https://your-netlify-site.netlify.app
+DISCORD_REDIRECT_URI=https://your-backend-domain.com/api/auth/discord/callback
+STEAM_REALM=https://your-backend-domain.com
+STEAM_RETURN_URL=https://your-backend-domain.com/api/auth/steam/callback
+COOKIE_SECURE=true
+COOKIE_SAME_SITE=none
 ```
 
-If the Netlify URL changes, update these backend values and restart the API.
+## Deploy
+
+```powershell
+npm.cmd run build --prefix client
+```
+
+Then connect the GitHub repo in Netlify or upload the generated `client/dist` output.
+
+## Secret Hygiene
+
+Netlify secret scanning can fail even after a successful build if secrets are committed in docs or example files. Keep `.env.example` placeholder-only and rotate any exposed secret immediately.

@@ -1,90 +1,63 @@
 import {
-  Activity,
-  Ambulance,
-  Archive,
-  BadgeDollarSign,
-  BriefcaseBusiness,
-  Building2,
   Calendar,
-  Car,
-  FileBadge,
-  FileText,
-  Gavel,
+  FileQuestion,
   Home,
-  IdCard,
-  Landmark,
   LayoutDashboard,
   Map,
   Newspaper,
-  RadioTower,
   ScrollText,
-  Search,
   Settings,
   Shield,
-  Siren,
   Sparkles,
+  Star,
   Ticket,
+  UserCircle,
   Users,
-  Video
+  Video,
+  Workflow
 } from "lucide-react";
 
 export const publicNav = [
   { label: "Home", href: "/", icon: Home },
+  { label: "Roster", href: "/roster", icon: Video },
+  { label: "Live", href: "/live", icon: Sparkles },
+  { label: "Team", href: "/team", icon: Users },
+  { label: "Careers", href: "/careers", icon: Workflow },
   { label: "News", href: "/news", icon: Newspaper },
-  { label: "Events", href: "/events", icon: Calendar },
-  { label: "Businesses", href: "/businesses", icon: Building2 },
   { label: "Map", href: "/map", icon: Map },
-  { label: "Jobs", href: "/jobs", icon: BriefcaseBusiness },
-  { label: "Characters", href: "/characters", icon: IdCard },
-  { label: "Streamers", href: "/streamers", icon: Video },
-  { label: "Status", href: "/status", icon: Activity },
-  { label: "Rules", href: "/rules", icon: ScrollText }
+  { label: "FAQ", href: "/faq", icon: FileQuestion }
 ];
 
-export const dashboardNav = {
-  player: [
-    { label: "Dashboard", href: "/player/dashboard", icon: LayoutDashboard, permission: "view_player_portal" },
-    { label: "My characters", href: "/player/characters", icon: IdCard, permission: "view_player_portal" },
-    { label: "My tickets", href: "/player/tickets", icon: Ticket, permission: "view_player_portal" },
-    { label: "My ban appeals", href: "/player/appeals", icon: FileBadge, permission: "view_player_portal" },
-    { label: "My profile", href: "/player/profile", icon: Users, permission: "view_player_portal" }
-  ],
-  police: [
-    { label: "Police dashboard", href: "/police/dashboard", icon: Shield, permission: "view_police_panel" },
-    { label: "Citizen search", href: "/police/search", icon: Search, permission: "view_police_panel" },
-    { label: "Reports", href: "/police/reports", icon: FileText, permission: "view_police_panel" },
-    { label: "Warrants", href: "/police/warrants", icon: Siren, permission: "view_police_panel" },
-    { label: "Fines", href: "/police/fines", icon: BadgeDollarSign, permission: "view_police_panel" },
-    { label: "Callsigns", href: "/police/callsigns", icon: RadioTower, permission: "view_police_panel" }
-  ],
-  ems: [
-    { label: "EMS dashboard", href: "/ems/dashboard", icon: Ambulance, permission: "view_ems_panel" },
-    { label: "Patient search", href: "/ems/search", icon: Search, permission: "view_ems_panel" },
-    { label: "Reports", href: "/ems/reports", icon: FileText, permission: "view_ems_panel" }
-  ],
-  admin: [
-    { label: "Staff dashboard", href: "/staff/dashboard", icon: LayoutDashboard, permission: "use_staff_panel" },
-    { label: "Player search", href: "/staff/search", icon: Search, permission: "use_staff_panel" },
-    { label: "Tickets", href: "/staff/tickets", icon: Ticket, permission: "review_tickets" },
-    { label: "Ban appeals", href: "/staff/ban-appeals", icon: FileBadge, permission: "review_ban_appeals" },
-    { label: "Whitelist", href: "/staff/whitelist", icon: FileText, permission: "review_whitelist" },
-    { label: "Streamers", href: "/staff/streamers", icon: Video, permission: "manage_streamers" },
-    { label: "Logs", href: "/staff/logs", icon: Archive, permission: "view_audit_logs" },
-    { label: "Website settings", href: "/staff/settings", icon: Settings, permission: "edit_website_settings" },
-    { label: "Permissions", href: "/staff/permissions", icon: Shield, permission: "manage_admins" },
-    { label: "CMS", href: "/staff/cms", icon: Sparkles, permission: "edit_website_settings" }
-  ],
-  court: [
-    { label: "Court dashboard", href: "/court/dashboard", icon: Landmark, permission: "view_court_panel" },
-    { label: "Cases", href: "/court/cases", icon: Gavel, permission: "view_court_panel" },
-    { label: "Documents", href: "/court/documents", icon: FileText, permission: "view_court_panel" }
-  ],
-  business: [
-    { label: "Business owner", href: "/business-owner/dashboard", icon: Building2, permission: "manage_business" }
-  ],
-  gang: [
-    { label: "Gang dashboard", href: "/gang/dashboard", icon: Users, permission: "manage_gang" }
-  ]
-};
+export const accountNav = [
+  { label: "Account", href: "/account", icon: LayoutDashboard, permission: "view_player_portal" },
+  { label: "Characters", href: "/account/characters", icon: UserCircle, permission: "view_player_portal" },
+  { label: "Tickets", href: "/account/tickets", icon: Ticket, permission: "view_player_portal" },
+  { label: "Settings", href: "/account/settings", icon: Settings, permission: "view_player_portal" }
+];
 
-export const allDashboardNav = Object.values(dashboardNav).flat();
+export const adminNav = [
+  { label: "Admin", href: "/admin", icon: LayoutDashboard, permission: "manage_home" },
+  { label: "Settings", href: "/admin/settings", icon: Settings, permission: "manage_home" },
+  { label: "Home", href: "/admin/home", icon: Home, permission: "manage_home" },
+  { label: "Partners", href: "/admin/partners", icon: Star, permission: "manage_partners" },
+  { label: "Journey", href: "/admin/journey", icon: Workflow, permission: "manage_journey" },
+  { label: "Famous", href: "/admin/famous", icon: UserCircle, permission: "manage_famous" },
+  { label: "Roster", href: "/admin/roster", icon: Video, permission: "manage_roster" },
+  { label: "Live", href: "/admin/live", icon: Sparkles, permission: "manage_live" },
+  { label: "Team", href: "/admin/team", icon: Users, permission: "manage_team" },
+  { label: "Careers", href: "/admin/careers", icon: Workflow, permission: "manage_careers" },
+  { label: "Tickets", href: "/admin/tickets", icon: Ticket, permission: "manage_tickets" },
+  { label: "News", href: "/admin/news", icon: Newspaper, permission: "manage_news" },
+  { label: "Map", href: "/admin/map", icon: Map, permission: "manage_map" },
+  { label: "FAQ", href: "/admin/faq", icon: FileQuestion, permission: "manage_faq" },
+  { label: "Terms", href: "/admin/terms", icon: ScrollText, permission: "manage_terms" },
+  { label: "Events", href: "/admin/events", icon: Calendar, permission: "manage_events" },
+  { label: "Users", href: "/admin/users", icon: Users, permission: "manage_users" },
+  { label: "Admins", href: "/admin/admins", icon: Shield, permission: "manage_admins" },
+  { label: "Permissions", href: "/admin/permissions", icon: Shield, permission: "manage_permissions" },
+  { label: "Webhooks", href: "/admin/webhooks", icon: Sparkles, permission: "manage_webhooks" },
+  { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText, permission: "view_audit_logs" },
+  { label: "Theme", href: "/admin/theme", icon: Settings, permission: "manage_theme" }
+];
+
+export const dashboardNav = [...accountNav, ...adminNav];

@@ -11,6 +11,9 @@ logs/
 uploads/
 server/uploads/
 client/.vite/
+.vite/
+.netlify/
+.vercel/
 database/backups/
 firebase-service-account*.json
 *.pem

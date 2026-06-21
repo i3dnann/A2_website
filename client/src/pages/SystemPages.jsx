@@ -9,7 +9,7 @@ export function ForbiddenPage() {
       <Card className="text-center">
         <AlertTriangle className="mx-auto mb-4 text-a2-warning" size={40} />
         <h1 className="text-4xl font-black">403 No Permission</h1>
-        <p className="mt-3 text-white/55">Your Discord roles do not have permission for this page. Admins can edit role permissions in the staff panel.</p>
+        <p className="mt-3 text-white/55">Your account does not have permission for this page. Master Admins can edit roles and permissions in the admin panel.</p>
         <Button as={Link} to="/" className="mt-6"><Home size={16} /> Back home</Button>
       </Card>
     </main>

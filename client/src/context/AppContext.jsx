@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { api } from "../lib/api.js";
 
 const defaultSettings = {
@@ -7,41 +6,46 @@ const defaultSettings = {
   primaryColor: "#b7fe1a",
   backgroundColor: "#000000",
   textColor: "#ffffff",
-  secondaryDark: "#111111",
+  secondaryColor: "#111111",
+  cardBackground: "#141414",
   borderColor: "#242424",
+  mutedTextColor: "#b8b8b8",
   dangerColor: "#ff3333",
   warningColor: "#ffaa00",
   successColor: "#35ff6b",
-  homepageDescription: "A premium FiveM QBCore roleplay city platform.",
-  discordInviteUrl: "#",
-  fivemConnectUrl: "#",
-  streamerPageEnabled: true
+  heroTitle: "A2 Studio Roleplay",
+  heroSubtitle: "Premium FiveM community",
+  heroDescription: "A serious, story-driven QBCore roleplay community.",
+  livePageEnabled: true,
+  maintenanceMode: false,
+  performanceMode: false
 };
 
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const { i18n } = useTranslation();
   const [settings, setSettings] = useState(defaultSettings);
   const [user, setUser] = useState(null);
+  const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiHealthy, setApiHealthy] = useState(true);
 
   useEffect(() => {
-    if (window.location.hash.includes("a2_session=")) {
-      const params = new URLSearchParams(window.location.hash.slice(1));
-      const token = params.get("a2_session");
-      if (token) {
-        localStorage.setItem("a2_session_token", token);
-        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
-      }
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      localStorage.setItem("a2_session_token", token);
+      window.history.replaceState(null, "", window.location.pathname);
     }
 
     let mounted = true;
     Promise.allSettled([api.get("/api/public/settings"), api.get("/api/auth/me")]).then(([settingsResult, userResult]) => {
       if (!mounted) return;
       if (settingsResult.status === "fulfilled") setSettings((current) => ({ ...current, ...(settingsResult.value.settings || {}) }));
-      if (userResult.status === "fulfilled") setUser(userResult.value.user || null);
+      if (userResult.status === "fulfilled") {
+        setUser(userResult.value.user || null);
+        setProviders(userResult.value.providers || []);
+      }
       if (settingsResult.status === "rejected" || userResult.status === "rejected") setApiHealthy(false);
       setLoading(false);
     });
@@ -55,21 +59,16 @@ export function AppProvider({ children }) {
     root.style.setProperty("--color-primary", settings.primaryColor || defaultSettings.primaryColor);
     root.style.setProperty("--color-bg", settings.backgroundColor || defaultSettings.backgroundColor);
     root.style.setProperty("--color-text", settings.textColor || defaultSettings.textColor);
-    root.style.setProperty("--color-panel", settings.secondaryDark || defaultSettings.secondaryDark);
+    root.style.setProperty("--color-panel", settings.secondaryColor || defaultSettings.secondaryColor);
+    root.style.setProperty("--color-card", settings.cardBackground || defaultSettings.cardBackground);
     root.style.setProperty("--color-border", settings.borderColor || defaultSettings.borderColor);
+    root.style.setProperty("--color-muted", settings.mutedTextColor || defaultSettings.mutedTextColor);
     root.style.setProperty("--color-danger", settings.dangerColor || defaultSettings.dangerColor);
     root.style.setProperty("--color-warning", settings.warningColor || defaultSettings.warningColor);
     root.style.setProperty("--color-success", settings.successColor || defaultSettings.successColor);
     document.title = settings.websiteName || defaultSettings.websiteName;
-    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
-  }, [settings, i18n.language]);
-
-  const setLanguage = async (language) => {
-    const safeLanguage = language === "ar" ? "ar" : "en";
-    localStorage.setItem("a2_language", safeLanguage);
-    await i18n.changeLanguage(safeLanguage);
-    api.post("/api/auth/language", { language: safeLanguage }).catch(() => {});
-  };
+    document.body.classList.toggle("performance-mode", Boolean(settings.performanceMode));
+  }, [settings]);
 
   const value = useMemo(
     () => ({
@@ -77,15 +76,16 @@ export function AppProvider({ children }) {
       setSettings,
       user,
       setUser,
+      providers,
+      setProviders,
       loading,
       apiHealthy,
-      setLanguage,
       hasPermission(permission) {
         const permissions = user?.permissions || [];
         return permissions.includes("master_access") || permissions.includes(permission);
       }
     }),
-    [settings, user, loading, apiHealthy]
+    [settings, user, providers, loading, apiHealthy]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

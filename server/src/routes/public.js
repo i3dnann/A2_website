@@ -1,107 +1,107 @@
 import { Router } from "express";
-import { RESOURCE_MAP, SEED_DATA } from "../data/catalog.js";
+import { PUBLIC_COLLECTIONS, RESOURCE_MAP } from "../data/catalog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getFiveMStatus, getResource, getSettings, listResource } from "../services/repository.js";
+import { getResource, getSettings, listResource } from "../services/repository.js";
 import { withLiveStatus } from "../services/streamerService.js";
 
 const router = Router();
 
-function isPublicSeedRow(resourceKey, row) {
-  if (!row || row.deleted_at || row.is_hidden === true || row.is_hidden === 1 || row.status === "Hidden") return false;
-  if (resourceKey === "streamers") return Boolean(row.is_approved) && !row.is_hidden;
-  return true;
+function eventStatus(event) {
+  if (event.status_override) return event.status_override;
+  const now = Date.now();
+  const starts = event.starts_at ? new Date(event.starts_at).getTime() : null;
+  const ends = event.ends_at ? new Date(event.ends_at).getTime() : null;
+  if (starts && starts > now) return "Future";
+  if (starts && ends && starts <= now && ends >= now) return "Live";
+  if (ends && ends < now) return "Passed";
+  return "Future";
 }
 
-function findSeedRows(resourceKey, options = {}) {
-  const config = RESOURCE_MAP[resourceKey];
-  const limit = Math.min(Number(options.limit) || 25, 100);
-  const offset = Math.max(Number(options.offset) || 0, 0);
-  const q = String(options.q || "").trim().toLowerCase();
-  let rows = (SEED_DATA[resourceKey] || [])
-    .filter((row) => isPublicSeedRow(resourceKey, row))
-    .map((row) => ({ ...row, is_seed: true }));
-
-  if (q && config?.searchFields?.length) {
-    rows = rows.filter((row) => config.searchFields.some((field) => String(row[field] || "").toLowerCase().includes(q)));
-  }
-
-  rows = rows.sort((a, b) => Number(a.sort_order || 9999) - Number(b.sort_order || 9999) || String(b.created_at || "").localeCompare(String(a.created_at || "")));
-  return { rows: rows.slice(offset, offset + limit), total: rows.length };
-}
-
-async function listPublicResource(resourceKey, options = {}) {
-  const result = await listResource(resourceKey, options);
-  if (result.rows?.length) return result;
-
-  const seed = findSeedRows(resourceKey, options);
-  if (!seed.rows.length) return result;
-
+function publicSummary(row) {
   return {
-    ...result,
-    rows: seed.rows,
-    total: seed.total,
-    seeded: true
+    ...row,
+    event_status: row?.starts_at || row?.ends_at ? eventStatus(row) : row?.status
   };
 }
 
-function findSeedRow(resourceKey, id) {
-  return (SEED_DATA[resourceKey] || []).find((row) => String(row.id) === String(id) && isPublicSeedRow(resourceKey, row));
-}
-
-router.get("/settings", (req, res) => {
-  res.json({ settings: getSettings() });
-});
+router.get(
+  "/settings",
+  asyncHandler(async (_req, res) => {
+    res.json({ settings: await getSettings() });
+  })
+);
 
 router.get(
   "/home",
   asyncHandler(async (_req, res) => {
-    const settings = getSettings();
-    const [news, events, businesses, characters, streamers] = await Promise.all([
-      listPublicResource("news", { limit: 4, publicOnly: true }),
-      listPublicResource("events", { limit: 4, publicOnly: true }),
-      listPublicResource("businesses", { limit: 4, publicOnly: true }),
-      listPublicResource("characterProfiles", { limit: 1, publicOnly: true }),
-      listPublicResource("streamers", { limit: 8, publicOnly: true })
+    const settings = await getSettings();
+    const [partners, journey, famous, news, events, team, streamers] = await Promise.all([
+      listResource("partners", { limit: 20, publicOnly: true }),
+      listResource("journey", { limit: 4, publicOnly: true }),
+      listResource("famous", { limit: 4, publicOnly: true }),
+      listResource("news", { limit: 4, publicOnly: true }),
+      listResource("events", { limit: 4, publicOnly: true }),
+      listResource("team", { limit: 6, publicOnly: true }),
+      listResource("streamers", { limit: 8, publicOnly: true })
     ]);
-    const streamerRows = await withLiveStatus(streamers.rows);
 
     res.json({
       settings,
-      status: getFiveMStatus(),
-      latestNews: news.rows,
-      latestEvents: events.rows,
-      businessSpotlight: businesses.rows[0] || null,
-      featuredCharacter: characters.rows[0] || null,
-      streamers: streamerRows,
-      weeklyHighlights: {
-        police: "Best police officer can be selected in CMS",
-        ems: "Best EMS can be selected in CMS",
-        gang: "Best criminal/gang can be selected in CMS"
-      }
+      partners: partners.rows,
+      journey: journey.rows,
+      famous: famous.rows,
+      news: news.rows,
+      events: events.rows.map(publicSummary).sort((a, b) => {
+        const order = { Live: 0, Future: 1, Passed: 2 };
+        return (order[a.event_status] ?? 9) - (order[b.event_status] ?? 9);
+      }),
+      team: team.rows,
+      streamers: await withLiveStatus(streamers.rows)
     });
   })
 );
 
-router.get("/status", (_req, res) => {
-  res.json({ status: getFiveMStatus(), settings: getSettings() });
-});
+router.get(
+  "/live",
+  asyncHandler(async (req, res) => {
+    const settings = await getSettings();
+    if (!settings.livePageEnabled) return res.status(404).json({ error: "live_page_disabled" });
+    const { q = "", platform = "" } = req.query;
+    const { rows } = await listResource("streamers", { q, limit: 100, publicOnly: true });
+    let streamers = await withLiveStatus(rows);
+    if (platform) {
+      streamers = streamers.filter((streamer) => {
+        const selected = String(platform).toLowerCase();
+        return (
+          (selected === "twitch" && streamer.twitch_username) ||
+          (selected === "kick" && streamer.kick_username)
+        );
+      });
+    }
+    if (!settings.showOfflineStreamers) streamers = streamers.filter((streamer) => streamer.is_live);
+    streamers = streamers.sort(
+      (a, b) =>
+        Number(b.is_live) - Number(a.is_live) ||
+        Number(b.is_featured) - Number(a.is_featured) ||
+        Number(a.sort_order || 9999) - Number(b.sort_order || 9999)
+    );
+    res.json({
+      streamers,
+      totalLiveChannels: streamers.filter((streamer) => streamer.is_live).length,
+      totalLiveViewers: streamers.reduce((sum, streamer) => sum + Number(streamer.viewer_count || 0), 0),
+      settings
+    });
+  })
+);
 
 router.get(
   "/streamers",
   asyncHandler(async (req, res) => {
-    const settings = getSettings();
-    if (!settings.streamerPageEnabled) return res.status(404).json({ error: "streamer_page_disabled" });
-    const { q = "", platform = "", category = "" } = req.query;
-    const { rows, total } = await listPublicResource("streamers", { q, limit: 100, publicOnly: true });
+    const { q = "", category = "" } = req.query;
+    const { rows, total } = await listResource("streamers", { q, limit: 100, publicOnly: true });
     let streamers = await withLiveStatus(rows);
-    streamers = streamers.filter((streamer) => {
-      if (!settings.showOfflineStreamers && !streamer.is_live) return false;
-      if (platform && String(streamer.main_platform || "").toLowerCase() !== String(platform).toLowerCase()) return false;
-      if (category && String(streamer.category || "").toLowerCase() !== String(category).toLowerCase()) return false;
-      return true;
-    });
-    streamers = streamers.sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || Number(b.is_live) - Number(a.is_live) || Number(a.sort_order || 9999) - Number(b.sort_order || 9999));
-    res.json({ streamers, total, settings });
+    if (category) streamers = streamers.filter((streamer) => String(streamer.category || "").toLowerCase() === String(category).toLowerCase());
+    res.json({ streamers, total });
   })
 );
 
@@ -109,37 +109,75 @@ router.get(
   "/streamers/:id",
   asyncHandler(async (req, res) => {
     const streamer = await getResource("streamers", req.params.id);
-    const fallbackStreamer = findSeedRow("streamers", req.params.id);
-    const row = streamer || fallbackStreamer;
-    if (!row || !row.is_approved || row.is_hidden) return res.status(404).json({ error: "streamer_not_found" });
-    const [withStatus] = await withLiveStatus([row]);
+    if (!streamer || streamer.is_hidden || !streamer.is_approved) return res.status(404).json({ error: "streamer_not_found" });
+    const [withStatus] = await withLiveStatus([streamer]);
     res.json({ streamer: withStatus });
   })
 );
 
 router.get(
-  "/:resource",
+  "/faq",
+  asyncHandler(async (_req, res) => {
+    const [categories, items] = await Promise.all([
+      listResource("faqCategories", { limit: 100, publicOnly: true }),
+      listResource("faqItems", { limit: 200, publicOnly: true })
+    ]);
+    res.json({ categories: categories.rows, items: items.rows });
+  })
+);
+
+router.get(
+  "/terms",
+  asyncHandler(async (_req, res) => {
+    const { rows } = await listResource("terms", { limit: 10, publicOnly: true });
+    const terms = rows.sort((a, b) => String(b.effective_date || "").localeCompare(String(a.effective_date || "")))[0] || null;
+    res.json({ terms });
+  })
+);
+
+router.get(
+  "/careers/:id",
   asyncHandler(async (req, res) => {
-    const config = RESOURCE_MAP[req.params.resource];
+    const job = await getResource("careerJobs", req.params.id);
+    if (!job || job.deleted_at || job.is_visible === false || job.is_visible === 0) return res.status(404).json({ error: "career_not_found" });
+    const [sections, questions] = await Promise.all([
+      listResource("careerSections", { q: req.params.id, limit: 100 }),
+      listResource("careerQuestions", { q: req.params.id, limit: 200 })
+    ]);
+    res.json({
+      job,
+      sections: sections.rows.filter((section) => section.job_id === req.params.id && section.is_visible !== false && section.is_visible !== 0),
+      questions: questions.rows.filter((question) => question.job_id === req.params.id && question.is_visible !== false && question.is_visible !== 0)
+    });
+  })
+);
+
+router.get(
+  "/:collection",
+  asyncHandler(async (req, res) => {
+    const resourceKey = PUBLIC_COLLECTIONS[req.params.collection];
+    const config = resourceKey ? RESOURCE_MAP[resourceKey] : null;
     if (!config?.public) return res.status(404).json({ error: "public_resource_not_found" });
-    const { rows, total, seeded } = await listPublicResource(req.params.resource, {
+    const result = await listResource(resourceKey, {
       q: req.query.q || "",
       limit: req.query.limit || 24,
       offset: req.query.offset || 0,
       publicOnly: true
     });
-    res.json({ rows, total, label: config.label, seeded: Boolean(seeded) });
+    const rows = resourceKey === "events" ? result.rows.map(publicSummary) : result.rows;
+    res.json({ rows, total: result.total, label: config.label, resourceKey });
   })
 );
 
 router.get(
-  "/:resource/:id",
+  "/:collection/:id",
   asyncHandler(async (req, res) => {
-    const config = RESOURCE_MAP[req.params.resource];
+    const resourceKey = PUBLIC_COLLECTIONS[req.params.collection];
+    const config = resourceKey ? RESOURCE_MAP[resourceKey] : null;
     if (!config?.public) return res.status(404).json({ error: "public_resource_not_found" });
-    const row = (await getResource(req.params.resource, req.params.id)) || findSeedRow(req.params.resource, req.params.id);
-    if (!row || row.deleted_at || row.is_hidden) return res.status(404).json({ error: "not_found" });
-    res.json({ row, label: config.label });
+    const row = await getResource(resourceKey, req.params.id);
+    if (!row || row.deleted_at || row.is_hidden || row.is_visible === false || row.is_visible === 0) return res.status(404).json({ error: "not_found" });
+    res.json({ row: resourceKey === "events" ? publicSummary(row) : row, label: config.label, resourceKey });
   })
 );
 

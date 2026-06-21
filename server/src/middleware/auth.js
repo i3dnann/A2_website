@@ -33,6 +33,10 @@ export function requireAuth(req, res, next) {
 export function requirePermission(permission) {
   return (req, res, next) => {
     const permissions = req.user?.permissions || [];
+    const isAdminPermission = permission !== "view_player_portal";
+    if (isAdminPermission && ["frozen", "disabled"].includes(req.user?.admin_status)) {
+      return res.status(403).json({ error: "admin_account_frozen_or_disabled" });
+    }
     if (permissions.includes("master_access") || permissions.includes(permission)) return next();
     return res.status(403).json({ error: "missing_permission", permission });
   };

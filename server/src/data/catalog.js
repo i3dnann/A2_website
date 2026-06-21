@@ -5,297 +5,110 @@ export const DEFAULT_SETTINGS = {
   primaryColor: "#b7fe1a",
   backgroundColor: "#000000",
   textColor: "#ffffff",
-  secondaryDark: "#111111",
+  secondaryColor: "#111111",
+  cardBackground: "#141414",
   borderColor: "#242424",
+  mutedTextColor: "#b8b8b8",
   dangerColor: "#ff3333",
   warningColor: "#ffaa00",
   successColor: "#35ff6b",
-  heroBackgroundUrl: "",
-  homepageDescription: "A premium FiveM QBCore roleplay city platform for players, staff, police, EMS, court, businesses, gangs, and creators.",
-  discordInviteUrl: "https://discord.gg/change-me",
-  fivemConnectUrl: "fivem://connect/your-server-ip",
   maintenanceMode: false,
   performanceMode: false,
-  defaultLanguage: "en",
-  termsVersion: "1.0.0",
-  termsText: "Respect the city, the staff, and the roleplay. Custom terms can be edited in the admin settings panel.",
-  rulesText: "Use common sense, stay in character, avoid toxicity, and follow all city laws and staff instructions.",
-  streamerPageEnabled: true,
-  streamerStatusCheckIntervalSeconds: 90,
+  navLinks: [
+    { label: "Home", url: "/" },
+    { label: "Roster", url: "/roster" },
+    { label: "Live", url: "/live" },
+    { label: "Team", url: "/team" },
+    { label: "Careers", url: "/careers" },
+    { label: "News", url: "/news" },
+    { label: "Map", url: "/map" },
+    { label: "FAQ", url: "/faq" }
+  ],
+  heroTitle: "A2 Studio Roleplay",
+  heroSubtitle: "Premium FiveM community",
+  heroDescription:
+    "A serious, story-driven QBCore roleplay community with creator rosters, live streams, events, support, careers, and player account tools.",
+  heroBackgroundImage: "",
+  heroBackgroundVideo: "",
+  heroOverlayOpacity: 78,
+  heroPrimaryButtonText: "Join Discord",
+  heroPrimaryButtonLink: "https://discord.gg/change-me",
+  heroSecondaryButtonText: "Connect to FiveM",
+  heroSecondaryButtonLink: "fivem://connect/127.0.0.1",
+  storeButtonText: "Store",
+  storeButtonLink: "",
+  partnersEnabled: true,
+  partnerAnimationSpeed: 32,
+  partnerDirection: "left",
+  partnerGrayscale: true,
+  partnerPauseOnHover: true,
+  livePageEnabled: true,
   showOfflineStreamers: true,
-  showStreamerViewerCount: true,
-  showStreamThumbnails: true,
-  featuredStreamersLimit: 6,
-  liveStreamersLimit: 12,
-  webhookStreamerGoLive: false,
-  webhookStreamerGoOffline: false
+  showViewerCount: true,
+  showThumbnails: true,
+  liveStatusCheckIntervalSeconds: 90,
+  featuredLiveLimit: 6,
+  webhookStreamerGoLive: true,
+  webhookStreamerGoOffline: true,
+  termsVersion: "1.0.0"
 };
 
-const commonFields = [
-  "title",
-  "name",
-  "subtitle",
-  "description",
-  "content",
-  "category",
-  "status",
-  "image_url",
-  "banner_url",
-  "citizenid",
-  "discord_id",
-  "character_name",
-  "assigned_to",
-  "priority",
-  "visibility",
-  "starts_at",
-  "ends_at",
-  "metadata_json"
-];
+const timestamps = ["created_at", "updated_at", "created_by", "updated_by", "deleted_at"];
+const common = ["title", "subtitle", "name", "description", "content", "image_url", "banner_url", "category", "status", "sort_order", "is_visible", "metadata_json"];
 
 export const RESOURCE_DEFINITIONS = [
   {
-    key: "news",
-    table: "news_articles",
-    label: "News Articles",
+    key: "partners",
+    table: "partners",
+    label: "Partners",
     public: true,
-    permission: "create_news",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["title", "subtitle", "category", "content"],
-    fields: [...commonFields, "author_name", "language", "tags", "is_featured", "publish_at"]
+    permission: "manage_partners",
+    searchFields: ["partner_name", "website_url"],
+    fields: ["partner_name", "logo_url", "website_url", "sort_order", "is_visible"]
   },
   {
-    key: "events",
-    table: "events",
-    label: "Events",
+    key: "journey",
+    table: "journey_items",
+    label: "Journey Timeline",
     public: true,
-    permission: "manage_events",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["title", "category", "location"],
-    fields: [...commonFields, "location", "requirements", "max_participants", "reward", "host"]
+    permission: "manage_journey",
+    searchFields: ["title", "description", "status"],
+    fields: ["title", "description", "journey_date", "journey_time", "image_url", "icon", "status", "sort_order", "is_visible"]
   },
   {
-    key: "businesses",
-    table: "businesses",
-    label: "Businesses",
+    key: "famous",
+    table: "famous_characters",
+    label: "Famous Characters",
     public: true,
-    permission: "manage_business",
-    webhook: "WEBHOOK_BUSINESS",
-    searchFields: ["name", "business_type", "owner_name", "description"],
-    fields: [...commonFields, "business_type", "owner_name", "opening_hours", "location", "weekly_rating", "is_approved"]
-  },
-  {
-    key: "mapMarkers",
-    table: "map_markers",
-    label: "Map Markers",
-    public: true,
-    permission: "manage_map",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["name", "marker_type", "description"],
-    fields: [...commonFields, "marker_type", "x", "y", "z", "icon", "color"]
-  },
-  {
-    key: "jobPages",
-    table: "job_pages",
-    label: "Jobs",
-    public: true,
-    permission: "manage_jobs",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["name", "description", "requirements"],
-    fields: [...commonFields, "requirements", "how_to_apply", "vehicles", "uniforms", "bosses"]
-  },
-  {
-    key: "characterProfiles",
-    table: "character_profiles",
-    label: "Character Profiles",
-    public: true,
-    permission: "view_player_portal",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["character_name", "citizenid", "backstory"],
-    fields: [...commonFields, "age", "backstory", "personality", "job", "gang", "profile_image_url", "privacy"]
-  },
-  {
-    key: "tickets",
-    table: "tickets",
-    label: "Tickets",
-    public: false,
-    permission: "review_tickets",
-    webhook: "WEBHOOK_TICKETS",
-    searchFields: ["title", "ticket_type", "discord_id", "citizenid"],
-    fields: [...commonFields, "ticket_type", "created_by_user_id", "compensation_status"]
-  },
-  {
-    key: "whitelistApplications",
-    table: "whitelist_applications",
-    label: "Whitelist Applications",
-    public: false,
-    permission: "review_whitelist",
-    webhook: "WEBHOOK_WHITELIST",
-    searchFields: ["discord_id", "discord_username", "character_name", "status"],
-    fields: [...commonFields, "discord_username", "age_confirmed", "rules_agreed", "terms_agreed", "language", "review_reason"]
-  },
-  {
-    key: "banAppeals",
-    table: "ban_appeals",
-    label: "Ban Appeals",
-    public: false,
-    permission: "review_ban_appeals",
-    webhook: "WEBHOOK_BAN_APPEALS",
-    searchFields: ["ban_id", "discord_id", "citizenid", "status"],
-    fields: [...commonFields, "ban_id", "ban_reason", "player_explanation", "decision_reason"]
-  },
-  {
-    key: "policeReports",
-    table: "police_reports",
-    label: "Police Reports",
-    public: false,
-    permission: "edit_police_records",
-    webhook: "WEBHOOK_POLICE",
-    searchFields: ["case_number", "citizenid", "title", "officer_name"],
-    fields: [...commonFields, "case_number", "officer_name", "danger_level", "fine_amount", "jail_time"]
-  },
-  {
-    key: "policeWarrants",
-    table: "police_warrants",
-    label: "Warrants",
-    public: false,
-    permission: "edit_police_records",
-    webhook: "WEBHOOK_POLICE",
-    searchFields: ["citizenid", "character_name", "reason", "assigned_officer"],
-    fields: [...commonFields, "reason", "danger_level", "assigned_officer", "expires_at"]
-  },
-  {
-    key: "policeFines",
-    table: "police_fines",
-    label: "Fines",
-    public: false,
-    permission: "edit_police_records",
-    webhook: "WEBHOOK_POLICE",
-    searchFields: ["citizenid", "character_name", "officer_name"],
-    fields: [...commonFields, "officer_name", "amount", "reason"]
-  },
-  {
-    key: "emsRecords",
-    table: "ems_records",
-    label: "Medical Records",
-    public: false,
-    permission: "edit_medical_records",
-    webhook: "WEBHOOK_EMS",
-    searchFields: ["citizenid", "patient_name", "assigned_doctor"],
-    fields: [...commonFields, "patient_name", "blood_type", "known_injuries", "assigned_doctor"]
-  },
-  {
-    key: "courtCases",
-    table: "court_cases",
-    label: "Court Cases",
-    public: false,
-    permission: "manage_court_cases",
-    webhook: "WEBHOOK_COURT",
-    searchFields: ["case_number", "defendant", "plaintiff", "judge_name"],
-    fields: [...commonFields, "case_number", "defendant", "plaintiff", "judge_name", "lawyer_name", "fine_amount", "jail_time"]
-  },
-  {
-    key: "businessApplications",
-    table: "business_applications",
-    label: "Business Applications",
-    public: false,
-    permission: "manage_business",
-    webhook: "WEBHOOK_BUSINESS",
-    searchFields: ["business_name", "discord_id", "status"],
-    fields: [...commonFields, "business_name", "business_type", "applicant_name"]
-  },
-  {
-    key: "gangs",
-    table: "gangs",
-    label: "Gangs",
-    public: true,
-    permission: "manage_gang",
-    webhook: "WEBHOOK_GANG",
-    searchFields: ["name", "leader_name", "territory"],
-    fields: [...commonFields, "leader_name", "territory", "reputation", "color", "war_status", "is_public"]
-  },
-  {
-    key: "gangTerritories",
-    table: "gang_territories",
-    label: "Territories",
-    public: false,
-    permission: "manage_gang",
-    webhook: "WEBHOOK_GANG",
-    searchFields: ["name", "controlled_by", "danger_level"],
-    fields: [...commonFields, "controlled_by", "conflict_level", "danger_level", "fear_level"]
-  },
-  {
-    key: "shopProducts",
-    table: "shop_products",
-    label: "Cosmetic Shop",
-    public: true,
-    permission: "manage_shop",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["name", "category", "description"],
-    fields: [...commonFields, "price", "availability", "requires_approval"]
-  },
-  {
-    key: "shopOrders",
-    table: "shop_orders",
-    label: "Shop Orders",
-    public: false,
-    permission: "manage_shop",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["discord_id", "citizenid", "status"],
-    fields: [...commonFields, "product_id", "price", "delivery_note"]
-  },
-  {
-    key: "cityArchive",
-    table: "city_archive",
-    label: "City Archive",
-    public: true,
-    permission: "create_news",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["title", "week_number", "story_summary"],
-    fields: [...commonFields, "week_number", "month", "story_summary", "best_police", "best_ems", "best_business", "best_gang", "best_streamer"]
-  },
-  {
-    key: "storyCampaigns",
-    table: "story_campaigns",
-    label: "Story Campaigns",
-    public: true,
-    permission: "manage_story",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["name", "description", "status"],
-    fields: [...commonFields, "start_date", "end_date", "linked_event_id"]
-  },
-  {
-    key: "storyClues",
-    table: "story_clues",
-    label: "Story Clues",
-    public: true,
-    permission: "manage_story",
-    webhook: "WEBHOOK_ADMIN_LOGS",
-    searchFields: ["title", "campaign_id", "content"],
-    fields: [...commonFields, "campaign_id", "clue_type", "release_at", "encrypted_payload"]
+    permission: "manage_famous",
+    searchFields: ["character_name", "header", "role_name", "gang_business"],
+    fields: ["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "social_links_json", "is_featured", "sort_order", "is_visible"]
   },
   {
     key: "streamers",
     table: "streamers",
-    label: "Streamers",
+    label: "Streamer Roster",
     public: true,
-    permission: "manage_streamers",
-    webhook: "WEBHOOK_STREAMERS",
-    searchFields: ["display_name", "discord_id", "twitch_username", "kick_username", "category"],
+    permission: "manage_roster",
+    searchFields: ["display_name", "discord_id", "discord_username", "twitch_username", "kick_username", "category", "character_name"],
     fields: [
       "display_name",
-      "discord_id",
-      "discord_username",
+      "profile_image_url",
       "avatar_url",
       "banner_url",
       "bio",
-      "main_platform",
+      "discord_id",
+      "discord_username",
+      "steam_id",
+      "character_name",
+      "category",
       "twitch_username",
       "kick_username",
       "youtube_url",
       "tiktok_url",
+      "instagram_url",
+      "x_url",
       "discord_url",
-      "character_name",
-      "category",
       "is_featured",
       "is_approved",
       "is_hidden",
@@ -303,274 +116,313 @@ export const RESOURCE_DEFINITIONS = [
     ]
   },
   {
+    key: "team",
+    table: "team_members",
+    label: "Team Members",
+    public: true,
+    permission: "manage_team",
+    searchFields: ["name", "role_title", "category", "bio"],
+    fields: ["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "youtube_url", "tiktok_url", "instagram_url", "x_url", "sort_order", "is_visible"]
+  },
+  {
+    key: "careerJobs",
+    table: "career_jobs",
+    label: "Career Jobs",
+    public: true,
+    permission: "manage_careers",
+    searchFields: ["title", "department", "description", "requirements"],
+    fields: ["title", "description", "department", "image_url", "is_open", "start_date", "end_date", "requirements", "sort_order", "is_visible"]
+  },
+  {
+    key: "careerSections",
+    table: "career_sections",
+    label: "Career Sections",
+    public: false,
+    permission: "manage_careers",
+    searchFields: ["title", "job_id"],
+    fields: ["job_id", "title", "description", "sort_order", "is_visible"]
+  },
+  {
+    key: "careerQuestions",
+    table: "career_questions",
+    label: "Career Questions",
+    public: false,
+    permission: "manage_careers",
+    searchFields: ["question", "job_id", "section_id"],
+    fields: ["job_id", "section_id", "question", "help_text", "question_type", "options_json", "is_required", "sort_order", "is_visible"]
+  },
+  {
+    key: "careerApplications",
+    table: "career_applications",
+    label: "Career Applications",
+    public: false,
+    permission: "review_career_applications",
+    searchFields: ["job_id", "user_id", "status"],
+    fields: ["job_id", "user_id", "discord_id", "steam_id", "citizenid", "status", "reviewed_by", "reviewed_at", "internal_notes", "sort_order"]
+  },
+  {
+    key: "careerAnswers",
+    table: "career_answers",
+    label: "Career Answers",
+    public: false,
+    permission: "review_career_applications",
+    searchFields: ["application_id", "question_id", "answer_text"],
+    fields: ["application_id", "section_id", "question_id", "question_snapshot", "answer_text", "file_url"]
+  },
+  {
+    key: "careerApplicationNotes",
+    table: "career_application_notes",
+    label: "Career Notes",
+    public: false,
+    permission: "review_career_applications",
+    searchFields: ["application_id", "note"],
+    fields: ["application_id", "admin_id", "note", "is_internal"]
+  },
+  {
+    key: "tickets",
+    table: "tickets",
+    label: "Tickets",
+    public: false,
+    permission: "manage_tickets",
+    searchFields: ["ticket_number", "subject", "category", "status", "user_id", "discord_id", "steam_id"],
+    fields: ["ticket_number", "user_id", "category", "subject", "message_preview", "status", "priority", "assigned_to", "closed_by", "closed_at", "discord_id", "steam_id", "citizenid", "sort_order"]
+  },
+  {
+    key: "ticketMessages",
+    table: "ticket_messages",
+    label: "Ticket Messages",
+    public: false,
+    permission: "manage_tickets",
+    searchFields: ["ticket_id", "message"],
+    fields: ["ticket_id", "author_id", "author_type", "message", "internal_only"]
+  },
+  {
+    key: "ticketAttachments",
+    table: "ticket_attachments",
+    label: "Ticket Attachments",
+    public: false,
+    permission: "manage_tickets",
+    searchFields: ["ticket_id", "file_url", "original_name"],
+    fields: ["ticket_id", "message_id", "file_url", "original_name", "mime_type", "size_bytes"]
+  },
+  {
+    key: "ticketNotes",
+    table: "ticket_notes",
+    label: "Ticket Notes",
+    public: false,
+    permission: "manage_tickets",
+    searchFields: ["ticket_id", "note"],
+    fields: ["ticket_id", "admin_id", "note"]
+  },
+  {
+    key: "news",
+    table: "news_articles",
+    label: "News",
+    public: true,
+    permission: "manage_news",
+    searchFields: ["title", "subtitle", "content", "category", "author_name"],
+    fields: ["title", "subtitle", "content", "image_url", "category", "author_name", "published_at", "status", "is_featured", "sort_order"]
+  },
+  {
+    key: "newsCategories",
+    table: "news_categories",
+    label: "News Categories",
+    public: false,
+    permission: "manage_news",
+    searchFields: ["name", "slug"],
+    fields: ["name", "slug", "description", "sort_order", "is_visible"]
+  },
+  {
+    key: "mapZones",
+    table: "map_zones",
+    label: "Map Zones",
+    public: true,
+    permission: "manage_map",
+    searchFields: ["zone_name", "zone_type", "description"],
+    fields: ["zone_name", "zone_type", "description", "image_url", "position_x", "position_y", "fivem_x", "fivem_y", "fivem_z", "radius", "color", "icon", "sort_order", "is_visible"]
+  },
+  {
+    key: "faqCategories",
+    table: "faq_categories",
+    label: "FAQ Categories",
+    public: true,
+    permission: "manage_faq",
+    searchFields: ["name"],
+    fields: ["name", "description", "sort_order", "is_visible"]
+  },
+  {
+    key: "faqItems",
+    table: "faq_items",
+    label: "FAQ Items",
+    public: true,
+    permission: "manage_faq",
+    searchFields: ["question", "answer", "category_id"],
+    fields: ["category_id", "question", "answer", "sort_order", "is_visible"]
+  },
+  {
+    key: "terms",
+    table: "terms_pages",
+    label: "Terms",
+    public: true,
+    permission: "manage_terms",
+    searchFields: ["title", "version", "content"],
+    fields: ["title", "content", "version", "effective_date", "is_visible", "sort_order"]
+  },
+  {
+    key: "events",
+    table: "events",
+    label: "Events",
+    public: true,
+    permission: "manage_events",
+    searchFields: ["title", "description", "location", "category", "status_override"],
+    fields: ["title", "description", "image_url", "location", "starts_at", "ends_at", "status_override", "category", "sort_order", "is_visible"]
+  },
+  {
+    key: "files",
+    table: "web_files",
+    label: "Files",
+    public: false,
+    permission: "manage_files",
+    searchFields: ["original_name", "mime_type", "url"],
+    fields: ["owner_user_id", "original_name", "stored_name", "mime_type", "size_bytes", "url", "storage_driver", "metadata_json"]
+  },
+  {
     key: "auditLogs",
     table: "web_audit_logs",
     label: "Audit Logs",
     public: false,
     permission: "view_audit_logs",
-    webhook: "WEBHOOK_SECURITY_LOGS",
-    searchFields: ["action", "target_type", "reason", "staff_name"],
-    fields: [...commonFields, "action", "staff_id", "staff_name", "target_type", "target_id", "reason", "ip", "before_json", "after_json"]
+    searchFields: ["action", "target_type", "target_id", "staff_name", "reason"],
+    fields: ["action", "staff_id", "staff_name", "target_type", "target_id", "reason", "ip", "before_json", "after_json", "status"]
+  },
+  {
+    key: "adminInvites",
+    table: "admin_invites",
+    label: "Admin Invites",
+    public: false,
+    permission: "manage_admins",
+    searchFields: ["email", "discord_id", "steam_id", "status"],
+    fields: ["email", "discord_id", "steam_id", "role_name", "permissions_json", "token_hash", "expires_at", "status"]
   }
 ];
 
-const DB_FIELD_OVERRIDES = {
-  news: ["title", "subtitle", "image_url", "content", "category", "author_name", "language", "tags", "is_featured", "status", "publish_at", "metadata_json", "sort_order"],
-  events: ["title", "description", "image_url", "category", "starts_at", "ends_at", "location", "requirements", "max_participants", "reward", "host", "status", "metadata_json", "sort_order"],
-  businesses: ["name", "business_type", "logo_url", "banner_url", "description", "owner_id", "owner_name", "opening_hours", "location", "weekly_rating", "revenue_stats_json", "is_approved", "status", "metadata_json", "sort_order"],
-  mapMarkers: ["name", "marker_type", "description", "x", "y", "z", "icon", "color", "image_url", "visibility", "status", "metadata_json", "sort_order"],
-  jobPages: ["name", "description", "requirements", "how_to_apply", "vehicles", "uniforms", "rules", "bosses", "employees_public", "status", "metadata_json", "sort_order"],
-  characterProfiles: ["user_id", "citizenid", "character_name", "age", "backstory", "personality", "job", "gang", "profile_image_url", "privacy", "status", "metadata_json", "sort_order"],
-  tickets: ["title", "ticket_type", "description", "discord_id", "citizenid", "status", "priority", "assigned_to", "compensation_status", "metadata_json", "sort_order"],
-  whitelistApplications: ["discord_id", "discord_username", "character_name", "age_confirmed", "rules_agreed", "terms_agreed", "language", "backstory", "roleplay_experience", "status", "review_reason", "metadata_json", "sort_order"],
-  banAppeals: ["ban_id", "discord_id", "citizenid", "ban_reason", "player_explanation", "why_unban", "evidence_url", "status", "decision_reason", "metadata_json", "sort_order"],
-  policeReports: ["case_number", "title", "description", "citizenid", "character_name", "officer_name", "category", "status", "danger_level", "fine_amount", "jail_time", "metadata_json", "sort_order"],
-  policeWarrants: ["citizenid", "character_name", "reason", "danger_level", "assigned_officer", "status", "expires_at", "metadata_json", "sort_order"],
-  policeFines: ["citizenid", "character_name", "officer_name", "reason", "amount", "status", "metadata_json", "sort_order"],
-  emsRecords: ["patient_name", "citizenid", "blood_type", "known_injuries", "medical_history", "medication_notes", "treatment_notes", "assigned_doctor", "status", "metadata_json", "sort_order"],
-  courtCases: ["case_number", "title", "description", "defendant", "plaintiff", "judge_name", "lawyer_name", "status", "fine_amount", "jail_time", "appeal_status", "evidence_json", "metadata_json", "sort_order"],
-  businessApplications: ["business_name", "business_type", "applicant_name", "discord_id", "description", "status", "metadata_json", "sort_order"],
-  gangs: ["name", "logo_url", "color", "leader_name", "territory", "reputation", "public_description", "description", "allies_json", "enemies_json", "war_status", "warnings_json", "admin_notes", "is_public", "status", "metadata_json", "sort_order"],
-  gangTerritories: ["name", "controlled_by", "conflict_level", "danger_level", "fear_level", "last_conflict_at", "metadata_json", "sort_order"],
-  shopProducts: ["name", "description", "image_url", "price", "category", "availability", "requires_approval", "status", "metadata_json", "sort_order"],
-  shopOrders: ["product_id", "user_id", "discord_id", "citizenid", "price", "status", "delivery_note", "metadata_json", "sort_order"],
-  cityArchive: ["title", "week_number", "month", "major_events", "biggest_crime", "biggest_court_case", "best_police", "best_ems", "best_business", "best_gang", "best_streamer", "most_watched_streamer", "most_wanted", "deaths", "server_changes", "screenshots_json", "video_links_json", "story_summary", "status", "metadata_json", "sort_order"],
-  storyCampaigns: ["name", "title", "description", "status", "start_date", "end_date", "visibility", "linked_event_id", "linked_map_markers_json", "metadata_json", "sort_order"],
-  storyClues: ["campaign_id", "title", "content", "clue_type", "encrypted_payload", "release_at", "visibility", "status", "metadata_json", "sort_order"],
-  streamers: ["display_name", "discord_id", "discord_username", "avatar_url", "banner_url", "bio", "main_platform", "twitch_username", "kick_username", "youtube_url", "tiktok_url", "discord_url", "character_name", "category", "is_featured", "is_approved", "is_hidden", "sort_order"],
-  auditLogs: ["action", "staff_id", "staff_name", "target_type", "target_id", "reason", "ip", "before_json", "after_json", "status", "sort_order"]
-};
-
 RESOURCE_DEFINITIONS.forEach((resource) => {
-  resource.dbFields = DB_FIELD_OVERRIDES[resource.key] || resource.fields;
+  resource.dbFields = [...new Set([...resource.fields, ...common, ...timestamps])];
 });
 
 export const RESOURCE_MAP = Object.fromEntries(RESOURCE_DEFINITIONS.map((resource) => [resource.key, resource]));
 
+export const PUBLIC_COLLECTIONS = {
+  news: "news",
+  events: "events",
+  journey: "journey",
+  famous: "famous",
+  team: "team",
+  careers: "careerJobs",
+  map: "mapZones"
+};
+
 export const SEED_DATA = {
-  news: [
+  partners: [
+    { id: "partner-discord", partner_name: "A2 Discord", logo_url: "", website_url: "https://discord.gg/change-me", sort_order: 1, is_visible: true },
+    { id: "partner-rp", partner_name: "Roleplay Hub", logo_url: "", website_url: "#", sort_order: 2, is_visible: true },
+    { id: "partner-creators", partner_name: "Creator Network", logo_url: "", website_url: "#", sort_order: 3, is_visible: true }
+  ],
+  journey: [
+    { id: "journey-1", title: "City Concept", description: "The A2 Studio roleplay vision begins.", journey_date: "2026-06-01", journey_time: "18:00", status: "past", sort_order: 1, is_visible: true },
+    { id: "journey-2", title: "Community Beta", description: "Creators, staff, and early players shape the city.", journey_date: "2026-06-21", journey_time: "20:00", status: "current", sort_order: 2, is_visible: true },
+    { id: "journey-3", title: "Opening Week", description: "Public events, careers, and city stories go live.", journey_date: "2026-07-01", journey_time: "19:00", status: "future", sort_order: 3, is_visible: true }
+  ],
+  famous: [
     {
-      id: "news-1",
-      title: "A2 Studio City Hall Opens",
-      subtitle: "The new city control center is ready for roleplay stories.",
-      category: "Server updates",
-      status: "Published",
-      image_url: "",
-      content: "Welcome to the A2 Studio city platform. Staff can replace this article from the CMS.",
-      author_name: "City Desk",
-      language: "en",
-      tags: "launch,city",
+      id: "maya-knox",
+      character_name: "Maya Knox",
+      header: "The first face of A2 Studio",
+      picture_url: "",
+      bio: "A disciplined city operator with a reputation for keeping scenes alive.",
+      description: "Replace this seed character from the admin panel with famous roleplay characters from your city.",
+      role_name: "Police",
+      gang_business: "City Hall",
+      social_links_json: "{}",
       is_featured: true,
-      publish_at: new Date().toISOString()
+      sort_order: 1,
+      is_visible: true
     }
   ],
-  events: [
-    {
-      id: "event-1",
-      title: "Opening Night Patrol",
-      category: "Community meeting",
-      status: "Published",
-      location: "Legion Square",
-      starts_at: new Date(Date.now() + 86400000).toISOString(),
-      ends_at: new Date(Date.now() + 90000000).toISOString(),
-      description: "A public meetup for citizens, staff, police, EMS, businesses, and creators."
-    }
-  ],
-  businesses: [
-    {
-      id: "business-1",
-      name: "A2 Customs",
-      business_type: "Mechanic",
-      owner_name: "Unassigned",
-      description: "A featured city business ready to be claimed by an owner.",
-      opening_hours: "18:00-23:00",
-      weekly_rating: 4.8,
-      status: "Approved",
-      is_approved: true
-    }
-  ],
-  mapMarkers: [
-    {
-      id: "marker-1",
-      name: "Police Department",
-      marker_type: "Police station",
-      description: "Public safety headquarters.",
-      x: 428.2,
-      y: -984.4,
-      z: 30.7,
-      icon: "shield",
-      color: "#35a7ff",
-      visibility: "Public"
-    }
-  ],
-  jobPages: [
-    {
-      id: "job-1",
-      name: "Police",
-      description: "Protect the city with investigation, patrol, and command roles.",
-      requirements: "Whitelist, interview, and clean disciplinary record.",
-      how_to_apply: "Apply through the player portal.",
-      status: "Published"
-    },
-    {
-      id: "job-2",
-      name: "EMS",
-      description: "Respond to emergencies, hospital roleplay, and medical cases.",
-      requirements: "Whitelist, training, and interview.",
-      how_to_apply: "Apply through the player portal.",
-      status: "Published"
-    }
-  ],
-  characterProfiles: [
-    {
-      id: "char-1",
-      character_name: "Maya Knox",
-      citizenid: "A2DEMO1",
-      age: 28,
-      job: "Police",
-      gang: "None",
-      privacy: "Public",
-      backstory: "A featured demo character. Players can replace this from their portal.",
-      status: "Published"
-    }
-  ],
-  tickets: [
-    {
-      id: "ticket-1",
-      title: "Lost item example",
-      ticket_type: "Lost items",
-      status: "Open",
-      priority: "Normal",
-      description: "A safe development ticket example.",
-      discord_id: "000000000000000000"
-    }
-  ],
-  whitelistApplications: [
-    {
-      id: "wl-1",
-      discord_id: "000000000000000000",
-      discord_username: "demo_player",
-      character_name: "Maya Knox",
-      status: "Submitted",
-      age_confirmed: true,
-      rules_agreed: true,
-      terms_agreed: true,
-      language: "en"
-    }
-  ],
-  banAppeals: [
-    {
-      id: "appeal-1",
-      ban_id: "DEMO-BAN",
-      discord_id: "000000000000000000",
-      citizenid: "A2DEMO1",
-      status: "Under review",
-      ban_reason: "Development sample",
-      player_explanation: "This row is safe seed data."
-    }
-  ],
-  policeReports: [
-    {
-      id: "police-1",
-      case_number: "A2-PD-0001",
-      title: "Traffic stop report",
-      officer_name: "Officer Demo",
-      citizenid: "A2DEMO1",
-      status: "Open",
-      danger_level: "Low"
-    }
-  ],
-  policeWarrants: [],
-  policeFines: [],
-  emsRecords: [
-    {
-      id: "ems-1",
-      patient_name: "Maya Knox",
-      citizenid: "A2DEMO1",
-      blood_type: "O+",
-      known_injuries: "None",
-      assigned_doctor: "Dr. Demo",
-      status: "Active"
-    }
-  ],
-  courtCases: [
-    {
-      id: "court-1",
-      case_number: "A2-COURT-0001",
-      defendant: "Demo Defendant",
-      plaintiff: "City of A2",
-      judge_name: "Judge Demo",
-      status: "Open"
-    }
-  ],
-  businessApplications: [],
-  gangs: [
-    {
-      id: "gang-1",
-      name: "Northside Crew",
-      leader_name: "Unknown",
-      territory: "North LS",
-      reputation: 42,
-      is_public: true,
-      status: "Active",
-      description: "Public-safe demo gang profile."
-    }
-  ],
-  gangTerritories: [],
-  shopProducts: [
-    {
-      id: "shop-1",
-      name: "Custom Profile Frame",
-      category: "Website profile theme",
-      price: 10,
-      availability: "Available",
-      requires_approval: true,
-      description: "Cosmetic-only website profile styling."
-    }
-  ],
-  shopOrders: [],
-  cityArchive: [
-    {
-      id: "archive-1",
-      title: "Week 1 Archive",
-      week_number: 1,
-      month: "Launch",
-      story_summary: "A clean starting archive entry for the city history system.",
-      status: "Published"
-    }
-  ],
-  storyCampaigns: [
-    {
-      id: "story-1",
-      name: "Signal Zero",
-      title: "Signal Zero",
-      description: "A mysterious city campaign with editable chapters and clues.",
-      status: "Published"
-    }
-  ],
-  storyClues: [],
   streamers: [
     {
-      id: "streamer-1",
+      id: "a2-creator",
       display_name: "A2 Creator",
-      discord_id: "000000000000000000",
-      discord_username: "a2creator",
+      profile_image_url: "",
       avatar_url: "",
       banner_url: "",
-      bio: "Featured creator placeholder. Add real Twitch/Kick channels in the admin panel.",
-      main_platform: "Twitch",
+      bio: "Approved creator placeholder. Add Twitch or Kick channel names in admin to enable live checks.",
+      discord_id: "",
+      discord_username: "a2creator",
+      steam_id: "",
+      character_name: "Maya Knox",
+      category: "Civilian",
       twitch_username: "",
       kick_username: "",
       youtube_url: "",
       tiktok_url: "",
-      discord_url: "",
-      character_name: "Maya Knox",
-      category: "Civilian",
+      instagram_url: "",
+      x_url: "",
+      discord_url: "https://discord.gg/change-me",
       is_featured: true,
       is_approved: true,
       is_hidden: false,
       sort_order: 1
     }
   ],
-  auditLogs: []
+  team: [
+    { id: "team-owner", name: "A2 Owner", role_title: "Owner", category: "Owner", profile_image_url: "", bio: "Replace with the real owner profile.", sort_order: 1, is_visible: true },
+    { id: "team-dev", name: "A2 Developer", role_title: "Developer", category: "Developer", profile_image_url: "", bio: "Responsible for website and city systems.", sort_order: 2, is_visible: true },
+    { id: "team-support", name: "A2 Support", role_title: "Support Lead", category: "Support", profile_image_url: "", bio: "Keeps tickets and community help moving.", sort_order: 3, is_visible: true }
+  ],
+  careerJobs: [
+    { id: "career-police", title: "Police Department", department: "Law Enforcement", description: "Apply to patrol, investigate, and protect A2 Studio.", image_url: "", is_open: true, start_date: "2026-06-21", end_date: null, requirements: "Mature RP, clean record, microphone, interview.", sort_order: 1, is_visible: true },
+    { id: "career-ems", title: "EMS Department", department: "Medical", description: "Apply to become part of the emergency medical team.", image_url: "", is_open: true, start_date: "2026-06-21", end_date: null, requirements: "Calm communication, RP experience, training availability.", sort_order: 2, is_visible: true }
+  ],
+  careerSections: [
+    { id: "section-personal", job_id: "career-police", title: "Personal information", description: "Basic identity and contact details.", sort_order: 1, is_visible: true },
+    { id: "section-rp", job_id: "career-police", title: "Roleplay experience", description: "Tell us how you handle scenes.", sort_order: 2, is_visible: true }
+  ],
+  careerQuestions: [
+    { id: "question-age", job_id: "career-police", section_id: "section-personal", question: "What is your age?", help_text: "", question_type: "number", options_json: "[]", is_required: true, sort_order: 1, is_visible: true },
+    { id: "question-scenario", job_id: "career-police", section_id: "section-rp", question: "Describe how you would handle a tense traffic stop.", help_text: "", question_type: "long_text", options_json: "[]", is_required: true, sort_order: 2, is_visible: true }
+  ],
+  careerApplications: [],
+  careerAnswers: [],
+  careerApplicationNotes: [],
+  tickets: [],
+  ticketMessages: [],
+  ticketAttachments: [],
+  ticketNotes: [],
+  news: [
+    { id: "news-launch", title: "A2 Studio Website Launch", subtitle: "A new home for the community.", content: "Manage news from the admin panel and publish updates for your FiveM city.", image_url: "", category: "Community", author_name: "A2 Studio", published_at: new Date().toISOString(), status: "Published", is_featured: true, sort_order: 1 }
+  ],
+  newsCategories: [
+    { id: "news-cat-community", name: "Community", slug: "community", description: "Community updates.", sort_order: 1, is_visible: true }
+  ],
+  mapZones: [
+    { id: "zone-safe-legion", zone_name: "Legion Square", zone_type: "Safe zone", description: "Public meet-up and safe roleplay space.", image_url: "", position_x: 48, position_y: 52, fivem_x: 215.8, fivem_y: -810.1, fivem_z: 30.7, radius: 80, color: "#35ff6b", icon: "shield", sort_order: 1, is_visible: true },
+    { id: "zone-danger-docks", zone_name: "Docks", zone_type: "Dangerous zone", description: "High-risk industrial area.", image_url: "", position_x: 74, position_y: 68, fivem_x: 915.5, fivem_y: -2910.1, fivem_z: 5.9, radius: 140, color: "#ff3333", icon: "alert-triangle", sort_order: 2, is_visible: true }
+  ],
+  faqCategories: [
+    { id: "faq-general", name: "General", description: "Common community questions.", sort_order: 1, is_visible: true }
+  ],
+  faqItems: [
+    { id: "faq-steam", category_id: "faq-general", question: "Why do I need Steam linked?", answer: "Steam is used to safely match your website account with your own FiveM characters.", sort_order: 1, is_visible: true },
+    { id: "faq-livestream", category_id: "faq-general", question: "How do I appear on the roster?", answer: "Apply through staff or ask an admin to add and approve your creator profile.", sort_order: 2, is_visible: true }
+  ],
+  terms: [
+    { id: "terms-default", title: "A2 Studio Terms", content: "Respect staff, players, and roleplay. Full rules and legal terms can be edited from the admin panel.", version: "1.0.0", effective_date: "2026-06-21", is_visible: true, sort_order: 1 }
+  ],
+  events: [
+    { id: "event-opening", title: "Opening Night", description: "Community gathering, staff introductions, and city photos.", image_url: "", location: "Legion Square", starts_at: new Date(Date.now() + 86400000).toISOString(), ends_at: new Date(Date.now() + 93600000).toISOString(), status_override: "", category: "Community", sort_order: 1, is_visible: true }
+  ],
+  files: [],
+  auditLogs: [],
+  adminInvites: []
 };

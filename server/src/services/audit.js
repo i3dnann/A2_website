@@ -27,15 +27,15 @@ export async function auditAction({
   });
 
   await sendWebhook(webhookCategory, {
-    Action: action,
-    Staff: staff.username || staff.discord_username || staff.id,
+    title: `Admin action: ${action}`,
+    color: status === "success" ? 0xb7fe1a : 0xff3333,
+    Staff: staff.username || staff.email || staff.discord_username || staff.id,
     Target: `${targetType || "unknown"}:${targetId || ""}`,
     Reason: reason || "",
-    Time: new Date().toISOString(),
     IP: ip,
-    Before: before ? JSON.stringify(before).slice(0, 950) : "",
-    After: after ? JSON.stringify(after).slice(0, 950) : "",
-    Status: status
+    Status: status,
+    Before: before ? JSON.stringify(before).slice(0, 900) : "None",
+    After: after ? JSON.stringify(after).slice(0, 900) : "None"
   });
 
   return entry;

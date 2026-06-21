@@ -1,376 +1,430 @@
-import { useMemo, useState } from "react";
-import { Plus, RefreshCw, Save, Settings, ShieldAlert, Trash2, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
-import { staffResources } from "../data/modules.js";
 import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
-import { Card, StatCard } from "../components/Card.jsx";
-import { DataTable } from "../components/DataTable.jsx";
+import { Card } from "../components/Card.jsx";
 
-const streamerFields = ["display_name", "discord_id", "discord_username", "main_platform", "twitch_username", "kick_username", "youtube_url", "tiktok_url", "character_name", "category", "bio"];
+const sectionResources = {
+  partners: "partners",
+  journey: "journey",
+  famous: "famous",
+  roster: "streamers",
+  team: "team",
+  careers: "careerJobs",
+  tickets: "tickets",
+  news: "news",
+  map: "mapZones",
+  faq: "faqItems",
+  terms: "terms",
+  events: "events",
+  "audit-logs": "auditLogs"
+};
 
-export function StaffDashboard() {
-  const { data } = useApi(() => api.get("/api/admin/dashboard"), [], { cards: [], recentLogs: [] });
+const careerResources = ["careerJobs", "careerSections", "careerQuestions", "careerApplications", "careerAnswers"];
+const faqResources = ["faqCategories", "faqItems"];
+
+export function AdminWorkspace({ section = "dashboard", resourceOverride }) {
+  if (section === "dashboard") return <AdminDashboard />;
+  if (["settings", "home", "theme", "live"].includes(section)) return <SettingsEditor mode={section} />;
+  if (section === "users") return <UsersManager />;
+  if (section === "admins") return <AdminsManager />;
+  if (section === "permissions") return <PermissionsPage />;
+  if (section === "webhooks") return <WebhooksManager />;
+  if (section === "careers") return <ResourceTabs title="Careers" resources={careerResources} initial={resourceOverride || "careerJobs"} />;
+  if (section === "faq") return <ResourceTabs title="FAQ" resources={faqResources} initial="faqItems" />;
+  const resource = resourceOverride || sectionResources[section] || "partners";
+  return <ResourceManager resource={resource} title={labelFor(resource)} />;
+}
+
+function AdminDashboard() {
+  const { data, loading } = useApi(() => api.get("/api/admin/dashboard"), [], { cards: [], recentTickets: [], recentApplications: [], recentLogs: [] });
   return (
-    <WorkspaceHeader title="Staff Dashboard" description="Tickets, whitelist, appeals, streamers, logs, and website operations.">
+    <div className="grid gap-5">
+      <Header eyebrow="Admin panel" title="A2 Studio control center" />
       <div className="grid gap-4 md:grid-cols-4">
-        {(data?.cards || []).map((card) => <StatCard key={card.label} label={card.label} value={card.value} icon={Settings} />)}
+        {(loading ? Array.from({ length: 4 }) : data?.cards || []).map((card, index) => (
+          <Card key={card?.label || index}>
+            {loading ? <div className="h-20 rounded skeleton" /> : (
+              <>
+                <p className="text-sm text-white/50">{card.label}</p>
+                <p className="mt-2 text-3xl font-black">{card.value}</p>
+              </>
+            )}
+          </Card>
+        ))}
       </div>
-      <Card className="mt-5">
-        <h2 className="mb-4 text-xl font-black">Recent audit logs</h2>
-        <DataTable rows={data?.recentLogs || []} columns={[
-          { key: "action", label: "Action" },
-          { key: "staff_name", label: "Staff" },
-          { key: "target_type", label: "Target" },
-          { key: "created_at", label: "Time" }
-        ]} />
-      </Card>
-    </WorkspaceHeader>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <MiniList title="Recent tickets" rows={data?.recentTickets || []} />
+        <MiniList title="Recent applications" rows={data?.recentApplications || []} />
+      </div>
+    </div>
   );
 }
 
-export function StaffResourcePage({ resource }) {
-  const config = staffResources[resource] || staffResources.tickets;
-  const [q, setQ] = useState("");
-  const { data, loading, setData } = useApi(() => api.get(`/api/admin/${config.api}?q=${encodeURIComponent(q)}`), [config.api, q], { rows: [] });
-
-  const createQuick = async () => {
-    const row = await api.post(`/api/admin/${config.api}`, {
-      title: `New ${config.title}`,
-      name: `New ${config.title}`,
-      status: "Draft",
-      reason: "Created from admin workspace"
-    });
-    setData((current) => ({ ...current, rows: [row.row, ...(current?.rows || [])] }));
-  };
-
+function MiniList({ title, rows }) {
   return (
-    <WorkspaceHeader title={config.title} description={config.action}>
-      <div className="mb-4 flex flex-wrap gap-3">
-        <Button onClick={createQuick}><Plus size={16} /> New record</Button>
-        {resource === "streamers" && <Button variant="ghost" onClick={() => api.post("/api/admin/streamers/check", {})}><RefreshCw size={16} /> Refresh live status</Button>}
-      </div>
-      <DataTable rows={loading ? [] : data?.rows || []} search={q} onSearch={setQ} columns={[
-        { key: "title", label: "Name", render: (row) => row.title || row.name || row.display_name || row.character_name || row.ban_id || row.case_number || row.id },
-        { key: "category", label: "Category", render: (row) => row.category || row.ticket_type || row.business_type || row.main_platform },
-        { key: "status", label: "Status", status: true, render: (row) => row.status || (row.is_live ? "LIVE" : row.is_approved ? "Approved" : "Draft") },
-        { key: "updated_at", label: "Updated" }
-      ]} />
-    </WorkspaceHeader>
-  );
-}
-
-export function StreamerEditor({ mode = "create" }) {
-  const [form, setForm] = useState({ main_platform: "Twitch", category: "Civilian", is_approved: true, is_hidden: false, is_featured: false });
-  const [status, setStatus] = useState("");
-
-  const submit = async (event) => {
-    event.preventDefault();
-    setStatus("");
-    try {
-      await api.post("/api/admin/streamers", { ...form, reason: `${mode} streamer` });
-      setStatus("Streamer saved. It will appear publicly only when approved and not hidden.");
-    } catch (error) {
-      setStatus(error.message);
-    }
-  };
-
-  return (
-    <WorkspaceHeader title={mode === "create" ? "Create Streamer" : "Edit Streamer"} description="Manage streamer display name, channels, profile images, category, approval, featured status, and public visibility.">
-      <Card>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={submit}>
-          {streamerFields.map((field) => (
-            <label key={field} className="grid gap-2 text-sm font-bold text-white/70 md:col-span-1">
-              {field.replaceAll("_", " ")}
-              {field === "bio" ? (
-                <textarea className="form-input min-h-28" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
-              ) : (
-                <input className="form-input" value={form[field] || ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
-              )}
-            </label>
-          ))}
-          <div className="grid gap-3 md:col-span-2 md:grid-cols-3">
-            {["is_featured", "is_approved", "is_hidden"].map((field) => (
-              <label key={field} className="flex items-center gap-3 rounded-lg border border-a2-border p-3 text-sm text-white/62">
-                <input type="checkbox" checked={Boolean(form[field])} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.checked }))} />
-                {field.replaceAll("_", " ")}
-              </label>
-            ))}
+    <Card>
+      <h2 className="text-xl font-black">{title}</h2>
+      <div className="mt-4 grid gap-2">
+        {rows.map((row) => (
+          <div key={row.id} className="rounded-lg border border-a2-border bg-white/[0.03] p-3">
+            <p className="font-bold">{row.subject || row.title || row.job_id || row.action || row.id}</p>
+            <p className="text-xs text-white/45">{row.status || row.created_at}</p>
           </div>
-          <Button className="md:col-span-2"><Save size={16} /> Save streamer</Button>
-          {status && <p className="md:col-span-2 text-sm text-white/60">{status}</p>}
-        </form>
-      </Card>
-    </WorkspaceHeader>
+        ))}
+        {!rows.length && <p className="text-sm text-white/45">No rows yet.</p>}
+      </div>
+    </Card>
   );
 }
 
-export function SettingsPage() {
-  const { settings, setSettings } = useApp();
-  const [form, setForm] = useState(settings);
-  const [status, setStatus] = useState("");
+function ResourceTabs({ title, resources, initial }) {
+  const [active, setActive] = useState(initial);
+  return (
+    <div className="grid gap-5">
+      <Header eyebrow="CMS" title={title} />
+      <div className="flex flex-wrap gap-2">
+        {resources.map((resource) => (
+          <button key={resource} onClick={() => setActive(resource)} className={`rounded-lg px-3 py-2 text-sm font-bold ${active === resource ? "bg-a2-green text-black" : "border border-a2-border text-white/60"}`}>
+            {labelFor(resource)}
+          </button>
+        ))}
+      </div>
+      <ResourceManager resource={active} title={labelFor(active)} embedded />
+    </div>
+  );
+}
 
-  const fields = useMemo(() => [
-    "websiteName",
-    "logoUrl",
-    "faviconUrl",
-    "heroBackgroundUrl",
-    "homepageDescription",
-    "discordInviteUrl",
-    "fivemConnectUrl",
-    "primaryColor",
-    "backgroundColor",
-    "textColor",
-    "secondaryDark",
-    "borderColor",
-    "dangerColor",
-    "warningColor",
-    "successColor",
-    "termsText",
-    "rulesText",
-    "streamerStatusCheckIntervalSeconds",
-    "featuredStreamersLimit",
-    "liveStreamersLimit"
-  ], []);
+function ResourceManager({ resource, title, embedded = false }) {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [draft, setDraft] = useState({});
+  const [refresh, setRefresh] = useState(0);
+  const { data, loading, setData } = useApi(() => api.get(`/api/admin/${resource}?q=${encodeURIComponent(q)}`), [resource, q, refresh], { rows: [], config: null });
+  const rows = data?.rows || [];
+  const fields = data?.config?.fields || [];
+
+  useEffect(() => {
+    setSelected(null);
+    setDraft({});
+  }, [resource]);
+
+  const selectRow = (row) => {
+    setSelected(row);
+    setDraft(row || {});
+  };
 
   const save = async (event) => {
     event.preventDefault();
-    setStatus("");
-    try {
-      const data = await api.patch("/api/admin/settings", { ...form, reason: "Website settings updated from admin panel" });
-      setSettings(data.settings);
-      setStatus("Settings saved.");
-    } catch (error) {
-      setStatus(error.message);
-    }
+    const payload = normalizeDraft(draft, fields);
+    const response = selected?.id ? await api.patch(`/api/admin/${resource}/${selected.id}`, payload) : await api.post(`/api/admin/${resource}`, payload);
+    setSelected(response.row);
+    setDraft(response.row);
+    setRefresh((value) => value + 1);
+  };
+
+  const remove = async () => {
+    if (!selected?.id || !confirm(`Delete ${selected.id}?`)) return;
+    await api.delete(`/api/admin/${resource}/${selected.id}`, {});
+    setSelected(null);
+    setDraft({});
+    setRefresh((value) => value + 1);
   };
 
   return (
-    <WorkspaceHeader title="Website Settings" description="Control the global brand: name, logo, favicon, colors, backgrounds, Discord, FiveM link, rules, terms, streamers, and performance settings.">
-      <Card>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={save}>
-          {fields.map((field) => (
-            <label key={field} className={`grid gap-2 text-sm font-bold text-white/70 ${field.includes("Text") || field === "homepageDescription" ? "md:col-span-2" : ""}`}>
-              {field}
-              {field.includes("Text") || field === "homepageDescription" ? (
-                <textarea className="form-input min-h-28" value={form[field] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
-              ) : (
-                <input className="form-input" value={form[field] ?? ""} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.value }))} />
-              )}
-            </label>
-          ))}
-          {["maintenanceMode", "performanceMode", "streamerPageEnabled", "showOfflineStreamers", "showStreamerViewerCount", "showStreamThumbnails", "webhookStreamerGoLive", "webhookStreamerGoOffline"].map((field) => (
-            <label key={field} className="flex items-center gap-3 rounded-lg border border-a2-border p-3 text-sm text-white/62">
-              <input type="checkbox" checked={Boolean(form[field])} onChange={(event) => setForm((current) => ({ ...current, [field]: event.target.checked }))} />
-              {field}
-            </label>
-          ))}
-          <Button className="md:col-span-2"><Save size={16} /> Save settings</Button>
-          {status && <p className="md:col-span-2 text-sm text-white/60">{status}</p>}
-        </form>
-      </Card>
-    </WorkspaceHeader>
-  );
-}
-
-export function PermissionsPage() {
-  const { data } = useApi(() => api.get("/api/admin/permissions"), [], { roles: [], permissions: [], defaults: {} });
-  const users = useApi(() => api.get("/api/admin/users"), [], { rows: [] });
-  const roleMappings = useApi(() => api.get("/api/admin/discord-role-mappings"), [], { mappings: [] });
-  const [userForm, setUserForm] = useState({ discord_id: "", username: "", roles: ["Player"], permissions: [] });
-  const [mappingForm, setMappingForm] = useState({ discord_role_id: "", label: "", roles: [], permissions: [] });
-  const [status, setStatus] = useState("");
-  const permissions = data?.permissions || [];
-  const roles = data?.roles || [];
-
-  const toggleList = (target, key, value) => {
-    target((current) => {
-      const list = current[key] || [];
-      return {
-        ...current,
-        [key]: list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
-      };
-    });
-  };
-
-  const saveUser = async (event) => {
-    event.preventDefault();
-    setStatus("");
-    try {
-      const saved = await api.post("/api/admin/users", {
-        ...userForm,
-        reason: "admin panel permission update"
-      });
-      users.setData((current) => ({
-        ...current,
-        rows: [saved.user, ...(current?.rows || []).filter((row) => row.discord_id !== saved.user.discord_id)]
-      }));
-      setUserForm({ discord_id: "", username: "", roles: ["Player"], permissions: [] });
-      setStatus("User permissions saved.");
-    } catch (error) {
-      setStatus(error.message);
-    }
-  };
-
-  const disableUser = async (id) => {
-    setStatus("");
-    try {
-      const saved = await api.delete(`/api/admin/users/${encodeURIComponent(id)}`, { reason: "disabled from admin panel" });
-      users.setData((current) => ({
-        ...current,
-        rows: (current?.rows || []).map((row) => (row.id === saved.user.id ? saved.user : row))
-      }));
-      setStatus("User disabled.");
-    } catch (error) {
-      setStatus(error.message);
-    }
-  };
-
-  const addMapping = () => {
-    if (!mappingForm.discord_role_id) return;
-    const next = [
-      ...(roleMappings.data?.mappings || []).filter((mapping) => mapping.discord_role_id !== mappingForm.discord_role_id),
-      mappingForm
-    ];
-    roleMappings.setData({ mappings: next });
-    setMappingForm({ discord_role_id: "", label: "", roles: [], permissions: [] });
-  };
-
-  const removeMapping = (roleId) => {
-    roleMappings.setData({
-      mappings: (roleMappings.data?.mappings || []).filter((mapping) => mapping.discord_role_id !== roleId)
-    });
-  };
-
-  const saveMappings = async () => {
-    setStatus("");
-    try {
-      const saved = await api.put("/api/admin/discord-role-mappings", {
-        mappings: roleMappings.data?.mappings || [],
-        reason: "discord role permission update"
-      });
-      roleMappings.setData(saved);
-      setStatus("Discord role mappings saved.");
-    } catch (error) {
-      setStatus(error.message);
-    }
-  };
-
-  return (
-    <WorkspaceHeader title="Admins & Permissions" description="Add admins by Discord ID, choose exact access, or map Discord role IDs to website permissions. Master Admin keeps dangerous access.">
-      {status && <div className="mb-4 rounded-lg border border-a2-border bg-white/[0.03] p-3 text-sm text-white/70">{status}</div>}
-      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+    <div className="grid gap-5">
+      {!embedded && <Header eyebrow="CMS" title={title} />}
+      <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
         <Card>
-          <div className="mb-4 flex items-center gap-2 text-a2-warning"><ShieldAlert size={18} /> Only trusted owners should receive `master_access`.</div>
-          <h2 className="text-xl font-black">Add / Update User By Discord ID</h2>
-          <form className="mt-4 grid gap-4" onSubmit={saveUser}>
-            <label className="grid gap-2 text-sm font-bold text-white/70">
-              Discord user ID
-              <input className="form-input" value={userForm.discord_id} onChange={(event) => setUserForm((current) => ({ ...current, discord_id: event.target.value }))} required />
-            </label>
-            <label className="grid gap-2 text-sm font-bold text-white/70">
-              Display name optional
-              <input className="form-input" value={userForm.username} onChange={(event) => setUserForm((current) => ({ ...current, username: event.target.value }))} />
-            </label>
-            <CheckGrid title="Roles" items={roles} selected={userForm.roles} onToggle={(value) => toggleList(setUserForm, "roles", value)} />
-            <CheckGrid title="Extra permissions" items={permissions} selected={userForm.permissions} onToggle={(value) => toggleList(setUserForm, "permissions", value)} compact />
-            <Button><UserPlus size={16} /> Save user access</Button>
+          <div className="mb-4 flex items-center gap-2">
+            <input className="form-input" placeholder="Search..." value={q} onChange={(event) => setQ(event.target.value)} />
+            <Button type="button" variant="ghost" onClick={() => setRefresh((value) => value + 1)}><RefreshCw size={15} /></Button>
+          </div>
+          <div className="max-h-[640px] overflow-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs uppercase text-white/35">
+                <tr><th className="py-2">Title</th><th>Status</th><th>Updated</th></tr>
+              </thead>
+              <tbody>
+                {(loading ? Array.from({ length: 8 }) : rows).map((row, index) => (
+                  <tr key={row?.id || index} onClick={() => row && selectRow(row)} className="cursor-pointer border-t border-a2-border hover:bg-white/[0.04]">
+                    <td className="py-3 font-bold">{loading ? <div className="h-4 rounded skeleton" /> : rowTitle(row)}</td>
+                    <td className="py-3 text-white/50">{row ? row.status || String(row.is_visible ?? "") : ""}</td>
+                    <td className="py-3 text-white/35">{row?.updated_at?.slice?.(0, 10) || ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!loading && !rows.length && <p className="py-6 text-center text-sm text-white/45">No rows yet.</p>}
+          </div>
+        </Card>
+
+        <Card>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="text-xl font-black">{selected ? "Edit item" : "Create item"}</h2>
+            <Button type="button" variant="ghost" onClick={() => selectRow(null)}><Plus size={15} /> New</Button>
+          </div>
+          <form className="grid gap-3" onSubmit={save}>
+            {fields.map((field) => (
+              <FieldInput key={field} field={field} value={draft[field]} onChange={(value) => setDraft((current) => ({ ...current, [field]: value }))} />
+            ))}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Button type="submit"><Save size={15} /> Save</Button>
+              {selected?.id && <Button type="button" variant="danger" onClick={remove}><Trash2 size={15} /> Delete</Button>}
+            </div>
           </form>
         </Card>
-
-        <Card>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-black">Current Website Users</h2>
-              <p className="mt-1 text-sm text-white/48">Disable removes access without deleting their history.</p>
-            </div>
-          </div>
-          <div className="mt-4 grid gap-3">
-            {(users.data?.rows || []).map((user) => (
-              <div key={user.id} className="rounded-lg border border-a2-border p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-black">{user.username || user.discord_username || user.discord_id}</p>
-                    <p className="text-xs text-white/45">Discord ID: {user.discord_id}</p>
-                    <p className="mt-2 text-xs text-white/52">Roles: {(user.roles || []).join(", ") || "None"}</p>
-                    <p className="mt-1 line-clamp-2 text-xs text-white/40">Permissions: {(user.permissions || []).join(", ") || "None"}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-a2-border px-2 py-1 text-xs text-white/55">{user.account_status}</span>
-                    <Button type="button" variant="danger" onClick={() => disableUser(user.id)}><Trash2 size={14} /></Button>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {(users.data?.rows || []).length === 0 && <p className="rounded-lg border border-a2-border p-4 text-sm text-white/50">No website users yet. Login once or add a Discord ID manually.</p>}
-          </div>
-        </Card>
       </div>
-
-      <Card className="mt-5">
-        <h2 className="text-xl font-black">Discord Role ID Mappings</h2>
-        <p className="mt-1 text-sm text-white/50">When a Discord login includes one of these guild role IDs, these roles and permissions are added automatically.</p>
-        <div className="mt-4 grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-          <div className="grid gap-4">
-            <label className="grid gap-2 text-sm font-bold text-white/70">
-              Discord role ID
-              <input className="form-input" value={mappingForm.discord_role_id} onChange={(event) => setMappingForm((current) => ({ ...current, discord_role_id: event.target.value }))} />
-            </label>
-            <label className="grid gap-2 text-sm font-bold text-white/70">
-              Label
-              <input className="form-input" value={mappingForm.label} onChange={(event) => setMappingForm((current) => ({ ...current, label: event.target.value }))} />
-            </label>
-            <CheckGrid title="Roles to grant" items={roles} selected={mappingForm.roles} onToggle={(value) => toggleList(setMappingForm, "roles", value)} />
-            <CheckGrid title="Permissions to grant" items={permissions} selected={mappingForm.permissions} onToggle={(value) => toggleList(setMappingForm, "permissions", value)} compact />
-            <Button type="button" variant="ghost" onClick={addMapping}><Plus size={16} /> Add mapping</Button>
-          </div>
-          <div className="grid gap-3">
-            {(roleMappings.data?.mappings || []).map((mapping) => (
-              <div key={mapping.discord_role_id} className="rounded-lg border border-a2-border p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-black">{mapping.label || mapping.discord_role_id}</p>
-                    <p className="text-xs text-white/45">Role ID: {mapping.discord_role_id}</p>
-                    <p className="mt-2 text-xs text-white/52">Roles: {(mapping.roles || []).join(", ") || "None"}</p>
-                    <p className="mt-1 line-clamp-2 text-xs text-white/40">Permissions: {(mapping.permissions || []).join(", ") || "None"}</p>
-                  </div>
-                  <Button type="button" variant="danger" onClick={() => removeMapping(mapping.discord_role_id)}><Trash2 size={14} /></Button>
-                </div>
-              </div>
-            ))}
-            {(roleMappings.data?.mappings || []).length === 0 && <p className="rounded-lg border border-a2-border p-4 text-sm text-white/50">No Discord role mappings yet.</p>}
-            <Button type="button" onClick={saveMappings}><Save size={16} /> Save Discord role mappings</Button>
-          </div>
-        </div>
-      </Card>
-    </WorkspaceHeader>
+    </div>
   );
 }
 
-function CheckGrid({ title, items, selected = [], onToggle, compact = false }) {
+function FieldInput({ field, value, onChange }) {
+  const label = field.replaceAll("_", " ");
+  const booleanFields = new Set(["performanceMode", "maintenanceMode", "partnerGrayscale", "partnerPauseOnHover", "webhookStreamerGoLive", "webhookStreamerGoOffline"]);
+  if (field.endsWith("_json") || field === "navLinks" || ["content", "description", "bio", "requirements", "internal_notes", "message_preview"].includes(field)) {
+    const textValue = typeof value === "object" ? JSON.stringify(value, null, 2) : value || "";
+    return <label className="grid gap-2 text-sm font-bold capitalize">{label}<textarea className="form-input min-h-24" value={textValue} onChange={(event) => onChange(event.target.value)} /></label>;
+  }
+  if (field.startsWith("is_") || field.startsWith("show") || field.endsWith("_enabled") || booleanFields.has(field)) {
+    return <label className="flex items-center gap-3 rounded-lg border border-a2-border bg-white/[0.03] p-3 text-sm font-bold capitalize"><input type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(event.target.checked)} />{label}</label>;
+  }
+  if (field.includes("date") || field.endsWith("_at")) {
+    return <label className="grid gap-2 text-sm font-bold capitalize">{label}<input className="form-input" type="datetime-local" value={dateInputValue(value)} onChange={(event) => onChange(event.target.value)} /></label>;
+  }
+  if (field.includes("color")) {
+    return <label className="grid gap-2 text-sm font-bold capitalize">{label}<input className="form-input h-12" type="color" value={value || "#b7fe1a"} onChange={(event) => onChange(event.target.value)} /></label>;
+  }
+  return <label className="grid gap-2 text-sm font-bold capitalize">{label}<input className="form-input" value={value || ""} onChange={(event) => onChange(event.target.value)} /></label>;
+}
+
+function SettingsEditor({ mode }) {
+  const { setSettings } = useApp();
+  const [draft, setDraft] = useState({});
+  const [status, setStatus] = useState("");
+  const { data, loading } = useApi(() => api.get("/api/admin/settings"), [mode], { settings: {} });
+  const fields = settingsFields(mode);
+
+  useEffect(() => {
+    setDraft(data?.settings || {});
+  }, [data]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const payload = normalizeDraft(draft, fields);
+    const response = await api.patch(mode === "theme" ? "/api/admin/theme" : "/api/admin/settings", payload);
+    setSettings((current) => ({ ...current, ...(response.settings || payload) }));
+    setStatus("Saved.");
+  };
+
   return (
-    <div>
-      <p className="mb-2 text-sm font-black text-white/72">{title}</p>
-      <div className={`grid gap-2 ${compact ? "max-h-56 overflow-y-auto rounded-lg border border-a2-border p-2 md:grid-cols-2" : "md:grid-cols-2"}`}>
-        {items.map((item) => (
-          <label key={item} className="flex items-center gap-2 rounded-lg border border-a2-border bg-white/[0.03] p-2 text-xs text-white/62">
-            <input type="checkbox" checked={selected.includes(item)} onChange={() => onToggle(item)} />
-            <span>{item}</span>
-          </label>
+    <div className="grid gap-5">
+      <Header eyebrow="Website settings" title={settingsTitle(mode)} />
+      <Card>
+        {loading ? <div className="h-80 rounded skeleton" /> : (
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={save}>
+            {fields.map((field) => <FieldInput key={field} field={field} value={draft[field]} onChange={(value) => setDraft((current) => ({ ...current, [field]: value }))} />)}
+            <div className="md:col-span-2 flex items-center gap-3">
+              <Button type="submit"><Save size={15} /> Save settings</Button>
+              {status && <span className="text-sm text-a2-success">{status}</span>}
+            </div>
+          </form>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function UsersManager() {
+  return <UserTable endpoint="/api/admin/users" title="Users" defaultRole="Player" />;
+}
+
+function AdminsManager() {
+  return <UserTable endpoint="/api/admin/admins" title="Admins" defaultRole="Admin" adminActions />;
+}
+
+function UserTable({ endpoint, title, defaultRole, adminActions = false }) {
+  const [q, setQ] = useState("");
+  const [draft, setDraft] = useState({ roles: [defaultRole], permissions: [] });
+  const [refresh, setRefresh] = useState(0);
+  const { data } = useApi(() => api.get(`${endpoint}?q=${encodeURIComponent(q)}`), [endpoint, q, refresh], { rows: [] });
+
+  const save = async (event) => {
+    event.preventDefault();
+    const payload = {
+      ...draft,
+      roles: parseList(draft.roles),
+      permissions: parseList(draft.permissions)
+    };
+    await api.post(endpoint, payload);
+    setDraft({ roles: [defaultRole], permissions: [] });
+    setRefresh((value) => value + 1);
+  };
+
+  const adminStatus = async (id, action) => {
+    await api.post(`/api/admin/admins/${id}/${action}`, {});
+    setRefresh((value) => value + 1);
+  };
+
+  return (
+    <div className="grid gap-5">
+      <Header eyebrow="Management" title={title} />
+      <div className="grid gap-5 lg:grid-cols-[1fr_0.8fr]">
+        <Card>
+          <input className="form-input mb-4" placeholder="Search..." value={q} onChange={(event) => setQ(event.target.value)} />
+          <div className="grid gap-3">
+            {(data?.rows || []).map((user) => (
+              <div key={user.id} className="rounded-lg border border-a2-border bg-white/[0.03] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-black">{user.username || user.email}</p>
+                    <p className="text-xs text-white/45">{user.email || "No email"} / Discord {user.discord_id || "none"} / Steam {user.steam_id || "none"}</p>
+                    <p className="mt-1 text-xs text-a2-green">{user.roles?.join(", ")}</p>
+                  </div>
+                  <span className="rounded-full border border-a2-border px-3 py-1 text-xs font-bold text-white/60">{user.admin_status || user.account_status}</span>
+                </div>
+                {adminActions && (
+                  <div className="mt-3 flex gap-2">
+                    <Button type="button" variant="ghost" onClick={() => adminStatus(user.id, "freeze")}>Freeze</Button>
+                    <Button type="button" variant="ghost" onClick={() => adminStatus(user.id, "unfreeze")}>Unfreeze</Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card>
+          <h2 className="text-xl font-black">Add / update {title.toLowerCase()}</h2>
+          <form className="mt-4 grid gap-3" onSubmit={save}>
+            {["email", "username", "discord_id", "steam_id", "roles", "permissions"].map((field) => (
+              <FieldInput key={field} field={field} value={Array.isArray(draft[field]) ? draft[field].join(",") : draft[field]} onChange={(value) => setDraft((current) => ({ ...current, [field]: value }))} />
+            ))}
+            <Button type="submit"><Check size={15} /> Save</Button>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function PermissionsPage() {
+  const { data } = useApi(() => api.get("/api/admin/permissions"), [], { roles: [], permissions: [], defaults: {} });
+  return (
+    <div className="grid gap-5">
+      <Header eyebrow="Security" title="Roles and permissions" />
+      <div className="grid gap-4 lg:grid-cols-2">
+        {(data?.roles || []).map((role) => (
+          <Card key={role}>
+            <h2 className="font-black">{role}</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {(data?.defaults?.[role] || []).map((permission) => <span key={permission} className="rounded-full border border-a2-border px-2 py-1 text-xs text-a2-green">{permission}</span>)}
+            </div>
+          </Card>
         ))}
       </div>
     </div>
   );
 }
 
-export function WorkspaceHeader({ title, description, children }) {
+function WebhooksManager() {
+  const [draft, setDraft] = useState({});
+  const [status, setStatus] = useState("");
+  const { data, setData } = useApi(() => api.get("/api/admin/webhooks"), [], { webhooks: {} });
+  const keys = Object.keys(data?.webhooks || {});
+  const save = async (event) => {
+    event.preventDefault();
+    await api.patch("/api/admin/webhooks", draft);
+    setStatus("Webhook settings saved.");
+    const fresh = await api.get("/api/admin/webhooks");
+    setData(fresh);
+  };
   return (
-    <div>
-      <p className="text-sm font-black uppercase tracking-wide text-a2-green">Control center</p>
-      <h1 className="mt-2 text-3xl font-black">{title}</h1>
-      <p className="mt-2 max-w-3xl text-white/55">{description}</p>
-      <div className="mt-6">{children}</div>
+    <div className="grid gap-5">
+      <Header eyebrow="Discord embeds" title="Webhook settings" />
+      <Card>
+        <form className="grid gap-4" onSubmit={save}>
+          {keys.map((key) => (
+            <label key={key} className="grid gap-2 text-sm font-bold">
+              {key} {data.webhooks[key]?.configured && <span className="text-a2-success">configured</span>}
+              <input className="form-input" type="password" placeholder="Paste new webhook URL to update" value={draft[key] || ""} onChange={(event) => setDraft((current) => ({ ...current, [key]: event.target.value }))} />
+            </label>
+          ))}
+          <Button type="submit"><Save size={15} /> Save webhooks</Button>
+          {status && <p className="text-sm text-a2-success">{status}</p>}
+        </form>
+      </Card>
     </div>
+  );
+}
+
+function normalizeDraft(draft, fields) {
+  const booleanFields = new Set(["performanceMode", "maintenanceMode", "partnerGrayscale", "partnerPauseOnHover", "webhookStreamerGoLive", "webhookStreamerGoOffline"]);
+  return Object.fromEntries(
+    fields.map((field) => {
+      const value = draft[field];
+      if (field.startsWith("is_") || field.startsWith("show") || field.endsWith("_enabled") || booleanFields.has(field)) return [field, Boolean(value)];
+      if (field.endsWith("_json") || field === "navLinks") return [field, parseJsonField(value)];
+      return [field, value ?? ""];
+    })
+  );
+}
+
+function parseJsonField(value) {
+  if (typeof value !== "string") return value ?? "";
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+function parseList(value) {
+  if (Array.isArray(value)) return value;
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function rowTitle(row) {
+  return row.title || row.name || row.partner_name || row.display_name || row.character_name || row.zone_name || row.question || row.subject || row.id;
+}
+
+function labelFor(resource) {
+  return resource
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (char) => char.toUpperCase())
+    .replace("Faq", "FAQ");
+}
+
+function dateInputValue(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 16);
+  return date.toISOString().slice(0, 16);
+}
+
+function settingsTitle(mode) {
+  if (mode === "home") return "Homepage content";
+  if (mode === "theme") return "Theme and colors";
+  if (mode === "live") return "Live stream settings";
+  return "Website settings";
+}
+
+function settingsFields(mode) {
+  if (mode === "theme") return ["primaryColor", "backgroundColor", "textColor", "secondaryColor", "cardBackground", "borderColor", "mutedTextColor", "dangerColor", "warningColor", "successColor", "performanceMode"];
+  if (mode === "home") return ["websiteName", "logoUrl", "faviconUrl", "heroTitle", "heroSubtitle", "heroDescription", "heroBackgroundImage", "heroBackgroundVideo", "heroOverlayOpacity", "heroPrimaryButtonText", "heroPrimaryButtonLink", "heroSecondaryButtonText", "heroSecondaryButtonLink", "storeButtonText", "storeButtonLink"];
+  if (mode === "live") return ["livePageEnabled", "showOfflineStreamers", "showViewerCount", "showThumbnails", "liveStatusCheckIntervalSeconds", "featuredLiveLimit", "webhookStreamerGoLive", "webhookStreamerGoOffline"];
+  return ["websiteName", "logoUrl", "faviconUrl", "maintenanceMode", "performanceMode", "navLinks", "termsVersion", "partnersEnabled", "partnerAnimationSpeed", "partnerDirection", "partnerGrayscale", "partnerPauseOnHover"];
+}
+
+function Header({ eyebrow, title }) {
+  return (
+    <header>
+      <p className="text-sm font-black uppercase tracking-widest text-a2-green">{eyebrow}</p>
+      <h1 className="mt-2 text-3xl font-black md:text-4xl">{title}</h1>
+    </header>
   );
 }

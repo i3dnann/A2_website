@@ -5,43 +5,25 @@ const resources = {
   en: {
     translation: {
       home: "Home",
+      roster: "Roster",
+      live: "Live",
+      team: "Team",
+      careers: "Careers",
+      tickets: "Tickets",
       news: "News",
-      events: "Events",
-      businesses: "Businesses",
       map: "Map",
-      jobs: "Jobs",
-      characters: "Characters",
-      streamers: "Streamers",
-      status: "Status",
-      rules: "Rules",
+      faq: "FAQ",
+      terms: "Terms",
+      events: "Events",
+      journey: "Journey",
+      famous: "Famous Characters",
       login: "Login",
       logout: "Logout",
-      dashboard: "Dashboard",
+      account: "Account",
+      admin: "Admin",
       search: "Search",
-      live: "LIVE",
       offline: "Offline",
       unknown: "Unknown"
-    }
-  },
-  ar: {
-    translation: {
-      home: "الرئيسية",
-      news: "الأخبار",
-      events: "الفعاليات",
-      businesses: "الأعمال",
-      map: "الخريطة",
-      jobs: "الوظائف",
-      characters: "الشخصيات",
-      streamers: "المبدعون",
-      status: "الحالة",
-      rules: "القوانين",
-      login: "تسجيل الدخول",
-      logout: "تسجيل الخروج",
-      dashboard: "لوحة التحكم",
-      search: "بحث",
-      live: "مباشر",
-      offline: "غير متصل",
-      unknown: "غير معروف"
     }
   }
 };

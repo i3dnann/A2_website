@@ -1,33 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { query } from "../config/db.js";
-import { DEFAULT_SETTINGS, RESOURCE_MAP, SEED_DATA } from "../data/catalog.js";
 import { databaseEnabled } from "../config/env.js";
-import { pickAllowed } from "../utils/sanitize.js";
+import { DEFAULT_SETTINGS, RESOURCE_MAP, SEED_DATA } from "../data/catalog.js";
+import { pickAllowed, safeJson, toBoolean } from "../utils/sanitize.js";
 
 const state = {
   settings: { ...DEFAULT_SETTINGS },
+  settingsLoaded: false,
+  secretSettingsLoaded: false,
   resources: new Map(Object.entries(SEED_DATA).map(([key, rows]) => [key, rows.map((row) => addTimestamps(row))])),
-  liveStatus: new Map(),
-  fivem: {
-    status: {
-      online: false,
-      players: 0,
-      maxPlayers: 0,
-      queue: 0,
-      ping: null,
-      lastRestart: null,
-      nextRestart: null,
-      endpointStatus: "unknown",
-      databaseStatus: "unknown",
-      discordBotStatus: "unknown",
-      websiteApiStatus: "online",
-      firebaseStatus: "disabled",
-      streamerCheckerStatus: "idle",
-      updatedAt: null
-    },
-    players: [],
-    actionQueue: []
-  }
+  liveStatus: new Map()
 };
 
 function addTimestamps(row) {
@@ -46,42 +28,116 @@ function getStore(resourceKey) {
 }
 
 function sqlValue(value) {
+  if (value === undefined) return null;
   if (value && typeof value === "object") return JSON.stringify(value);
-  return value ?? null;
+  if (typeof value === "boolean") return value ? 1 : 0;
+  return value;
+}
+
+function normalizeDbValue(value) {
+  if (Buffer.isBuffer(value)) return value.toString("utf8");
+  return value;
 }
 
 function normalizeDbRow(row) {
   if (!row) return row;
+  const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [key, normalizeDbValue(value)]));
   return {
-    ...row,
-    id: String(row.id)
+    ...normalized,
+    id: String(normalized.id)
   };
 }
 
-function whereSearch(config, q) {
-  if (!q || !config.searchFields?.length) return { clause: "deleted_at IS NULL", params: {} };
-  const clauses = config.searchFields.map((field, index) => `${field} LIKE :q${index}`);
-  const params = Object.fromEntries(config.searchFields.map((_, index) => [`q${index}`, `%${q}%`]));
-  return { clause: `deleted_at IS NULL AND (${clauses.join(" OR ")})`, params };
+function resourceSearchWhere(config, q, publicOnly) {
+  const clauses = ["deleted_at IS NULL"];
+  const params = {};
+
+  if (q && config.searchFields?.length) {
+    const searchClauses = config.searchFields.map((field, index) => {
+      params[`q${index}`] = `%${q}%`;
+      return `${field} LIKE :q${index}`;
+    });
+    clauses.push(`(${searchClauses.join(" OR ")})`);
+  }
+
+  if (publicOnly) {
+    if (config.fields.includes("is_visible")) clauses.push("(is_visible = 1 OR is_visible IS NULL)");
+    if (config.fields.includes("is_hidden")) clauses.push("(is_hidden = 0 OR is_hidden IS NULL)");
+    if (config.fields.includes("is_approved")) clauses.push("(is_approved = 1 OR is_approved IS NULL)");
+    if (config.fields.includes("status")) clauses.push("(status IS NULL OR status NOT IN ('Hidden', 'Draft', 'Deleted'))");
+  }
+
+  return { clause: clauses.join(" AND "), params };
+}
+
+function isPublicRow(config, row) {
+  if (!row || row.deleted_at) return false;
+  if ("is_visible" in row && !toBoolean(row.is_visible)) return false;
+  if ("is_hidden" in row && toBoolean(row.is_hidden)) return false;
+  if ("is_approved" in row && !toBoolean(row.is_approved)) return false;
+  if (["Hidden", "Deleted", "Draft"].includes(String(row.status || ""))) return false;
+  return true;
+}
+
+function sortRows(a, b) {
+  return Number(a.sort_order || 9999) - Number(b.sort_order || 9999) || String(b.created_at || "").localeCompare(String(a.created_at || ""));
 }
 
 export function getResourceConfig(resourceKey) {
   return RESOURCE_MAP[resourceKey] || null;
 }
 
-export function getSettings() {
+export async function getSettings({ includeSecrets = false } = {}) {
+  if (databaseEnabled && (!state.settingsLoaded || (includeSecrets && !state.secretSettingsLoaded))) {
+    const rows = await query("SELECT setting_key, setting_value, is_secret FROM web_settings");
+    if (rows) {
+      const dbSettings = {};
+      rows.forEach((row) => {
+        if (row.is_secret && !includeSecrets) return;
+        dbSettings[row.setting_key] = safeJson(row.setting_value, row.setting_value);
+      });
+      state.settings = { ...state.settings, ...dbSettings };
+      state.settingsLoaded = true;
+      if (includeSecrets) state.secretSettingsLoaded = true;
+    }
+  }
+
+  if (!includeSecrets) {
+    return Object.fromEntries(Object.entries(state.settings).filter(([key]) => !key.toLowerCase().includes("webhookurl")));
+  }
   return { ...state.settings };
 }
 
-export function updateSettings(patch, actor) {
-  const before = { ...state.settings };
+export async function updateSettings(patch, actor, { secretKeys = [] } = {}) {
+  const before = await getSettings({ includeSecrets: true });
+  const safePatch = { ...(patch || {}) };
   state.settings = {
     ...state.settings,
-    ...patch,
+    ...safePatch,
     updated_by: actor?.id || null,
     updated_at: new Date().toISOString()
   };
-  return { before, after: { ...state.settings } };
+
+  if (databaseEnabled) {
+    await Promise.all(
+      Object.entries(safePatch).map(([key, value]) =>
+        query(
+          `INSERT INTO web_settings (id, setting_key, setting_value, is_secret, updated_by)
+           VALUES (:id, :setting_key, :setting_value, :is_secret, :updated_by)
+           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), is_secret = VALUES(is_secret), updated_by = VALUES(updated_by), updated_at = CURRENT_TIMESTAMP`,
+          {
+            id: `setting-${key}`,
+            setting_key: key,
+            setting_value: JSON.stringify(value),
+            is_secret: secretKeys.includes(key) ? 1 : 0,
+            updated_by: actor?.id || null
+          }
+        )
+      )
+    );
+  }
+
+  return { before, after: await getSettings({ includeSecrets: true }) };
 }
 
 export async function listResource(resourceKey, options = {}) {
@@ -93,7 +149,7 @@ export async function listResource(resourceKey, options = {}) {
   const q = String(options.q || "").trim();
 
   if (databaseEnabled) {
-    const { clause, params } = whereSearch(config, q);
+    const { clause, params } = resourceSearchWhere(config, q, Boolean(options.publicOnly));
     const rows = await query(
       `SELECT * FROM ${config.table} WHERE ${clause} ORDER BY COALESCE(sort_order, 9999), created_at DESC LIMIT :limit OFFSET :offset`,
       { ...params, limit, offset }
@@ -103,15 +159,12 @@ export async function listResource(resourceKey, options = {}) {
   }
 
   let rows = getStore(resourceKey).filter((row) => !row.deleted_at);
-  if (q) {
+  if (q && config.searchFields?.length) {
     const needle = q.toLowerCase();
-    rows = rows.filter((row) => config.searchFields?.some((field) => String(row[field] || "").toLowerCase().includes(needle)));
+    rows = rows.filter((row) => config.searchFields.some((field) => String(row[field] || "").toLowerCase().includes(needle)));
   }
-  if (options.publicOnly) {
-    rows = rows.filter((row) => row.is_hidden !== true && row.is_hidden !== 1 && row.status !== "Hidden");
-    if (resourceKey === "streamers") rows = rows.filter((row) => row.is_approved && !row.is_hidden);
-  }
-  rows = rows.sort((a, b) => Number(a.sort_order || 9999) - Number(b.sort_order || 9999) || String(b.created_at).localeCompare(String(a.created_at)));
+  if (options.publicOnly) rows = rows.filter((row) => isPublicRow(config, row));
+  rows = rows.sort(sortRows);
   return { rows: rows.slice(offset, offset + limit), total: rows.length, config };
 }
 
@@ -144,9 +197,10 @@ export async function createResource(resourceKey, payload, actor) {
 
   if (databaseEnabled) {
     const keys = Object.keys(data);
-    const placeholders = keys.map((key) => `:${key}`).join(", ");
-    const columns = keys.join(", ");
-    const result = await query(`INSERT INTO ${config.table} (${columns}) VALUES (${placeholders})`, Object.fromEntries(keys.map((key) => [key, sqlValue(data[key])])));
+    const result = await query(
+      `INSERT INTO ${config.table} (${keys.join(", ")}) VALUES (${keys.map((key) => `:${key}`).join(", ")})`,
+      Object.fromEntries(keys.map((key) => [key, sqlValue(data[key])]))
+    );
     if (result) return data;
   }
 
@@ -168,11 +222,10 @@ export async function updateResource(resourceKey, id, payload, actor) {
 
   if (databaseEnabled) {
     const keys = Object.keys(patch);
-    const assignments = keys.map((key) => `${key} = :${key}`).join(", ");
-    const result = await query(`UPDATE ${config.table} SET ${assignments} WHERE id = :id`, {
-      ...Object.fromEntries(keys.map((key) => [key, sqlValue(patch[key])])),
-      id
-    });
+    const result = await query(
+      `UPDATE ${config.table} SET ${keys.map((key) => `${key} = :${key}`).join(", ")} WHERE id = :id`,
+      { ...Object.fromEntries(keys.map((key) => [key, sqlValue(patch[key])])), id }
+    );
     if (result) return { before, after: { ...before, ...patch } };
   }
 
@@ -194,10 +247,10 @@ export async function deleteResource(resourceKey, id, actor) {
   };
 
   if (databaseEnabled) {
-    const result = await query(`UPDATE ${config.table} SET deleted_at = :deleted_at, updated_by = :updated_by, updated_at = :updated_at WHERE id = :id`, {
-      ...patch,
-      id
-    });
+    const result = await query(
+      `UPDATE ${config.table} SET deleted_at = :deleted_at, updated_by = :updated_by, updated_at = :updated_at WHERE id = :id`,
+      { ...patch, id }
+    );
     if (result) return before;
   }
 
@@ -208,66 +261,22 @@ export async function deleteResource(resourceKey, id, actor) {
 }
 
 export async function addAuditLog(entry) {
-  const row = await createResource(
+  return createResource(
     "auditLogs",
     {
       action: entry.action,
       staff_id: entry.staff?.id || null,
-      staff_name: entry.staff?.username || entry.staff?.discord_username || "system",
+      staff_name: entry.staff?.username || entry.staff?.email || "system",
       target_type: entry.targetType,
       target_id: entry.targetId,
       reason: entry.reason || "",
       ip: entry.ip || "",
-      before_json: entry.before ? JSON.stringify(entry.before) : null,
-      after_json: entry.after ? JSON.stringify(entry.after) : null,
+      before_json: entry.before ? JSON.stringify(entry.before).slice(0, 6000) : null,
+      after_json: entry.after ? JSON.stringify(entry.after).slice(0, 6000) : null,
       status: entry.status || "success"
     },
     entry.staff
   );
-  return row;
-}
-
-export function getFiveMStatus() {
-  return { ...state.fivem.status, players: state.fivem.players };
-}
-
-export function updateFiveMStatus(payload) {
-  const onlinePlayers = Array.isArray(payload.onlinePlayers)
-    ? payload.onlinePlayers
-    : Array.isArray(payload.playersList)
-      ? payload.playersList
-      : Array.isArray(payload.players)
-        ? payload.players
-        : state.fivem.players;
-  const playerCount = typeof payload.players === "number" ? payload.players : onlinePlayers.length;
-
-  state.fivem.status = {
-    ...state.fivem.status,
-    ...payload,
-    players: playerCount,
-    currentPlayers: playerCount,
-    onlinePlayers,
-    online: true,
-    updatedAt: new Date().toISOString(),
-    websiteApiStatus: "online"
-  };
-  state.fivem.players = onlinePlayers;
-  return getFiveMStatus();
-}
-
-export function enqueueFiveMAction(action) {
-  const row = {
-    id: randomUUID(),
-    status: "queued",
-    created_at: new Date().toISOString(),
-    ...action
-  };
-  state.fivem.actionQueue.push(row);
-  return row;
-}
-
-export function drainFiveMActions(limit = 20) {
-  return state.fivem.actionQueue.splice(0, limit);
 }
 
 export function setStreamerLiveStatus(streamerId, platform, status) {

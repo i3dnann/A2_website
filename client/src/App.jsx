@@ -1,14 +1,10 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
-import { PublicCollection, PublicDetail } from "./pages/PublicCollection.jsx";
-import { StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
-import { AuthCompletePage, LoginPage, LogoutPage, SelectLanguagePage } from "./pages/AuthPages.jsx";
-import { RulesPage, TermsPage } from "./pages/RulesTerms.jsx";
-import StatusPage from "./pages/StatusPage.jsx";
-import { ApplyPage, BanAppealPage, TicketsPage } from "./pages/Forms.jsx";
+import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage, TicketsPage } from "./pages/PublicCollection.jsx";
+import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
+import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
 import PlayerDashboard from "./pages/PlayerDashboard.jsx";
-import { PermissionsPage, SettingsPage, StaffDashboard, StaffResourcePage, StreamerEditor } from "./pages/AdminWorkspace.jsx";
-import DomainWorkspace from "./pages/DomainWorkspace.jsx";
+import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import { ForbiddenPage, MaintenancePage, NotFoundPage } from "./pages/SystemPages.jsx";
 import { PublicLayout } from "./components/PublicLayout.jsx";
 import { DashboardLayout } from "./components/DashboardLayout.jsx";
@@ -31,85 +27,61 @@ export default function App() {
         <Route element={<PublicLayout />}>
           <Route index element={maintenance ? <MaintenancePage /> : <Home />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<LoginPage mode="register" />} />
           <Route path="/auth/complete" element={<AuthCompletePage />} />
           <Route path="/logout" element={<LogoutPage />} />
-          <Route path="/select-language" element={<SelectLanguagePage />} />
-          <Route path="/rules" element={<RulesPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/status" element={<StatusPage />} />
+          <Route path="/roster" element={<StreamersPage />} />
+          <Route path="/roster/:id" element={<StreamerDetail />} />
+          <Route path="/live" element={<LivePage />} />
+          <Route path="/team" element={<PublicCollection type="team" />} />
+          <Route path="/careers" element={<PublicCollection type="careers" />} />
+          <Route path="/careers/:id" element={<CareerDetailPage />} />
+          <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/news" element={<PublicCollection type="news" />} />
           <Route path="/news/:id" element={<PublicDetail type="news" />} />
+          <Route path="/map" element={<PublicCollection type="map" />} />
+          <Route path="/faq" element={<FaqPage />} />
+          <Route path="/terms" element={<TermsPage />} />
           <Route path="/events" element={<PublicCollection type="events" />} />
           <Route path="/events/:id" element={<PublicDetail type="events" />} />
-          <Route path="/businesses" element={<PublicCollection type="businesses" />} />
-          <Route path="/businesses/:id" element={<PublicDetail type="businesses" />} />
-          <Route path="/map" element={<PublicCollection type="map" />} />
-          <Route path="/map/:id" element={<PublicDetail type="map" />} />
-          <Route path="/jobs" element={<PublicCollection type="jobs" />} />
-          <Route path="/jobs/:id" element={<PublicDetail type="jobs" />} />
-          <Route path="/characters" element={<PublicCollection type="characters" />} />
-          <Route path="/characters/:id" element={<PublicDetail type="characters" />} />
-          <Route path="/streamers" element={<StreamersPage />} />
-          <Route path="/streamers/:id" element={<StreamerDetail />} />
-          <Route path="/apply" element={<ApplyPage />} />
-          <Route path="/ban-appeal" element={<BanAppealPage />} />
-          <Route path="/tickets" element={<TicketsPage />} />
-          <Route path="/archive" element={<PublicCollection type="archive" />} />
-          <Route path="/archive/:week" element={<PublicDetail type="archive" />} />
-          <Route path="/story" element={<PublicCollection type="story" />} />
-          <Route path="/story/:campaign" element={<PublicDetail type="story" />} />
-          <Route path="/shop" element={<PublicCollection type="shop" />} />
-          <Route path="/shop/:id" element={<PublicDetail type="shop" />} />
+          <Route path="/journey" element={<PublicCollection type="journey" />} />
+          <Route path="/journey/:id" element={<PublicDetail type="journey" />} />
+          <Route path="/famous" element={<PublicCollection type="famous" />} />
+          <Route path="/famous/:id" element={<PublicDetail type="famous" />} />
           <Route path="/403" element={<ForbiddenPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         <Route element={<DashboardLayout />}>
-          <Route path="/player/dashboard" element={<Guarded permission="view_player_portal"><PlayerDashboard /></Guarded>} />
-          <Route path="/player/characters" element={<Guarded permission="view_player_portal"><PlayerDashboard section="characters" /></Guarded>} />
-          <Route path="/player/vehicles" element={<Guarded permission="view_player_portal"><PlayerDashboard section="characters" /></Guarded>} />
-          <Route path="/player/tickets" element={<Guarded permission="view_player_portal"><PlayerDashboard section="tickets" /></Guarded>} />
-          <Route path="/player/appeals" element={<Guarded permission="view_player_portal"><PlayerDashboard section="appeals" /></Guarded>} />
-          <Route path="/player/profile" element={<Guarded permission="view_player_portal"><PlayerDashboard section="profile" /></Guarded>} />
+          <Route path="/account" element={<Guarded permission="view_player_portal"><PlayerDashboard /></Guarded>} />
+          <Route path="/account/characters" element={<Guarded permission="view_player_portal"><PlayerDashboard section="characters" /></Guarded>} />
+          <Route path="/account/tickets" element={<Guarded permission="view_player_portal"><PlayerDashboard section="tickets" /></Guarded>} />
+          <Route path="/account/settings" element={<Guarded permission="view_player_portal"><PlayerDashboard section="settings" /></Guarded>} />
 
-          <Route path="/staff/dashboard" element={<Guarded permission="use_staff_panel"><StaffDashboard /></Guarded>} />
-          <Route path="/staff/search" element={<Guarded permission="use_staff_panel"><StaffResourcePage resource="logs" /></Guarded>} />
-          <Route path="/staff/players/:id" element={<Guarded permission="use_staff_panel"><StaffResourcePage resource="logs" /></Guarded>} />
-          <Route path="/staff/tickets" element={<Guarded permission="review_tickets"><StaffResourcePage resource="tickets" /></Guarded>} />
-          <Route path="/staff/ban-appeals" element={<Guarded permission="review_ban_appeals"><StaffResourcePage resource="ban-appeals" /></Guarded>} />
-          <Route path="/staff/whitelist" element={<Guarded permission="review_whitelist"><StaffResourcePage resource="whitelist" /></Guarded>} />
-          <Route path="/staff/logs" element={<Guarded permission="view_audit_logs"><StaffResourcePage resource="logs" /></Guarded>} />
-          <Route path="/staff/settings" element={<Guarded permission="edit_website_settings"><SettingsPage /></Guarded>} />
-          <Route path="/staff/permissions" element={<Guarded permission="manage_admins"><PermissionsPage /></Guarded>} />
-          <Route path="/staff/cms" element={<Guarded permission="edit_website_settings"><StaffResourcePage resource="cms" /></Guarded>} />
-          <Route path="/staff/streamers" element={<Guarded permission="manage_streamers"><StaffResourcePage resource="streamers" /></Guarded>} />
-          <Route path="/staff/streamers/create" element={<Guarded permission="manage_streamers"><StreamerEditor mode="create" /></Guarded>} />
-          <Route path="/staff/streamers/:id/edit" element={<Guarded permission="manage_streamers"><StreamerEditor mode="edit" /></Guarded>} />
-
-          <Route path="/police/dashboard" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" /></Guarded>} />
-          <Route path="/police/search" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="search" /></Guarded>} />
-          <Route path="/police/citizen/:id" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="search" /></Guarded>} />
-          <Route path="/police/reports" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="reports" /></Guarded>} />
-          <Route path="/police/warrants" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="warrants" /></Guarded>} />
-          <Route path="/police/fines" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="fines" /></Guarded>} />
-          <Route path="/police/callsigns" element={<Guarded permission="view_police_panel"><DomainWorkspace domain="police" page="callsigns" /></Guarded>} />
-
-          <Route path="/ems/dashboard" element={<Guarded permission="view_ems_panel"><DomainWorkspace domain="ems" /></Guarded>} />
-          <Route path="/ems/search" element={<Guarded permission="view_ems_panel"><DomainWorkspace domain="ems" page="search" /></Guarded>} />
-          <Route path="/ems/patient/:id" element={<Guarded permission="view_ems_panel"><DomainWorkspace domain="ems" page="search" /></Guarded>} />
-          <Route path="/ems/reports" element={<Guarded permission="view_ems_panel"><DomainWorkspace domain="ems" page="reports" /></Guarded>} />
-
-          <Route path="/court/dashboard" element={<Guarded permission="view_court_panel"><DomainWorkspace domain="court" /></Guarded>} />
-          <Route path="/court/cases" element={<Guarded permission="view_court_panel"><DomainWorkspace domain="court" page="cases" /></Guarded>} />
-          <Route path="/court/cases/:id" element={<Guarded permission="view_court_panel"><DomainWorkspace domain="court" page="cases" /></Guarded>} />
-          <Route path="/court/documents" element={<Guarded permission="view_court_panel"><DomainWorkspace domain="court" page="documents" /></Guarded>} />
-
-          <Route path="/business-owner/dashboard" element={<Guarded permission="manage_business"><DomainWorkspace domain="business-owner" /></Guarded>} />
-          <Route path="/business-owner/business/:id" element={<Guarded permission="manage_business"><DomainWorkspace domain="business-owner" /></Guarded>} />
-          <Route path="/gang/dashboard" element={<Guarded permission="manage_gang"><DomainWorkspace domain="gang" /></Guarded>} />
-          <Route path="/gang/:id" element={<Guarded permission="manage_gang"><DomainWorkspace domain="gang" /></Guarded>} />
-
-          <Route path="/dashboard" element={<Navigate to="/player/dashboard" replace />} />
+          <Route path="/admin" element={<Guarded permission="manage_home"><AdminWorkspace /></Guarded>} />
+          <Route path="/admin/settings" element={<Guarded permission="manage_home"><AdminWorkspace section="settings" /></Guarded>} />
+          <Route path="/admin/home" element={<Guarded permission="manage_home"><AdminWorkspace section="home" /></Guarded>} />
+          <Route path="/admin/partners" element={<Guarded permission="manage_partners"><AdminWorkspace section="partners" /></Guarded>} />
+          <Route path="/admin/journey" element={<Guarded permission="manage_journey"><AdminWorkspace section="journey" /></Guarded>} />
+          <Route path="/admin/famous" element={<Guarded permission="manage_famous"><AdminWorkspace section="famous" /></Guarded>} />
+          <Route path="/admin/roster" element={<Guarded permission="manage_roster"><AdminWorkspace section="roster" /></Guarded>} />
+          <Route path="/admin/live" element={<Guarded permission="manage_live"><AdminWorkspace section="live" /></Guarded>} />
+          <Route path="/admin/team" element={<Guarded permission="manage_team"><AdminWorkspace section="team" /></Guarded>} />
+          <Route path="/admin/careers" element={<Guarded permission="manage_careers"><AdminWorkspace section="careers" /></Guarded>} />
+          <Route path="/admin/careers/:id/applications" element={<Guarded permission="review_career_applications"><AdminWorkspace section="careers" resourceOverride="careerApplications" /></Guarded>} />
+          <Route path="/admin/tickets" element={<Guarded permission="manage_tickets"><AdminWorkspace section="tickets" /></Guarded>} />
+          <Route path="/admin/news" element={<Guarded permission="manage_news"><AdminWorkspace section="news" /></Guarded>} />
+          <Route path="/admin/map" element={<Guarded permission="manage_map"><AdminWorkspace section="map" /></Guarded>} />
+          <Route path="/admin/faq" element={<Guarded permission="manage_faq"><AdminWorkspace section="faq" /></Guarded>} />
+          <Route path="/admin/terms" element={<Guarded permission="manage_terms"><AdminWorkspace section="terms" /></Guarded>} />
+          <Route path="/admin/events" element={<Guarded permission="manage_events"><AdminWorkspace section="events" /></Guarded>} />
+          <Route path="/admin/users" element={<Guarded permission="manage_users"><AdminWorkspace section="users" /></Guarded>} />
+          <Route path="/admin/admins" element={<Guarded permission="manage_admins"><AdminWorkspace section="admins" /></Guarded>} />
+          <Route path="/admin/permissions" element={<Guarded permission="manage_permissions"><AdminWorkspace section="permissions" /></Guarded>} />
+          <Route path="/admin/webhooks" element={<Guarded permission="manage_webhooks"><AdminWorkspace section="webhooks" /></Guarded>} />
+          <Route path="/admin/audit-logs" element={<Guarded permission="view_audit_logs"><AdminWorkspace section="audit-logs" /></Guarded>} />
+          <Route path="/admin/theme" element={<Guarded permission="manage_theme"><AdminWorkspace section="theme" /></Guarded>} />
+          <Route path="/dashboard" element={<Navigate to="/account" replace />} />
         </Route>
       </Routes>
     </ErrorBoundary>

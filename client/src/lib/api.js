@@ -13,17 +13,18 @@ async function request(path, options = {}) {
   const { body, headers, ...requestOptions } = options;
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("a2_session_token") : "";
   const ngrokHeaders = API_BASE.includes("ngrok-free.") ? { "ngrok-skip-browser-warning": "true" } : {};
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
   const response = await fetch(`${API_BASE}${path}`, {
     ...requestOptions,
     cache: "no-store",
     credentials: "include",
     headers: {
-      "content-type": "application/json",
+      ...(isForm ? {} : { "content-type": "application/json" }),
       ...ngrokHeaders,
       ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       ...(headers || {})
     },
-    body: body && typeof body !== "string" ? JSON.stringify(body) : body
+    body: body && !isForm && typeof body !== "string" ? JSON.stringify(body) : body
   });
 
   const contentType = response.headers.get("content-type") || "";
@@ -42,7 +43,8 @@ export const api = {
   post: (path, body) => request(path, { method: "POST", body }),
   put: (path, body) => request(path, { method: "PUT", body }),
   patch: (path, body) => request(path, { method: "PATCH", body }),
-  delete: (path, body) => request(path, { method: "DELETE", body })
+  delete: (path, body) => request(path, { method: "DELETE", body }),
+  upload: (path, formData) => request(path, { method: "POST", body: formData })
 };
 
 export function imageFallback(seed, width = 900, height = 500) {
