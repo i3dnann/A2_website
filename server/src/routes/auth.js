@@ -32,9 +32,10 @@ router.get(
     const [discordUser, roles] = await Promise.all([getDiscordUser(token.access_token), getDiscordMemberRoles(token.access_token)]);
     const preferredLanguage = req.cookies?.a2_language || "en";
     const user = await upsertDiscordUser(discordUser, roles, preferredLanguage);
-    res.cookie("a2_session", signUser(user), cookieOptions);
+    const sessionToken = signUser(user);
+    res.cookie("a2_session", sessionToken, cookieOptions);
     await auditAction({ req: { ...req, user }, action: "discord_login", targetType: "web_users", targetId: user.id, webhookCategory: "security" });
-    return res.redirect(`${env.FRONTEND_URL}/player/dashboard`);
+    return res.redirect(`${env.FRONTEND_URL}/player/dashboard#a2_session=${encodeURIComponent(sessionToken)}`);
   })
 );
 

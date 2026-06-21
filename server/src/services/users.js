@@ -46,6 +46,12 @@ function normalizeUser(row) {
   };
 }
 
+function masterDiscordIds() {
+  return env.MASTER_ADMIN_DISCORD_IDS.split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
 export function signUser(user) {
   return jwt.sign({ sub: user.id }, env.JWT_SECRET, { expiresIn: "12h" });
 }
@@ -68,8 +74,10 @@ export async function getUserById(id) {
 
 export async function upsertDiscordUser(discordUser, discordRoles = [], preferredLanguage = "en") {
   const now = new Date().toISOString();
-  const existing = [...users.values()].find((user) => user.discord_id === discordUser.id);
-  const roleNames = existing?.roles?.length ? existing.roles : ["Player"];
+  const dbRows = databaseEnabled ? await query("SELECT * FROM web_users WHERE discord_id = :discord_id LIMIT 1", { discord_id: discordUser.id }) : null;
+  const existing = dbRows?.[0] ? normalizeUser(dbRows[0]) : [...users.values()].find((user) => user.discord_id === discordUser.id);
+  const isMasterAdmin = masterDiscordIds().includes(discordUser.id);
+  const roleNames = isMasterAdmin ? ["Master Admin"] : existing?.roles?.length ? existing.roles : ["Player"];
   const user = {
     id: existing?.id || randomUUID(),
     discord_id: discordUser.id,
@@ -98,6 +106,7 @@ export async function upsertDiscordUser(discordUser, discordRoles = [], preferre
         discord_username = VALUES(discord_username),
         avatar_url = VALUES(avatar_url),
         email = VALUES(email),
+        roles_json = VALUES(roles_json),
         discord_roles_json = VALUES(discord_roles_json),
         permissions_json = VALUES(permissions_json),
         preferred_language = VALUES(preferred_language),

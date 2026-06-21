@@ -80,6 +80,7 @@ export function SelectLanguagePage() {
 export function LogoutPage() {
   const { setUser } = useApp();
   api.post("/api/auth/logout", {}).finally(() => {
+    localStorage.removeItem("a2_session_token");
     setUser(null);
     window.location.href = "/";
   });

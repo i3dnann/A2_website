@@ -12,6 +12,7 @@ export function DashboardLayout() {
 
   const logout = async () => {
     await api.post("/api/auth/logout", {}).catch(() => {});
+    localStorage.removeItem("a2_session_token");
     setUser(null);
     window.location.href = "/";
   };

@@ -10,10 +10,12 @@ export function apiUrl(path) {
 }
 
 async function request(path, options = {}) {
+  const sessionToken = typeof window !== "undefined" ? localStorage.getItem("a2_session_token") : "";
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: {
       "content-type": "application/json",
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       ...(options.headers || {})
     },
     ...options,

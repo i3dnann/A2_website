@@ -21,6 +21,7 @@ const schema = z.object({
   DISCORD_REDIRECT_URI: z.string().default(""),
   DISCORD_BOT_TOKEN: z.string().default(""),
   DISCORD_GUILD_ID: z.string().default(""),
+  MASTER_ADMIN_DISCORD_IDS: z.string().default(""),
   JWT_SECRET: z.string().default("change_me_to_a_long_random_secret"),
   SESSION_SECRET: z.string().default("change_me_to_a_long_random_session_secret"),
   COOKIE_SECURE: z.string().default("false"),

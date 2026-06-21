@@ -28,6 +28,15 @@ export function AppProvider({ children }) {
   const [apiHealthy, setApiHealthy] = useState(true);
 
   useEffect(() => {
+    if (window.location.hash.includes("a2_session=")) {
+      const params = new URLSearchParams(window.location.hash.slice(1));
+      const token = params.get("a2_session");
+      if (token) {
+        localStorage.setItem("a2_session_token", token);
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      }
+    }
+
     let mounted = true;
     Promise.allSettled([api.get("/api/public/settings"), api.get("/api/auth/me")]).then(([settingsResult, userResult]) => {
       if (!mounted) return;
