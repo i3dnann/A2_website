@@ -4,6 +4,8 @@ import { getSettings, getStreamerLiveStatuses, listResource, setStreamerLiveStat
 import { sendWebhook } from "./webhook.js";
 
 let twitchToken = env.TWITCH_ACCESS_TOKEN || "";
+let kickToken = "";
+let kickTokenExpiresAt = 0;
 let running = false;
 
 async function getTwitchToken() {
@@ -58,25 +60,59 @@ async function checkTwitch(streamer) {
   });
 }
 
+async function getKickToken() {
+  if (kickToken && Date.now() < kickTokenExpiresAt - 60000) return kickToken;
+  if (!env.KICK_CLIENT_ID || !env.KICK_CLIENT_SECRET) return "";
+
+  const body = new URLSearchParams({
+    grant_type: "client_credentials",
+    client_id: env.KICK_CLIENT_ID,
+    client_secret: env.KICK_CLIENT_SECRET
+  });
+
+  const response = await fetch("https://id.kick.com/oauth/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body
+  });
+
+  if (!response.ok) return "";
+  const data = await response.json();
+  kickToken = data.access_token || "";
+  kickTokenExpiresAt = Date.now() + Number(data.expires_in || 3600) * 1000;
+  return kickToken;
+}
+
 async function checkKick(streamer) {
   if (!streamer.kick_username || !env.KICK_API_BASE_URL) {
     return setStreamerLiveStatus(streamer.id, "Kick", { is_live: false, raw_response_json: { skipped: "missing_kick_credentials_or_username" } });
   }
 
   try {
-    const response = await fetch(`${env.KICK_API_BASE_URL.replace(/\/$/, "")}/channels/${encodeURIComponent(streamer.kick_username)}`, {
-      headers: env.KICK_API_KEY ? { Authorization: `Bearer ${env.KICK_API_KEY}` } : {}
+    const token = env.KICK_API_KEY || (await getKickToken());
+    if (!token) {
+      return setStreamerLiveStatus(streamer.id, "Kick", {
+        is_live: false,
+        raw_response_json: { skipped: "missing_kick_token" }
+      });
+    }
+
+    const params = new URLSearchParams();
+    params.append("slug", streamer.kick_username);
+    const response = await fetch(`${env.KICK_API_BASE_URL.replace(/\/$/, "")}/public/v1/channels?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
     });
     if (!response.ok) throw new Error(`kick_${response.status}`);
     const data = await response.json();
-    const stream = data.livestream || data.stream || data.data?.livestream;
+    const channel = data.data?.[0] || {};
+    const stream = channel.stream || {};
     return setStreamerLiveStatus(streamer.id, "Kick", {
-      is_live: Boolean(stream),
-      stream_title: stream?.session_title || stream?.title || "",
-      viewer_count: stream?.viewer_count || stream?.viewers || null,
-      thumbnail_url: stream?.thumbnail?.url || stream?.thumbnail_url || "",
+      is_live: Boolean(stream.is_live),
+      stream_title: channel.stream_title || "",
+      viewer_count: stream.viewer_count || null,
+      thumbnail_url: stream.thumbnail || "",
       stream_url: `https://kick.com/${streamer.kick_username}`,
-      started_at: stream?.created_at || stream?.started_at || null,
+      started_at: stream.start_time || null,
       raw_response_json: data
     });
   } catch (error) {
