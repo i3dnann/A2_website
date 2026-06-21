@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { Disc3, Languages, LogIn } from "lucide-react";
 import { api, apiUrl } from "../lib/api.js";
 import { useApp } from "../context/AppContext.jsx";
@@ -72,6 +72,43 @@ export function SelectLanguagePage() {
           <Button onClick={() => setLanguage("en")}>English</Button>
           <Button variant="ghost" onClick={() => setLanguage("ar")}>العربية</Button>
         </div>
+      </Card>
+    </main>
+  );
+}
+
+export function AuthCompletePage() {
+  const { setUser } = useApp();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const [message, setMessage] = useState("Finishing Discord login...");
+
+  useEffect(() => {
+    const token = params.get("token");
+    if (!token) {
+      setMessage("Discord login did not return a session token. Please try again.");
+      return;
+    }
+
+    localStorage.setItem("a2_session_token", token);
+    api.get("/api/auth/me")
+      .then((data) => {
+        if (!data.user) throw new Error("Session was saved, but the backend did not return a user.");
+        setUser(data.user);
+        navigate("/player/dashboard", { replace: true });
+      })
+      .catch((error) => {
+        localStorage.removeItem("a2_session_token");
+        setMessage(`Login session could not be verified: ${error.message}`);
+      });
+  }, [navigate, params, setUser]);
+
+  return (
+    <main className="mx-auto grid min-h-[70vh] max-w-3xl place-items-center px-4 py-12">
+      <Card className="w-full text-center">
+        <Disc3 className="mx-auto mb-4 text-a2-green" size={36} />
+        <h1 className="text-3xl font-black">Discord Login</h1>
+        <p className="mt-3 text-white/55">{message}</p>
       </Card>
     </main>
   );

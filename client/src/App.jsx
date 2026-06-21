@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import { PublicCollection, PublicDetail } from "./pages/PublicCollection.jsx";
 import { StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
-import { LoginPage, LogoutPage, SelectLanguagePage } from "./pages/AuthPages.jsx";
+import { AuthCompletePage, LoginPage, LogoutPage, SelectLanguagePage } from "./pages/AuthPages.jsx";
 import { RulesPage, TermsPage } from "./pages/RulesTerms.jsx";
 import StatusPage from "./pages/StatusPage.jsx";
 import { ApplyPage, BanAppealPage, TicketsPage } from "./pages/Forms.jsx";
@@ -28,6 +28,7 @@ export default function App() {
       <Route element={<PublicLayout />}>
         <Route index element={maintenance ? <MaintenancePage /> : <Home />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/auth/complete" element={<AuthCompletePage />} />
         <Route path="/logout" element={<LogoutPage />} />
         <Route path="/select-language" element={<SelectLanguagePage />} />
         <Route path="/rules" element={<RulesPage />} />

@@ -232,14 +232,26 @@ export function getFiveMStatus() {
 }
 
 export function updateFiveMStatus(payload) {
+  const onlinePlayers = Array.isArray(payload.onlinePlayers)
+    ? payload.onlinePlayers
+    : Array.isArray(payload.playersList)
+      ? payload.playersList
+      : Array.isArray(payload.players)
+        ? payload.players
+        : state.fivem.players;
+  const playerCount = typeof payload.players === "number" ? payload.players : onlinePlayers.length;
+
   state.fivem.status = {
     ...state.fivem.status,
     ...payload,
+    players: playerCount,
+    currentPlayers: playerCount,
+    onlinePlayers,
     online: true,
     updatedAt: new Date().toISOString(),
     websiteApiStatus: "online"
   };
-  if (Array.isArray(payload.players)) state.fivem.players = payload.players;
+  state.fivem.players = onlinePlayers;
   return getFiveMStatus();
 }
 

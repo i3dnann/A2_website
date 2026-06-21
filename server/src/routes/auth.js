@@ -35,7 +35,7 @@ router.get(
     const sessionToken = signUser(user);
     res.cookie("a2_session", sessionToken, cookieOptions);
     await auditAction({ req: { ...req, user }, action: "discord_login", targetType: "web_users", targetId: user.id, webhookCategory: "security" });
-    return res.redirect(`${env.FRONTEND_URL}/player/dashboard#a2_session=${encodeURIComponent(sessionToken)}`);
+    return res.redirect(`${env.FRONTEND_URL}/auth/complete?token=${encodeURIComponent(sessionToken)}`);
   })
 );
 
