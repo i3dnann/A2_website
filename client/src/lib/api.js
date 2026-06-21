@@ -10,18 +10,20 @@ export function apiUrl(path) {
 }
 
 async function request(path, options = {}) {
+  const { body, headers, ...requestOptions } = options;
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("a2_session_token") : "";
   const ngrokHeaders = API_BASE.includes("ngrok-free.") ? { "ngrok-skip-browser-warning": "true" } : {};
   const response = await fetch(`${API_BASE}${path}`, {
+    ...requestOptions,
+    cache: "no-store",
     credentials: "include",
     headers: {
       "content-type": "application/json",
       ...ngrokHeaders,
       ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
-      ...(options.headers || {})
+      ...(headers || {})
     },
-    ...options,
-    body: options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body
+    body: body && typeof body !== "string" ? JSON.stringify(body) : body
   });
 
   const contentType = response.headers.get("content-type") || "";

@@ -50,6 +50,13 @@ app.use(
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use(apiLimiter);
 app.use(optionalAuth);
+app.use("/api", (_req, res, next) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.set("Pragma", "no-cache");
+  res.set("Expires", "0");
+  res.set("Surrogate-Control", "no-store");
+  next();
+});
 
 app.get("/health", async (_req, res) => {
   const dbOk = await pingDatabase();
