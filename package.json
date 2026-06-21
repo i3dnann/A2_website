@@ -1,0 +1,16 @@
+{
+  "name": "a2-website-platform",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A2 Studio full-stack FiveM QBCore roleplay website platform.",
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start:server": "npm start --prefix server",
+    "check": "npm run check --prefix server && npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
