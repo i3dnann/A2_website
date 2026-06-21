@@ -99,7 +99,7 @@ export function AuthCompletePage() {
       })
       .catch((error) => {
         localStorage.removeItem("a2_session_token");
-        setMessage(`Login session could not be verified: ${error.message}`);
+        setMessage(`Login session could not be verified against ${apiUrl("/api/auth/me")}: ${error.message}`);
       });
   }, [navigate, params, setUser]);
 

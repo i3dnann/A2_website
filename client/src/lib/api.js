@@ -11,10 +11,12 @@ export function apiUrl(path) {
 
 async function request(path, options = {}) {
   const sessionToken = typeof window !== "undefined" ? localStorage.getItem("a2_session_token") : "";
+  const ngrokHeaders = API_BASE.includes("ngrok-free.") ? { "ngrok-skip-browser-warning": "true" } : {};
   const response = await fetch(`${API_BASE}${path}`, {
     credentials: "include",
     headers: {
       "content-type": "application/json",
+      ...ngrokHeaders,
       ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       ...(options.headers || {})
     },
