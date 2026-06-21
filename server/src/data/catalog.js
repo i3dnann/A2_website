@@ -1,8 +1,8 @@
 export const DEFAULT_SETTINGS = {
   websiteName: "A2 Studio",
-  logoUrl: "",
-  faviconUrl: "",
-  primaryColor: "#b7fe1a",
+  logoUrl: "/assets/gotham-logo.png",
+  faviconUrl: "/assets/gotham-logo.png",
+  primaryColor: "#8b5cf6",
   backgroundColor: "#000000",
   textColor: "#ffffff",
   secondaryColor: "#111111",
@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS = {
   heroSubtitle: "Premium FiveM community",
   heroDescription:
     "A serious, story-driven QBCore roleplay community with creator rosters, live streams, events, support, careers, and player account tools.",
-  heroBackgroundImage: "",
+  heroBackgroundImage: "/assets/gotham-banner.gif",
   heroBackgroundVideo: "",
   heroOverlayOpacity: 78,
   heroPrimaryButtonText: "Join Discord",

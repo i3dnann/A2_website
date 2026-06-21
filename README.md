@@ -110,6 +110,13 @@ Login as a Master Admin, then use:
 - `/admin/home` for hero text, background, buttons, and store/Discord/FiveM links.
 - `/admin/theme` for colors.
 
+Default branding assets are stored in:
+
+- `client/public/assets/gotham-banner.gif`
+- `client/public/assets/gotham-logo.png`
+
+The default settings use those files as the hero background, site logo, and favicon. Replace the files or update `/admin/home` and `/admin/settings` to change them without touching code.
+
 ## Deployment
 
 Frontend deploys from `/client` to Netlify. Backend runs separately on a VPS with Node.js and MySQL access. See [INSTALL.md](INSTALL.md) and [DEPLOY_NETLIFY.md](DEPLOY_NETLIFY.md).

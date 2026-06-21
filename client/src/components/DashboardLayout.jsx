@@ -20,7 +20,9 @@ export function DashboardLayout() {
     <div className="a2-shell min-h-screen bg-black">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-a2-border bg-black/88 p-4 backdrop-blur-xl lg:block">
         <NavLink to="/" className="mb-6 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-lg border border-a2-green/40 bg-a2-green/10 font-black text-a2-green">A2</div>
+          <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-a2-green/40 bg-a2-green/10 font-black text-a2-green">
+            {settings.logoUrl ? <img src={settings.logoUrl} className="h-full w-full rounded-full object-cover" alt={settings.websiteName || "A2 Studio"} /> : "A2"}
+          </div>
           <div className="min-w-0">
             <p className="truncate font-black">{settings.websiteName || "A2 Studio"}</p>
             <p className="truncate text-xs text-white/45">{user?.username || "Dashboard"}</p>

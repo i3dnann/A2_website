@@ -18,8 +18,8 @@ export function PublicLayout() {
       <header className="sticky top-0 z-40 border-b border-a2-border bg-black/82 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link to="/" className="flex min-w-0 items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-a2-green/40 bg-a2-green/10 font-black text-a2-green">
-              {settings.logoUrl ? <img src={settings.logoUrl} className="h-full w-full rounded-lg object-cover" alt={settings.websiteName || "A2 Studio"} /> : "A2"}
+            <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full border border-a2-green/40 bg-a2-green/10 font-black text-a2-green">
+              {settings.logoUrl ? <img src={settings.logoUrl} className="h-full w-full rounded-full object-cover" alt={settings.websiteName || "A2 Studio"} /> : "A2"}
             </div>
             <div className="min-w-0">
               <p className="truncate text-base font-black">{settings.websiteName || "A2 Studio"}</p>

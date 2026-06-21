@@ -35,7 +35,7 @@ export default function Home() {
               <Radio size={15} />
               {home.heroSubtitle || "Premium FiveM community"}
             </div>
-            {home.logoUrl && <img src={home.logoUrl} alt={home.websiteName || "A2 Studio"} className="mb-5 h-20 w-20 rounded-lg object-cover" />}
+            {home.logoUrl && <img src={home.logoUrl} alt={home.websiteName || "A2 Studio"} className="mb-5 h-24 w-24 rounded-full border border-a2-green/40 object-cover shadow-glow" />}
             <h1 className="text-4xl font-black tracking-normal text-white md:text-6xl">{home.heroTitle || home.websiteName || "A2 Studio"}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-white/68">{home.heroDescription}</p>
             <div className="mt-8 flex flex-wrap gap-3">

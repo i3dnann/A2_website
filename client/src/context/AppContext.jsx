@@ -3,7 +3,9 @@ import { api } from "../lib/api.js";
 
 const defaultSettings = {
   websiteName: "A2 Studio",
-  primaryColor: "#b7fe1a",
+  logoUrl: "/assets/gotham-logo.png",
+  faviconUrl: "/assets/gotham-logo.png",
+  primaryColor: "#8b5cf6",
   backgroundColor: "#000000",
   textColor: "#ffffff",
   secondaryColor: "#111111",
@@ -16,6 +18,7 @@ const defaultSettings = {
   heroTitle: "A2 Studio Roleplay",
   heroSubtitle: "Premium FiveM community",
   heroDescription: "A serious, story-driven QBCore roleplay community.",
+  heroBackgroundImage: "/assets/gotham-banner.gif",
   livePageEnabled: true,
   maintenanceMode: false,
   performanceMode: false
@@ -67,6 +70,13 @@ export function AppProvider({ children }) {
     root.style.setProperty("--color-warning", settings.warningColor || defaultSettings.warningColor);
     root.style.setProperty("--color-success", settings.successColor || defaultSettings.successColor);
     document.title = settings.websiteName || defaultSettings.websiteName;
+    let icon = document.querySelector("link[rel='icon']");
+    if (!icon) {
+      icon = document.createElement("link");
+      icon.rel = "icon";
+      document.head.appendChild(icon);
+    }
+    icon.href = settings.faviconUrl || settings.logoUrl || defaultSettings.faviconUrl;
     document.body.classList.toggle("performance-mode", Boolean(settings.performanceMode));
   }, [settings]);
 
