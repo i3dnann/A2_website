@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
+import { fontStack, googleFontsUrl } from "../data/fonts.js";
 
 const PURPLE = "#8b5cf6";
 
@@ -17,6 +18,11 @@ const defaultSettings = {
   dangerColor: "#ff3333",
   warningColor: "#ffaa00",
   successColor: PURPLE,
+  headerFont: "Gotham Regular",
+  textFont: "Inter",
+  buttonFont: "Montserrat",
+  adobeFontsKitUrl: "",
+  websiteAnimationType: "smooth-fade",
   heroTitle: "Gotham City",
   heroSubtitle: "Gotham City FiveM server",
   heroDescription: "FiveM Roleplay Server",
@@ -68,6 +74,21 @@ function asList(value) {
   if (Array.isArray(value)) return value.filter(Boolean).map(String);
   if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
   return [];
+}
+
+function ensureStylesheet(id, href) {
+  let link = document.getElementById(id);
+  if (!href) {
+    link?.remove();
+    return;
+  }
+  if (!link) {
+    link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }
+  if (link.href !== href) link.href = href;
 }
 
 const AppContext = createContext(null);
@@ -129,6 +150,12 @@ export function AppProvider({ children }) {
     root.style.setProperty("--color-danger", settings.dangerColor || defaultSettings.dangerColor);
     root.style.setProperty("--color-warning", settings.warningColor || defaultSettings.warningColor);
     root.style.setProperty("--color-success", settings.successColor || defaultSettings.successColor);
+    root.style.setProperty("--font-heading", fontStack(settings.headerFont || defaultSettings.headerFont));
+    root.style.setProperty("--font-body", fontStack(settings.textFont || defaultSettings.textFont));
+    root.style.setProperty("--font-button", fontStack(settings.buttonFont || defaultSettings.buttonFont));
+    document.body.dataset.animation = settings.websiteAnimationType || defaultSettings.websiteAnimationType;
+    ensureStylesheet("gotham-google-fonts", googleFontsUrl([settings.headerFont, settings.textFont, settings.buttonFont, settings.maintenanceFont]));
+    ensureStylesheet("gotham-adobe-fonts", settings.adobeFontsKitUrl || "");
     document.title = settings.websiteName || defaultSettings.websiteName;
     let icon = document.querySelector("link[rel='icon']");
     if (!icon) {
