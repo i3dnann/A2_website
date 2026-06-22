@@ -26,7 +26,7 @@ const fonts = {
   Impact: "Impact, Haettenschweiler, Arial Black, sans-serif"
 };
 
-export default function MaintenanceScreen({ settings = {} }) {
+export default function MaintenanceScreen({ settings = {}, onExit }) {
   const [now, setNow] = useState(Date.now());
   const audioRef = useRef(null);
   const endAt = targetMs(settings);
@@ -43,8 +43,8 @@ export default function MaintenanceScreen({ settings = {} }) {
   }, []);
 
   useEffect(() => {
-    if (endAt && remaining <= 0) window.location.reload();
-  }, [endAt, remaining]);
+    if (!onExit && endAt && remaining <= 0) window.location.reload();
+  }, [endAt, remaining, onExit]);
 
   const startSound = async () => {
     if (!audioRef.current) return;
@@ -58,6 +58,7 @@ export default function MaintenanceScreen({ settings = {} }) {
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop />}
       <div className="maintenance-lightning" />
       <div className="maintenance-lightning second" />
+      {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
       <section className="maintenance-card">
         <div className="maintenance-icon"><Construction size={38} /></div>
         <h1 style={{ fontFamily }}>{title}</h1>
