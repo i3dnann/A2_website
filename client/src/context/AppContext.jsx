@@ -22,6 +22,13 @@ const defaultSettings = {
   mapImageUrl: "/assets/fivem-map.svg",
   livePageEnabled: true,
   maintenanceMode: false,
+  maintenanceTitle: "The city is being rebuilt in the shadows",
+  maintenanceSubtitle: "Gotham City will return soon.",
+  maintenanceEndsAt: "",
+  maintenanceCountdownEnabled: true,
+  maintenanceSoundUrl: "",
+  maintenanceVolume: 35,
+  maintenanceFont: "Orbitron",
   performanceMode: false
 };
 
@@ -88,13 +95,8 @@ export function AppProvider({ children }) {
       user,
       setUser,
       providers,
-      setProviders,
       loading,
-      apiHealthy,
-      hasPermission(permission) {
-        const permissions = user?.permissions || [];
-        return permissions.includes("master_access") || permissions.includes(permission);
-      }
+      apiHealthy
     }),
     [settings, user, providers, loading, apiHealthy]
   );
