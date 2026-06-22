@@ -134,6 +134,7 @@
 }
 
 .maintenance-exit,
+.maintenance-login,
 .maintenance-volume {
   border: 1px solid rgba(167, 139, 250, 0.45);
   border-radius: 999px;
@@ -142,16 +143,36 @@
   box-shadow: 0 0 24px rgba(139, 92, 246, 0.16);
 }
 
-.maintenance-exit {
+.maintenance-exit,
+.maintenance-login {
   position: absolute;
   top: 1.25rem;
-  right: 1.25rem;
   z-index: 5;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   padding: 0.82rem 1.2rem;
   cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.maintenance-login {
+  right: 1.25rem;
+}
+
+.maintenance-exit {
+  left: 1.25rem;
+}
+
+.maintenance-login:hover,
+.maintenance-exit:hover {
+  border-color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.18);
+  transform: translateY(-1px);
 }
 
 .maintenance-volume {
@@ -226,4 +247,12 @@
   .maintenance-screen { padding: 1.1rem; }
   .maintenance-countdown { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .maintenance-card { padding: 1rem 0; }
+  .maintenance-login,
+  .maintenance-exit {
+    top: 0.85rem;
+    padding: 0.68rem 0.9rem;
+    font-size: 0.75rem;
+  }
+  .maintenance-login { right: 0.85rem; }
+  .maintenance-exit { left: 0.85rem; }
 }
