@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Construction, Volume2 } from "lucide-react";
+import { Construction, LogIn, Volume2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import "./MaintenanceScreen.css";
 
 function targetMs(settings = {}) {
@@ -75,6 +76,9 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop preload="auto" />}
       <div className="maintenance-lightning" />
       <div className="maintenance-lightning second" />
+      <Link to="/login" className="maintenance-login" onPointerDown={(event) => event.stopPropagation()}>
+        <LogIn size={17} /> Admin Login
+      </Link>
       {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
       <section className="maintenance-card">
         <div className="maintenance-icon"><Construction size={38} /></div>
