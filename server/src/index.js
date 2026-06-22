@@ -18,6 +18,7 @@ import { checkAllStreamers } from "./services/streamerService.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
 import adminTicketsRouter from "./routes/adminTickets.js";
+import maintenanceAdminRouter from "./routes/maintenanceAdmin.js";
 import adminRouter from "./routes/admin.js";
 import playerTicketLocksRouter from "./routes/playerTicketLocks.js";
 import playerRouter from "./routes/player.js";
@@ -83,6 +84,7 @@ app.use("/api/player", playerTicketLocksRouter);
 app.use("/api/player", playerRouter);
 app.use("/api/account", accountRouter);
 app.use("/api/admin", adminTicketsRouter);
+app.use("/api/admin/maintenance", maintenanceAdminRouter);
 app.use("/api/admin", adminRouter);
 
 if (fs.existsSync(clientDistPath)) {
