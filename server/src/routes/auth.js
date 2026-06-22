@@ -96,10 +96,22 @@ router.post(
   })
 );
 
+router.get("/discord/link-url", requireAuth, authLimiter, (req, res) => {
+  if (!discordConfigured()) return res.status(503).json({ error: "discord_oauth_not_configured" });
+  const state = createState({ provider: "discord", mode: "link", userId: req.user.id });
+  res.json({ url: discordAuthorizeUrl(state) });
+});
+
+router.get("/steam/link-url", requireAuth, authLimiter, (req, res) => {
+  if (!env.STEAM_REALM || !env.STEAM_RETURN_URL) return res.status(503).json({ error: "steam_openid_not_configured" });
+  const state = createState({ provider: "steam", mode: "link", userId: req.user.id });
+  res.json({ url: steamOpenIdUrl(state) });
+});
+
 router.get("/discord", authLimiter, (req, res) => {
   if (!discordConfigured()) return res.status(503).json({ error: "discord_oauth_not_configured" });
   const mode = req.query.mode === "link" ? "link" : "login";
-  if (mode === "link" && !req.user) return res.status(401).json({ error: "login_required" });
+  if (mode === "link" && !req.user) return res.status(401).json({ error: "login_required", message: "Use /api/auth/discord/link-url from the logged-in account page." });
   const state = createState({ provider: "discord", mode, userId: req.user?.id || null });
   res.redirect(discordAuthorizeUrl(state));
 });
@@ -166,7 +178,7 @@ async function verifySteamOpenId(query) {
 router.get("/steam", authLimiter, (req, res) => {
   if (!env.STEAM_REALM || !env.STEAM_RETURN_URL) return res.status(503).json({ error: "steam_openid_not_configured" });
   const mode = req.query.mode === "link" ? "link" : "login";
-  if (mode === "link" && !req.user) return res.status(401).json({ error: "login_required" });
+  if (mode === "link" && !req.user) return res.status(401).json({ error: "login_required", message: "Use /api/auth/steam/link-url from the logged-in account page." });
   const state = createState({ provider: "steam", mode, userId: req.user?.id || null });
   res.redirect(steamOpenIdUrl(state));
 });
