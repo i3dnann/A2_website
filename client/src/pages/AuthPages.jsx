@@ -43,9 +43,7 @@ export function LoginPage({ mode = "login" }) {
       <section>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Account access</p>
         <h1 className="mt-3 text-4xl font-black md:text-6xl">{isRegister ? "Create your account" : "Welcome back"}</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-8 text-white/62">
-          Use email, Discord, or Steam. Once Discord and Steam are linked from your account, they stay saved and do not need to be connected again each login.
-        </p>
+        <p className="mt-5 max-w-2xl text-lg leading-8 text-white/62">Use email, Discord, or Steam.</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ProviderButton href={apiUrl("/api/auth/discord")} disabled={!providers?.discord?.configured} icon={Disc3} label="Continue with Discord" />
           <ProviderButton href={apiUrl("/api/auth/steam")} disabled={!providers?.steam?.configured} icon={Gamepad2} label="Continue with Steam" />
