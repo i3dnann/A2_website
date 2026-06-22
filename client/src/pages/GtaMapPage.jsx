@@ -6,7 +6,7 @@ import { Card } from "../components/Card.jsx";
 const TILE_SIZE = 256;
 const TILE_LEVEL = 4;
 const TILE_COUNT = 2 ** TILE_LEVEL;
-const GTA_TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/atlas";
+const GTA_TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/mainmap";
 
 const DEFAULT_ZONE_TYPES = [
   "all",
@@ -178,7 +178,7 @@ export default function GtaMapPage() {
           <p className="text-sm font-black uppercase tracking-widest text-a2-green">City map</p>
           <h1 className="mt-3 text-4xl font-black md:text-5xl">3D GTA V Map</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-            Real GTA V atlas tiles with 3D perspective, pan, zoom, clickable city pins, and zone information.
+            Complete GTA V main map with 3D perspective, pan, zoom, clickable city pins, and zone information.
           </p>
         </div>
         <div className="rounded-2xl border border-a2-border bg-black/45 px-4 py-3 text-sm text-white/50">
@@ -229,7 +229,7 @@ export default function GtaMapPage() {
                 style={{
                   width: TILE_COUNT * TILE_SIZE,
                   height: TILE_COUNT * TILE_SIZE,
-                  transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotateX(12deg)`
+                  transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotateX(12deg)`
                 }}
               >
                 <GtaTileLayer />
