@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, MapPin, Plus, RefreshCw, Save, Search, Trash2 } from "lucide-react";
+import { Check, MapPin, Minus, Plus, RefreshCw, RotateCcw, Save, Search, Trash2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { Card } from "../components/Card.jsx";
 import { Button } from "../components/Button.jsx";
@@ -79,7 +79,11 @@ export default function AdminMapPage() {
   const [draft, setDraft] = useState(defaults);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
-  const mapRef = useRef(null);
+  const [zoom, setZoom] = useState(0.36);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(null);
+  const planeRef = useRef(null);
+  const movedRef = useRef(false);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -110,8 +114,42 @@ export default function AdminMapPage() {
     setStatus("");
   };
 
+  const startDrag = (event) => {
+    if (event.button !== 0) return;
+    movedRef.current = false;
+    setDragging({ x: event.clientX, y: event.clientY, offset });
+  };
+
+  useEffect(() => {
+    if (!dragging) return undefined;
+    const move = (event) => {
+      const dx = event.clientX - dragging.x;
+      const dy = event.clientY - dragging.y;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) movedRef.current = true;
+      setOffset({ x: dragging.offset.x + dx, y: dragging.offset.y + dy });
+    };
+    const stop = () => {
+      setDragging(null);
+      window.setTimeout(() => {
+        movedRef.current = false;
+      }, 0);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+    };
+  }, [dragging]);
+
+  const resetView = () => {
+    setZoom(0.36);
+    setOffset({ x: 0, y: 0 });
+  };
+
   const placePin = (event) => {
-    const rect = mapRef.current?.getBoundingClientRect();
+    if (movedRef.current) return;
+    const rect = planeRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
     const y = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
@@ -157,11 +195,11 @@ export default function AdminMapPage() {
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">CMS</p>
         <h1 className="mt-3 text-3xl font-black md:text-5xl">3D GTA map pin editor</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-white/50">
-          Add safe zones, dangerous zones, event locations, shops, and other pins. Click the real GTA V map preview to place the selected pin.
+          Same 3D GTA V map as the public map page. Zoom, pan, reset, then click the map to place the selected pin.
         </p>
       </header>
 
-      <div className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
+      <div className="grid gap-5 xl:grid-cols-[0.72fr_1.28fr]">
         <Card>
           <div className="mb-4 flex items-center gap-2">
             <label className="flex flex-1 items-center gap-2 rounded-lg border border-a2-border bg-black/55 px-3 py-2">
@@ -169,18 +207,13 @@ export default function AdminMapPage() {
               <input className="w-full bg-transparent text-sm outline-none" placeholder="Search map zones..." value={q} onChange={(event) => setQ(event.target.value)} />
             </label>
             <Button type="button" variant="ghost" onClick={loadRows}><RefreshCw size={15} /></Button>
-            <Button type="button" variant="ghost" onClick={() => selectZone(null)}><Plus size={15} /> New</Button>
           </div>
+          <Button type="button" variant="ghost" onClick={() => selectZone(null)}><Plus size={15} /> New pin</Button>
 
-          <div className="grid max-h-[720px] gap-2 overflow-auto pr-1">
+          <div className="mt-4 grid max-h-[620px] gap-2 overflow-auto pr-1">
             {(loading ? Array.from({ length: 7 }) : filtered).map((zone, index) => (
               loading ? <div key={index} className="h-20 rounded-xl skeleton" /> : (
-                <button
-                  key={zone.id}
-                  type="button"
-                  className={`rounded-xl border p-4 text-left transition ${selected?.id === zone.id ? "border-a2-green bg-a2-green/10" : "border-a2-border bg-white/[0.03] hover:border-a2-green/45"}`}
-                  onClick={() => selectZone(zone)}
-                >
+                <button key={zone.id} type="button" className={`rounded-xl border p-4 text-left transition ${selected?.id === zone.id ? "border-a2-green bg-a2-green/10" : "border-a2-border bg-white/[0.03] hover:border-a2-green/45"}`} onClick={() => selectZone(zone)}>
                   <span className="flex items-center gap-2 font-black"><MapPin size={16} style={{ color: zone.color || "#b7fe1a" }} />{zone.zone_name}</span>
                   <span className="mt-1 block text-xs font-bold text-a2-green">{zone.zone_type || "Point of Interest"}</span>
                   <span className="mt-2 line-clamp-2 block text-sm text-white/45">{zone.description || "No note"}</span>
@@ -193,33 +226,46 @@ export default function AdminMapPage() {
 
         <div className="grid gap-5">
           <Card>
-            <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-xl font-black">Visual pin placement</h2>
-                <p className="mt-1 text-sm text-white/45">Click anywhere on the GTA map to move this pin. Then press Save.</p>
+                <p className="mt-1 text-sm text-white/45">Drag to move the map. Use + / - to zoom. Click the map to place the pin.</p>
               </div>
               <span className="rounded-full border border-a2-border bg-black/40 px-3 py-1 text-xs font-bold text-white/55">
                 X {numberValue(draft.position_x).toFixed(2)} / Y {numberValue(draft.position_y).toFixed(2)}
               </span>
             </div>
-            <div className="admin-gta-map admin-gta-map-tiles" ref={mapRef} onClick={placePin}>
-              <div className="admin-gta-map-tile-plane">
-                <GtaTileLayer />
+
+            <div className="gta-map-shell admin-gta-map-shell">
+              <div className="gta-map-controls">
+                <button type="button" onClick={() => setZoom((value) => clamp(value + 0.08, 0.24, 1.35))} aria-label="Zoom in"><Plus size={16} /></button>
+                <button type="button" onClick={() => setZoom((value) => clamp(value - 0.08, 0.24, 1.35))} aria-label="Zoom out"><Minus size={16} /></button>
+                <button type="button" onClick={resetView} aria-label="Reset map"><RotateCcw size={16} /></button>
               </div>
-              {rows.map((zone) => (
-                <span
-                  key={zone.id}
-                  className="admin-gta-map-pin is-muted"
-                  style={{ left: `${numberValue(zone.position_x)}%`, top: `${numberValue(zone.position_y)}%`, "--pin-color": zone.color || "#b7fe1a" }}
-                  title={zone.zone_name}
-                />
-              ))}
-              <span
-                className="admin-gta-map-pin is-editing"
-                style={{ left: `${numberValue(draft.position_x)}%`, top: `${numberValue(draft.position_y)}%`, "--pin-color": draft.color || "#b7fe1a" }}
-              >
-                <MapPin size={20} />
-              </span>
+
+              <div className="gta-map-stage" onPointerDown={startDrag} onWheel={(event) => { event.preventDefault(); setZoom((value) => clamp(value + (event.deltaY > 0 ? -0.04 : 0.04), 0.24, 1.35)); }}>
+                <div
+                  ref={planeRef}
+                  className="gta-map-plane gta-map-plane-tiles"
+                  onClick={placePin}
+                  style={{
+                    width: TILE_COUNT * TILE_SIZE,
+                    height: TILE_COUNT * TILE_SIZE,
+                    transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotateX(12deg)`
+                  }}
+                >
+                  <GtaTileLayer />
+                  <div className="gta-map-grid" />
+                  {rows.map((zone) => (
+                    <button key={zone.id} type="button" className={`gta-map-marker ${selected?.id === zone.id ? "is-active" : ""}`} style={{ left: `${numberValue(zone.position_x)}%`, top: `${numberValue(zone.position_y)}%`, "--pin-color": zone.color || "#b7fe1a" }} onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); selectZone(zone); }}>
+                      <span className="gta-map-marker-core"><MapPin size={20} /></span>
+                    </button>
+                  ))}
+                  <span className="gta-map-marker is-active" style={{ left: `${numberValue(draft.position_x)}%`, top: `${numberValue(draft.position_y)}%`, "--pin-color": draft.color || "#b7fe1a" }}>
+                    <span className="gta-map-marker-core"><MapPin size={20} /></span>
+                  </span>
+                </div>
+              </div>
             </div>
           </Card>
 
