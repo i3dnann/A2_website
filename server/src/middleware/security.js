@@ -17,8 +17,8 @@ export const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "application/pdf"]);
-const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".pdf"]);
+const allowedTypes = new Set(["image/png", "image/jpeg", "image/webp", "application/pdf", "audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4", "audio/x-m4a"]);
+const allowedExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".pdf", ".mp3", ".wav", ".ogg", ".m4a"]);
 const blockedExtensions = new Set([".exe", ".bat", ".cmd", ".js", ".php", ".sh", ".dll", ".msi", ".ps1", ".vbs"]);
 
 const storage = multer.diskStorage({
@@ -36,6 +36,6 @@ export const upload = multer({
     const ext = path.extname(file.originalname || "").toLowerCase();
     if (blockedExtensions.has(ext)) return cb(new Error("Executable uploads are not allowed"));
     if (allowedTypes.has(file.mimetype) && allowedExtensions.has(ext)) return cb(null, true);
-    return cb(new Error("Only png, jpg, jpeg, webp, and pdf uploads are allowed"));
+    return cb(new Error("Only png, jpg, jpeg, webp, pdf, mp3, wav, ogg, and m4a uploads are allowed"));
   }
 });
