@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Construction, LogIn, Volume2 } from "lucide-react";
+import { LogIn, MapPin, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./MaintenanceScreen.css";
 
@@ -25,6 +25,10 @@ function volumeValue(value) {
   return Math.min(100, Math.max(5, number));
 }
 
+function countdownEnabled(settings = {}) {
+  return settings.maintenanceCountdownEnabled !== false;
+}
+
 const fonts = {
   Orbitron: "Orbitron, Inter, sans-serif",
   Inter: "Inter, sans-serif",
@@ -38,12 +42,14 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   const [volume, setVolume] = useState(volumeValue(settings.maintenanceVolume));
   const audioRef = useRef(null);
   const endAt = targetMs(settings);
+  const showCountdown = countdownEnabled(settings);
   const remaining = endAt ? endAt - now : 0;
   const time = useMemo(() => parts(remaining), [remaining]);
-  const title = settings.maintenanceTitle || "Website maintenance";
-  const subtitle = settings.maintenanceSubtitle || "We are updating the website. Access will open automatically when the timer ends.";
+  const title = settings.maintenanceTitle || "The city is being rebuilt in the shadows";
+  const subtitle = settings.maintenanceSubtitle || "Gotham City is under maintenance. The signal will return soon.";
   const fontFamily = fonts[settings.maintenanceFont] || fonts.Orbitron;
   const soundUrl = settings.maintenanceSoundUrl || "";
+  const brand = settings.websiteName || "Gotham City";
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -51,8 +57,8 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   }, []);
 
   useEffect(() => {
-    if (!onExit && endAt && remaining <= 0) window.location.reload();
-  }, [endAt, remaining, onExit]);
+    if (!onExit && showCountdown && endAt && remaining <= 0) window.location.reload();
+  }, [endAt, remaining, onExit, showCountdown]);
 
   const startSound = async (nextVolume = volume) => {
     if (!audioRef.current) return;
@@ -74,28 +80,50 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   return (
     <main className="maintenance-screen" onPointerDown={() => startSound(volume)}>
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop preload="auto" />}
-      <div className="maintenance-lightning" />
-      <div className="maintenance-lightning second" />
-      <Link to="/login" className="maintenance-login" onPointerDown={(event) => event.stopPropagation()}>
-        <LogIn size={17} /> Admin Login
-      </Link>
-      {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
+      <div className="maintenance-orb one" />
+      <div className="maintenance-orb two" />
       <section className="maintenance-card">
-        <div className="maintenance-icon"><Construction size={38} /></div>
-        <h1 style={{ fontFamily }}>{title}</h1>
-        <p>{subtitle}</p>
-        <div className="maintenance-countdown" style={{ fontFamily }}>
-          <TimeBox label="Days" value={time.days} />
-          <TimeBox label="Hours" value={time.hours} />
-          <TimeBox label="Minutes" value={time.minutes} />
-          <TimeBox label="Seconds" value={time.seconds} />
+        <header className="maintenance-topbar">
+          <div className="maintenance-brand">
+            <span className="maintenance-logo-mark">GC</span>
+            <span>{brand}</span>
+          </div>
+          <div className="maintenance-top-actions">
+            <Link to="/login" className="maintenance-login" onPointerDown={(event) => event.stopPropagation()}>
+              <LogIn size={16} /> Admin Login
+            </Link>
+            {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
+          </div>
+        </header>
+
+        <div className="maintenance-content">
+          <p className="maintenance-kicker">Maintenance Mode</p>
+          <h1 style={{ fontFamily }}>{title}</h1>
+          <p className="maintenance-subtitle">{subtitle}</p>
+
+          {showCountdown && (
+            <div className="maintenance-countdown" style={{ fontFamily }}>
+              <TimeBox label="Days" value={time.days} />
+              <TimeBox label="Hours" value={time.hours} />
+              <TimeBox label="Minutes" value={time.minutes} />
+              <TimeBox label="Seconds" value={time.seconds} />
+            </div>
+          )}
+
+          {!showCountdown && <div className="maintenance-no-countdown">The countdown is hidden by city command.</div>}
+
+          {soundUrl && (
+            <label className="maintenance-volume">
+              <span><Volume2 size={16} /> Volume {volume}%</span>
+              <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
+            </label>
+          )}
         </div>
-        {soundUrl && (
-          <label className="maintenance-volume">
-            <span><Volume2 size={17} /> Volume {volume}%</span>
-            <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
-          </label>
-        )}
+
+        <footer className="maintenance-footer">
+          <span>The city is being rebuilt in the shadows</span>
+          <span className="maintenance-location"><MapPin size={18} /> Gotham Signal</span>
+        </footer>
       </section>
     </main>
   );
