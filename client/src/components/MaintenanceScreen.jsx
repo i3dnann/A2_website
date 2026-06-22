@@ -29,6 +29,15 @@ function countdownEnabled(settings = {}) {
   return settings.maintenanceCountdownEnabled !== false;
 }
 
+function youtubeEmbedUrl(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const match = raw.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  const id = match?.[1];
+  if (!id) return "";
+  return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`;
+}
+
 const fonts = {
   Orbitron: "Orbitron, Inter, sans-serif",
   Inter: "Inter, sans-serif",
@@ -49,6 +58,7 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   const subtitle = settings.maintenanceSubtitle || "Gotham City is under maintenance. The signal will return soon.";
   const fontFamily = fonts[settings.maintenanceFont] || fonts.Orbitron;
   const soundUrl = settings.maintenanceSoundUrl || "";
+  const videoUrl = youtubeEmbedUrl(settings.maintenanceYoutubeUrl || settings.maintenanceVideoUrl);
   const brand = settings.websiteName || "Gotham City";
 
   useEffect(() => {
@@ -79,6 +89,7 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
 
   return (
     <main className="maintenance-screen" onPointerDown={() => startSound(volume)}>
+      {videoUrl && <iframe className="maintenance-video" src={videoUrl} title="Maintenance background video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />}
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop preload="auto" />}
       <div className="maintenance-orb one" />
       <div className="maintenance-orb two" />
@@ -96,6 +107,13 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
           </div>
         </header>
 
+        {soundUrl && (
+          <label className="maintenance-volume" onPointerDown={(event) => event.stopPropagation()}>
+            <span><Volume2 size={16} /> {volume}%</span>
+            <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
+          </label>
+        )}
+
         <div className="maintenance-content">
           <p className="maintenance-kicker">Maintenance Mode</p>
           <h1 style={{ fontFamily }}>{title}</h1>
@@ -108,15 +126,6 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
               <TimeBox label="Minutes" value={time.minutes} />
               <TimeBox label="Seconds" value={time.seconds} />
             </div>
-          )}
-
-          {!showCountdown && <div className="maintenance-no-countdown">The countdown is hidden by city command.</div>}
-
-          {soundUrl && (
-            <label className="maintenance-volume">
-              <span><Volume2 size={16} /> Volume {volume}%</span>
-              <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
-            </label>
           )}
         </div>
 
