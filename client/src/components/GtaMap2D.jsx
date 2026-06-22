@@ -6,6 +6,9 @@ const TILE_LEVEL = 3;
 const TILE_COUNT = 2 ** TILE_LEVEL;
 const MAP_SIZE = TILE_SIZE * TILE_COUNT;
 const TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/mainmap";
+const DEFAULT_ZOOM = 0.28;
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 1.8;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -37,7 +40,7 @@ export function GtaTiles() {
 }
 
 export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = false, draft, onPlace }) {
-  const [zoom, setZoom] = useState(0.44);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(null);
   const movedRef = useRef(false);
@@ -46,7 +49,7 @@ export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = 
   const visibleZones = useMemo(() => zones.filter(Boolean), [zones]);
 
   const resetView = () => {
-    setZoom(0.44);
+    setZoom(DEFAULT_ZOOM);
     setOffset({ x: 0, y: 0 });
   };
 
@@ -90,8 +93,8 @@ export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = 
   return (
     <div className="gta-map-shell" style={{ minHeight: editable ? 660 : 620 }}>
       <div className="gta-map-controls">
-        <button type="button" onClick={() => setZoom((value) => clamp(value + 0.1, 0.28, 1.8))} aria-label="Zoom in"><Plus size={16} /></button>
-        <button type="button" onClick={() => setZoom((value) => clamp(value - 0.1, 0.28, 1.8))} aria-label="Zoom out"><Minus size={16} /></button>
+        <button type="button" onClick={() => setZoom((value) => clamp(value + 0.1, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom in"><Plus size={16} /></button>
+        <button type="button" onClick={() => setZoom((value) => clamp(value - 0.1, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom out"><Minus size={16} /></button>
         <button type="button" onClick={resetView} aria-label="Reset map"><RotateCcw size={16} /></button>
       </div>
 
@@ -101,7 +104,7 @@ export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = 
         onPointerDown={startDrag}
         onWheel={(event) => {
           event.preventDefault();
-          setZoom((value) => clamp(value + (event.deltaY > 0 ? -0.06 : 0.06), 0.28, 1.8));
+          setZoom((value) => clamp(value + (event.deltaY > 0 ? -0.06 : 0.06), MIN_ZOOM, MAX_ZOOM));
         }}
       >
         <div
