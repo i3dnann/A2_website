@@ -11,7 +11,8 @@ import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import GtaMapPage from "./pages/GtaMapPage.jsx";
 import AdminMapPage from "./pages/AdminMapPage.jsx";
 import AdminTicketManager from "./components/AdminTicketManager.jsx";
-import { ForbiddenPage, MaintenancePage, NotFoundPage } from "./pages/SystemPages.jsx";
+import MaintenanceScreen from "./components/MaintenanceScreen.jsx";
+import { ForbiddenPage, NotFoundPage } from "./pages/SystemPages.jsx";
 import { PublicLayout } from "./components/PublicLayout.jsx";
 import { DashboardLayout } from "./components/DashboardLayout.jsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.jsx";
@@ -22,15 +23,30 @@ function Guarded({ permission, children }) {
   return <ProtectedRoute permission={permission}>{children}</ProtectedRoute>;
 }
 
+function maintenanceIsActive(settings = {}) {
+  if (!settings.maintenanceMode) return false;
+  const endAt = settings.maintenanceEndsAt ? new Date(settings.maintenanceEndsAt).getTime() : 0;
+  if (endAt && Number.isFinite(endAt) && endAt <= Date.now()) return false;
+  return true;
+}
+
+function canBypassMaintenance(user) {
+  const permissions = user?.permissions || [];
+  return permissions.includes("master_access") || permissions.includes("manage_home") || permissions.includes("manage_theme");
+}
+
 export default function App() {
   const { settings, user } = useApp();
   const location = useLocation();
-  const maintenance = settings.maintenanceMode && !user?.permissions?.includes("master_access");
+  const maintenance = maintenanceIsActive(settings) && !canBypassMaintenance(user);
+
+  if (maintenance) return <MaintenanceScreen settings={settings} />;
+
   return (
     <ErrorBoundary resetKey={location.pathname}>
       <Routes>
         <Route element={<PublicLayout />}>
-          <Route index element={maintenance ? <MaintenancePage /> : <Home />} />
+          <Route index element={<Home />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<LoginPage mode="register" />} />
           <Route path="/auth/complete" element={<AuthCompletePage />} />
