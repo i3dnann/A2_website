@@ -11,7 +11,8 @@ export function LoginPage({ mode = "login" }) {
   const navigate = useNavigate();
   const { settings, setUser, user } = useApp();
   const [isRegister, setIsRegister] = useState(mode === "register");
-  const [form, setForm] = useState({ username: "", email: "", password: "", terms: false });
+  const [remember, setRemember] = useState(() => localStorage.getItem("a2_remember_login") !== "false");
+  const [form, setForm] = useState(() => ({ username: "", email: localStorage.getItem("a2_remembered_email") || "", password: "", terms: false }));
   const [error, setError] = useState("");
   const { data: providers } = useApi(() => api.get("/api/auth/providers"), [], { discord: {}, steam: {} });
 
@@ -27,6 +28,9 @@ export function LoginPage({ mode = "login" }) {
         : { email: form.email, password: form.password };
       const response = await api.post(path, payload);
       localStorage.setItem("a2_session_token", response.token);
+      localStorage.setItem("a2_remember_login", remember ? "true" : "false");
+      if (remember) localStorage.setItem("a2_remembered_email", form.email);
+      else localStorage.removeItem("a2_remembered_email");
       setUser(response.user);
       navigate("/account");
     } catch (err) {
@@ -40,7 +44,7 @@ export function LoginPage({ mode = "login" }) {
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Account access</p>
         <h1 className="mt-3 text-4xl font-black md:text-6xl">{isRegister ? "Create your account" : "Welcome back"}</h1>
         <p className="mt-5 max-w-2xl text-lg leading-8 text-white/62">
-          Use email, Discord, or Steam. Steam must be connected before the account dashboard can show your own QBCore characters and stats.
+          Use email, Discord, or Steam. Once Discord and Steam are linked from your account, they stay saved and do not need to be connected again each login.
         </p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <ProviderButton href={apiUrl("/api/auth/discord")} disabled={!providers?.discord?.configured} icon={Disc3} label="Continue with Discord" />
@@ -68,6 +72,10 @@ export function LoginPage({ mode = "login" }) {
           <label className="grid gap-2 text-sm font-bold">
             Password
             <input className="form-input" type="password" minLength={isRegister ? 8 : 1} value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required />
+          </label>
+          <label className="flex items-center gap-3 rounded-lg border border-a2-border bg-white/[0.03] p-3 text-sm text-white/65">
+            <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} />
+            <span>Remember this login on this browser</span>
           </label>
           {isRegister && (
             <label className="flex items-start gap-3 rounded-lg border border-a2-border bg-white/[0.03] p-3 text-sm text-white/65">
