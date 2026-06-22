@@ -13,6 +13,7 @@ const defaultDraft = {
   maintenanceSubtitle: "Gotham City will return soon.",
   maintenanceEndsAt: "",
   maintenanceCountdownEnabled: true,
+  maintenanceYoutubeUrl: "",
   maintenanceSoundUrl: "",
   maintenanceVolume: 35,
   maintenanceFont: "Orbitron"
@@ -57,6 +58,7 @@ export default function MaintenanceSettingsPage() {
     maintenanceSubtitle: draft.maintenanceSubtitle || defaultDraft.maintenanceSubtitle,
     maintenanceEndsAt: draft.maintenanceEndsAt || "",
     maintenanceCountdownEnabled: draft.maintenanceCountdownEnabled !== false,
+    maintenanceYoutubeUrl: draft.maintenanceYoutubeUrl || "",
     maintenanceSoundUrl: draft.maintenanceSoundUrl || "",
     maintenanceVolume: volumeValue(draft.maintenanceVolume),
     maintenanceFont: draft.maintenanceFont || "Orbitron",
@@ -113,7 +115,7 @@ export default function MaintenanceSettingsPage() {
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Website control</p>
         <h1 className="mt-2 text-3xl font-black md:text-4xl">Maintenance mode</h1>
-        <p className="mt-2 max-w-3xl text-sm text-white/55">Control the maintenance page layout, countdown, headline, font, audio, and volume.</p>
+        <p className="mt-2 max-w-3xl text-sm text-white/55">Control the maintenance page, countdown, YouTube background video, headline, font, audio, and volume.</p>
       </header>
 
       <Card>
@@ -146,6 +148,12 @@ export default function MaintenanceSettingsPage() {
             <label className="grid gap-2 text-sm font-bold">
               Text under header
               <textarea className="form-input min-h-24" value={draft.maintenanceSubtitle || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSubtitle: event.target.value }))} />
+            </label>
+
+            <label className="grid gap-2 text-sm font-bold">
+              YouTube background video link
+              <input className="form-input" value={draft.maintenanceYoutubeUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceYoutubeUrl: event.target.value }))} placeholder="https://www.youtube.com/watch?v=VIDEO_ID" />
+              <span className="text-xs text-white/45">The video loops muted in the background. Your maintenance audio still uses the audio file setting below.</span>
             </label>
 
             {draft.maintenanceCountdownEnabled !== false && (
