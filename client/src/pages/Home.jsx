@@ -28,7 +28,12 @@ export default function Home() {
       <section className="relative min-h-[82vh] overflow-hidden">
         <img className="absolute inset-0 h-full w-full object-cover opacity-30" src={heroImage} alt="" loading="eager" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/78 to-black" style={{ opacity: Number(home.heroOverlayOpacity || 78) / 100 }} />
-        {!home.performanceMode && <div className="absolute inset-x-0 bottom-0 h-48 bg-[radial-gradient(circle_at_50%_100%,rgba(183,254,26,0.2),transparent_36rem)]" />}
+        {!home.performanceMode && (
+          <div
+            className="absolute inset-x-0 bottom-0 h-48"
+            style={{ background: "radial-gradient(circle at 50% 100%, rgba(139, 92, 246, 0.24), transparent 36rem)" }}
+          />
+        )}
         <div className="relative mx-auto flex min-h-[82vh] max-w-7xl items-center px-4 py-16">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="max-w-3xl">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-a2-green/35 bg-a2-green/10 px-3 py-1 text-sm font-bold text-a2-green">
