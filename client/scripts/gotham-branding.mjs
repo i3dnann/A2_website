@@ -25,9 +25,11 @@ const replacements = [
   ["FiveM community", "FiveM server"],
   ["QBCore roleplay community", "FiveM roleplay server"],
   ["QBCore roleplay", "FiveM roleplay"],
-  ["#b7fe1a", "#ef4444"],
-  ["b7fe1a", "ef4444"],
-  ["#35ff6b", "#38bdf8"]
+  ["#b7fe1a", "#8b5cf6"],
+  ["b7fe1a", "8b5cf6"],
+  ["#ef4444", "#8b5cf6"],
+  ["#35ff6b", "#8b5cf6"],
+  ["#38bdf8", "#8b5cf6"]
 ];
 
 const exactFiles = [
