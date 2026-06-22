@@ -1,0 +1,163 @@
+.maintenance-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(139, 92, 246, 0.28), transparent 24rem),
+    radial-gradient(circle at 12% 80%, rgba(99, 102, 241, 0.18), transparent 22rem),
+    linear-gradient(180deg, #05000d 0%, #000 68%);
+  color: #fff;
+}
+
+.maintenance-screen::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  transform: rotate(-7deg);
+  animation: maintenanceGrid 14s linear infinite;
+}
+
+.maintenance-card {
+  position: relative;
+  width: min(960px, 100%);
+  border: 1px solid rgba(139, 92, 246, 0.44);
+  border-radius: 2rem;
+  padding: clamp(2rem, 6vw, 5rem);
+  background: rgba(5, 5, 12, 0.72);
+  box-shadow: 0 0 90px rgba(139, 92, 246, 0.22), inset 0 0 60px rgba(139, 92, 246, 0.12);
+  text-align: center;
+  backdrop-filter: blur(18px);
+  animation: maintenanceRise 900ms ease both;
+}
+
+.maintenance-card h1 {
+  margin: 1rem 0 0;
+  font-size: clamp(3rem, 8vw, 7.5rem);
+  font-weight: 950;
+  line-height: 0.92;
+  letter-spacing: -0.07em;
+  text-transform: uppercase;
+  text-shadow: 0 0 26px rgba(139, 92, 246, 0.85), 0 0 70px rgba(139, 92, 246, 0.45);
+  animation: maintenanceTitle 2.4s ease-in-out infinite alternate;
+}
+
+.maintenance-card p {
+  margin: 1.5rem auto 0;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.8;
+}
+
+.maintenance-icon {
+  display: inline-grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border: 1px solid rgba(139, 92, 246, 0.55);
+  border-radius: 999px;
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.11);
+  box-shadow: 0 0 34px rgba(139, 92, 246, 0.35);
+}
+
+.maintenance-countdown {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.maintenance-countdown div {
+  border: 1px solid rgba(139, 92, 246, 0.32);
+  border-radius: 1.1rem;
+  padding: 1.15rem 0.65rem;
+  background: rgba(255, 255, 255, 0.045);
+  box-shadow: inset 0 0 22px rgba(139, 92, 246, 0.08);
+}
+
+.maintenance-countdown strong {
+  display: block;
+  font-size: clamp(2.2rem, 6vw, 5rem);
+  line-height: 1;
+  color: #ddd6fe;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.7);
+}
+
+.maintenance-countdown span {
+  display: block;
+  margin-top: 0.5rem;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.maintenance-sound {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  background: rgba(139, 92, 246, 0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.maintenance-lightning {
+  position: absolute;
+  top: -4rem;
+  left: 18%;
+  width: 8px;
+  height: 42vh;
+  background: linear-gradient(180deg, transparent, #fff, #a78bfa, transparent);
+  clip-path: polygon(45% 0, 100% 34%, 58% 34%, 84% 100%, 0 42%, 42% 42%);
+  filter: drop-shadow(0 0 28px #a78bfa);
+  opacity: 0;
+  animation: thunderStrike 4.2s infinite;
+}
+
+.maintenance-lightning.second {
+  left: auto;
+  right: 20%;
+  height: 34vh;
+  animation-delay: 1.6s;
+}
+
+@keyframes maintenanceGrid {
+  to { transform: rotate(-7deg) translate3d(-52px, 52px, 0); }
+}
+
+@keyframes maintenanceRise {
+  from { opacity: 0; transform: translateY(22px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes maintenanceTitle {
+  from { transform: translateY(0); filter: brightness(1); }
+  to { transform: translateY(-6px); filter: brightness(1.25); }
+}
+
+@keyframes thunderStrike {
+  0%, 86%, 100% { opacity: 0; transform: scaleY(0.7) translateY(-10px); }
+  88% { opacity: 1; transform: scaleY(1.15) translateY(0); }
+  90% { opacity: 0.35; }
+  92% { opacity: 1; }
+  94% { opacity: 0; }
+}
+
+@media (max-width: 700px) {
+  .maintenance-countdown { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .maintenance-card { padding: 1.5rem; border-radius: 1.35rem; }
+}
