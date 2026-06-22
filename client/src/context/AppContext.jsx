@@ -19,7 +19,7 @@ const defaultSettings = {
   successColor: PURPLE,
   heroTitle: "Gotham City",
   heroSubtitle: "Gotham City FiveM server",
-  heroDescription: "A serious, story-driven FiveM server with city news, creator roster, live streams, events, support, careers, and player account tools.",
+  heroDescription: "FiveM Roleplay Server",
   heroBackgroundImage: "/assets/gotham-banner.gif",
   mapImageUrl: "/assets/fivem-map.svg",
   livePageEnabled: true,
@@ -36,6 +36,8 @@ const defaultSettings = {
 };
 
 const textReplacements = [
+  ["A serious, story-driven QBCore roleplay community with creator rosters, live streams, events, support, careers, and player account tools.", "FiveM Roleplay Server"],
+  ["A serious, story-driven FiveM server with city news, creator roster, live streams, events, support, careers, and player account tools.", "FiveM Roleplay Server"],
   ["A2 Studio Roleplay", "Gotham City"],
   ["A2 Studio", "Gotham City"],
   ["Premium FiveM community", "Gotham City FiveM server"],
