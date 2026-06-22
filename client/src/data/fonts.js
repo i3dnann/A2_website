@@ -54,7 +54,7 @@ export function googleFontsUrl(values = []) {
   const families = googleFontFamilies(values);
   if (!families.length) return "";
   const query = families
-    .map((family) => `family=${encodeURIComponent(family).replaceAll("%20", "+")}:wght@300;400;500;600;700;800;900`)
+    .map((family) => `family=${encodeURIComponent(family).replaceAll("%20", "+")}`)
     .join("&");
   return `https://fonts.googleapis.com/css2?${query}&display=swap`;
 }
