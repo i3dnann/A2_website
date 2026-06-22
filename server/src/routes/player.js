@@ -7,6 +7,7 @@ import { getBanStatus, getCharactersForAccount, identifiersForAccount } from "..
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
 import { saveTermsAgreement } from "../services/users.js";
+import { listOwnedTickets, ownsTicket } from "../services/playerTicketService.js";
 
 const router = Router();
 router.use(requireAuth, requirePermission("view_player_portal"));
@@ -20,11 +21,6 @@ const ticketSchema = z.object({
 const ticketReplySchema = z.object({
   message: z.string().min(1).max(5000)
 });
-
-async function ownedTickets(userId, q = "") {
-  const { rows } = await listResource("tickets", { q: q || userId, limit: 100 });
-  return rows.filter((ticket) => String(ticket.user_id) === String(userId));
-}
 
 async function ownedApplications(userId) {
   const { rows } = await listResource("careerApplications", { q: userId, limit: 100 });
@@ -47,7 +43,7 @@ async function ownedApplications(userId) {
 async function accountPayload(req) {
   const characterResult = await getCharactersForAccount(req.user);
   const banStatus = await getBanStatus(characterResult.identifiers || identifiersForAccount(req.user));
-  const tickets = await ownedTickets(req.user.id);
+  const tickets = await listOwnedTickets(req.user);
   const applications = await ownedApplications(req.user.id);
   return {
     user: req.user,
@@ -85,7 +81,7 @@ router.get(
 router.get(
   "/tickets",
   asyncHandler(async (req, res) => {
-    const tickets = await ownedTickets(req.user.id, req.query.q || "");
+    const tickets = await listOwnedTickets(req.user, req.query.q || "");
     res.json({ tickets });
   })
 );
@@ -131,7 +127,7 @@ router.get(
   "/tickets/:id",
   asyncHandler(async (req, res) => {
     const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || String(ticket.user_id) !== String(req.user.id)) return res.status(404).json({ error: "ticket_not_found" });
+    if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
     const { rows } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
     res.json({ ticket, messages: rows.filter((message) => message.ticket_id === ticket.id && Number(message.internal_only || 0) !== 1) });
   })
@@ -142,7 +138,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const body = ticketReplySchema.parse(req.body || {});
     const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || String(ticket.user_id) !== String(req.user.id)) return res.status(404).json({ error: "ticket_not_found" });
+    if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
     const message = await createResource("ticketMessages", { ticket_id: ticket.id, author_id: req.user.id, author_type: "player", message: body.message, internal_only: false }, req.user);
     await updateResource("tickets", ticket.id, { status: "Waiting for staff", message_preview: body.message.slice(0, 300) }, req.user);
     res.status(201).json({ message });
@@ -153,7 +149,7 @@ router.post(
   "/tickets/:id/close",
   asyncHandler(async (req, res) => {
     const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || String(ticket.user_id) !== String(req.user.id)) return res.status(404).json({ error: "ticket_not_found" });
+    if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
     const result = await updateResource("tickets", ticket.id, { status: "Closed", closed_by: req.user.id, closed_at: new Date().toISOString() }, req.user);
     const { rows: messages } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
     await sendWebhook("tickets_closed", {
