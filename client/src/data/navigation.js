@@ -2,6 +2,7 @@ import {
   Calendar,
   Construction,
   FileQuestion,
+  FolderOpen,
   Home,
   LayoutDashboard,
   Map,
@@ -61,7 +62,8 @@ export const adminNav = [
   { label: "Permissions", href: "/admin/permissions", icon: Shield, permission: "manage_permissions" },
   { label: "Webhooks", href: "/admin/webhooks", icon: Sparkles, permission: "manage_webhooks" },
   { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText, permission: "view_audit_logs" },
-  { label: "Theme", href: "/admin/theme", icon: Settings, permission: "manage_theme" }
+  { label: "Theme", href: "/admin/theme", icon: Settings, permission: "manage_theme" },
+  { label: "Media", href: "/admin/media", icon: FolderOpen, permission: "manage_home" }
 ];
 
 export const dashboardNav = [...accountNav, ...adminNav];

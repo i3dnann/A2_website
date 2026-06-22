@@ -9,6 +9,8 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
+    "@netlify/blobs": "^10.7.9",
+    "@netlify/database": "^1.0.0",
     "@vitejs/plugin-react": "^4.3.4",
     "clsx": "^2.1.1",
     "framer-motion": "^11.15.0",
