@@ -7,6 +7,7 @@ import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
 import PlayerDashboard from "./pages/PlayerDashboard.jsx";
 import AccountSettingsPage from "./pages/AccountSettingsPage.jsx";
 import AdminsPage from "./pages/AdminsPage.jsx";
+import MaintenanceSettingsPage from "./pages/MaintenanceSettingsPage.jsx";
 import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import GtaMapPage from "./pages/GtaMapPage.jsx";
 import AdminMapPage from "./pages/AdminMapPage.jsx";
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="/account/settings" element={<Guarded permission="view_player_portal"><AccountSettingsPage /></Guarded>} />
           <Route path="/admin" element={<Guarded permission="manage_home"><AdminWorkspace /></Guarded>} />
           <Route path="/admin/settings" element={<Guarded permission="manage_home"><AdminWorkspace section="settings" /></Guarded>} />
+          <Route path="/admin/maintenance" element={<Guarded permission="manage_home"><MaintenanceSettingsPage /></Guarded>} />
           <Route path="/admin/home" element={<Guarded permission="manage_home"><AdminWorkspace section="home" /></Guarded>} />
           <Route path="/admin/partners" element={<Guarded permission="manage_partners"><AdminWorkspace section="partners" /></Guarded>} />
           <Route path="/admin/journey" element={<Guarded permission="manage_journey"><AdminWorkspace section="journey" /></Guarded>} />
