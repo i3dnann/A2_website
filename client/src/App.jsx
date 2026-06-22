@@ -8,6 +8,7 @@ import PlayerDashboard from "./pages/PlayerDashboard.jsx";
 import AccountSettingsPage from "./pages/AccountSettingsPage.jsx";
 import AdminsPage from "./pages/AdminsPage.jsx";
 import MaintenanceSettingsPage from "./pages/MaintenanceSettingsPage.jsx";
+import ThemeSettingsPage from "./pages/ThemeSettingsPage.jsx";
 import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import GtaMapPage from "./pages/GtaMapPage.jsx";
 import AdminMapPage from "./pages/AdminMapPage.jsx";
@@ -105,7 +106,7 @@ export default function App() {
           <Route path="/admin/permissions" element={<Guarded permission="manage_permissions"><AdminWorkspace section="permissions" /></Guarded>} />
           <Route path="/admin/webhooks" element={<Guarded permission="manage_webhooks"><AdminWorkspace section="webhooks" /></Guarded>} />
           <Route path="/admin/audit-logs" element={<Guarded permission="view_audit_logs"><AdminWorkspace section="audit-logs" /></Guarded>} />
-          <Route path="/admin/theme" element={<Guarded permission="manage_theme"><AdminWorkspace section="theme" /></Guarded>} />
+          <Route path="/admin/theme" element={<Guarded permission="manage_theme"><ThemeSettingsPage /></Guarded>} />
           <Route path="/admin/media" element={<Guarded permission="manage_home"><MediaLibraryPage /></Guarded>} />
           <Route path="/dashboard" element={<Navigate to="/account" replace />} />
         </Route>
