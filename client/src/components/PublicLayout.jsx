@@ -73,7 +73,7 @@ export function PublicLayout() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-9 md:grid-cols-[1fr_auto]">
           <div>
             <p className="font-black">{settings.websiteName || "A2 Studio"}</p>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/48">{settings.heroDescription || "A premium FiveM roleplay community website."}</p>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/48">FiveM Roleplay Server</p>
           </div>
           <div className="flex flex-wrap gap-2 text-sm text-white/55">
             <Link to="/terms" className="hover:text-a2-green">Terms</Link>
