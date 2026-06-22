@@ -91,6 +91,13 @@ app.use((_req, res) => {
 
 app.use((error, _req, res, _next) => {
   console.error("[api]", error);
+  if (error?.name === "ZodError") {
+    return res.status(400).json({
+      error: "validation_error",
+      message: error.errors?.[0]?.message || "Please check the form fields.",
+      issues: error.errors || []
+    });
+  }
   const status = error.status || 500;
   res.status(status).json({
     error: status === 500 ? "server_error" : error.message || "request_failed",

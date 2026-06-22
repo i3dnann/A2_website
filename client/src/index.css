@@ -113,8 +113,30 @@ select {
   background-size: 42px 42px, 42px 42px, auto, auto;
 }
 
+.map-board::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.42)), var(--map-image);
+  background-position: center;
+  background-size: cover;
+  opacity: 0.72;
+}
+
+.map-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(139, 92, 246, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.12) 1px, transparent 1px);
+  background-size: 42px 42px;
+  pointer-events: none;
+}
+
 .zone-marker {
   position: absolute;
+  z-index: 1;
   transform: translate(-50%, -50%);
 }
 

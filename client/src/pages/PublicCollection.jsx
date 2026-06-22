@@ -298,9 +298,11 @@ function safeOptions(value) {
 }
 
 function MapPage({ rows, q, setQ }) {
+  const { settings } = useApp();
   const [activeType, setActiveType] = useState("all");
   const types = useMemo(() => ["all", ...new Set(rows.map((zone) => zone.zone_type).filter(Boolean))], [rows]);
   const filtered = rows.filter((zone) => activeType === "all" || zone.zone_type === activeType);
+  const mapImage = settings.mapImageUrl || "/assets/fivem-map.svg";
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
       <PageHeader eyebrow="City map" title="Safe and danger zones" />
@@ -311,7 +313,7 @@ function MapPage({ rows, q, setQ }) {
         ))}
       </div>
       <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_0.4fr]">
-        <div className="map-board">
+        <div className="map-board" style={{ "--map-image": `url("${mapImage}")` }}>
           {filtered.map((zone) => (
             <button key={zone.id} className="zone-marker group" style={{ left: `${Number(zone.position_x || 50)}%`, top: `${Number(zone.position_y || 50)}%` }}>
               <span className="grid h-12 w-12 place-items-center rounded-full border-2 bg-black/80 shadow-glow" style={{ borderColor: zone.color || "#b7fe1a", color: zone.color || "#b7fe1a" }}>
@@ -327,6 +329,7 @@ function MapPage({ rows, q, setQ }) {
         <div className="grid gap-3">
           {filtered.map((zone) => (
             <Card key={zone.id}>
+              {zone.image_url && <img src={zone.image_url} alt="" className="mb-3 h-36 w-full rounded-lg object-cover opacity-85" />}
               <div className="flex items-start gap-3">
                 <Shield style={{ color: zone.color || "#b7fe1a" }} />
                 <div>

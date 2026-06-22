@@ -34,6 +34,7 @@ export default function App() {
           <Route path="/roster/:id" element={<StreamerDetail />} />
           <Route path="/live" element={<LivePage />} />
           <Route path="/team" element={<PublicCollection type="team" />} />
+          <Route path="/team/:id" element={<PublicDetail type="team" />} />
           <Route path="/careers" element={<PublicCollection type="careers" />} />
           <Route path="/careers/:id" element={<CareerDetailPage />} />
           <Route path="/tickets" element={<TicketsPage />} />
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/account" element={<Guarded permission="view_player_portal"><PlayerDashboard /></Guarded>} />
           <Route path="/account/characters" element={<Guarded permission="view_player_portal"><PlayerDashboard section="characters" /></Guarded>} />
           <Route path="/account/tickets" element={<Guarded permission="view_player_portal"><PlayerDashboard section="tickets" /></Guarded>} />
+          <Route path="/account/applications" element={<Guarded permission="view_player_portal"><PlayerDashboard section="applications" /></Guarded>} />
           <Route path="/account/settings" element={<Guarded permission="view_player_portal"><PlayerDashboard section="settings" /></Guarded>} />
 
           <Route path="/admin" element={<Guarded permission="manage_home"><AdminWorkspace /></Guarded>} />

@@ -9,8 +9,35 @@ const state = {
   settingsLoaded: false,
   secretSettingsLoaded: false,
   resources: new Map(Object.entries(SEED_DATA).map(([key, rows]) => [key, rows.map((row) => addTimestamps(row))])),
-  liveStatus: new Map()
+  liveStatus: new Map(),
+  tableColumns: new Map()
 };
+
+function safeTableName(table) {
+  if (!/^[a-zA-Z0-9_]+$/.test(String(table || ""))) throw new Error("Unsafe table name");
+  return table;
+}
+
+async function getTableColumns(table) {
+  if (!databaseEnabled) return null;
+  const safeTable = safeTableName(table);
+  if (state.tableColumns.has(safeTable)) return state.tableColumns.get(safeTable);
+  const rows = await query(`SHOW COLUMNS FROM ${safeTable}`);
+  if (!rows) return null;
+  const columns = new Set(rows.map((row) => row.Field));
+  state.tableColumns.set(safeTable, columns);
+  return columns;
+}
+
+async function filterExistingColumns(table, data) {
+  const columns = await getTableColumns(table);
+  if (!columns) return data;
+  return Object.fromEntries(Object.entries(data).filter(([key]) => columns.has(key)));
+}
+
+function hasColumn(columns, name) {
+  return !columns || columns.has(name);
+}
 
 function addTimestamps(row) {
   const now = new Date().toISOString();
@@ -48,26 +75,34 @@ function normalizeDbRow(row) {
   };
 }
 
-function resourceSearchWhere(config, q, publicOnly) {
-  const clauses = ["deleted_at IS NULL"];
+function resourceSearchWhere(config, q, publicOnly, columns = null) {
+  const clauses = hasColumn(columns, "deleted_at") ? ["deleted_at IS NULL"] : ["1 = 1"];
   const params = {};
 
   if (q && config.searchFields?.length) {
-    const searchClauses = config.searchFields.map((field, index) => {
+    const searchFields = config.searchFields.filter((field) => hasColumn(columns, field));
+    const searchClauses = searchFields.map((field, index) => {
       params[`q${index}`] = `%${q}%`;
       return `${field} LIKE :q${index}`;
     });
-    clauses.push(`(${searchClauses.join(" OR ")})`);
+    if (searchClauses.length) clauses.push(`(${searchClauses.join(" OR ")})`);
   }
 
   if (publicOnly) {
-    if (config.fields.includes("is_visible")) clauses.push("(is_visible = 1 OR is_visible IS NULL)");
-    if (config.fields.includes("is_hidden")) clauses.push("(is_hidden = 0 OR is_hidden IS NULL)");
-    if (config.fields.includes("is_approved")) clauses.push("(is_approved = 1 OR is_approved IS NULL)");
-    if (config.fields.includes("status")) clauses.push("(status IS NULL OR status NOT IN ('Hidden', 'Draft', 'Deleted'))");
+    if (config.fields.includes("is_visible") && hasColumn(columns, "is_visible")) clauses.push("(is_visible = 1 OR is_visible IS NULL)");
+    if (config.fields.includes("is_hidden") && hasColumn(columns, "is_hidden")) clauses.push("(is_hidden = 0 OR is_hidden IS NULL)");
+    if (config.fields.includes("is_approved") && hasColumn(columns, "is_approved")) clauses.push("(is_approved = 1 OR is_approved IS NULL)");
+    if (config.fields.includes("status") && hasColumn(columns, "status")) clauses.push("(status IS NULL OR status NOT IN ('Hidden', 'Draft', 'Deleted'))");
   }
 
   return { clause: clauses.join(" AND "), params };
+}
+
+function orderByFor(columns = null) {
+  const parts = [];
+  if (hasColumn(columns, "sort_order")) parts.push("COALESCE(sort_order, 9999)");
+  if (hasColumn(columns, "created_at")) parts.push("created_at DESC");
+  return parts.length ? parts.join(", ") : "id DESC";
 }
 
 function isPublicRow(config, row) {
@@ -89,7 +124,7 @@ export function getResourceConfig(resourceKey) {
 
 export async function getSettings({ includeSecrets = false } = {}) {
   if (databaseEnabled && (!state.settingsLoaded || (includeSecrets && !state.secretSettingsLoaded))) {
-    const rows = await query("SELECT setting_key, setting_value, is_secret FROM web_settings");
+    const rows = await query("SELECT * FROM web_settings");
     if (rows) {
       const dbSettings = {};
       rows.forEach((row) => {
@@ -120,20 +155,24 @@ export async function updateSettings(patch, actor, { secretKeys = [] } = {}) {
 
   if (databaseEnabled) {
     await Promise.all(
-      Object.entries(safePatch).map(([key, value]) =>
-        query(
-          `INSERT INTO web_settings (id, setting_key, setting_value, is_secret, updated_by)
-           VALUES (:id, :setting_key, :setting_value, :is_secret, :updated_by)
-           ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), is_secret = VALUES(is_secret), updated_by = VALUES(updated_by), updated_at = CURRENT_TIMESTAMP`,
-          {
-            id: `setting-${key}`,
-            setting_key: key,
-            setting_value: JSON.stringify(value),
-            is_secret: secretKeys.includes(key) ? 1 : 0,
-            updated_by: actor?.id || null
-          }
-        )
-      )
+      Object.entries(safePatch).map(async ([key, value]) => {
+        const data = await filterExistingColumns("web_settings", {
+          id: `setting-${key}`,
+          setting_key: key,
+          setting_value: JSON.stringify(value),
+          is_secret: secretKeys.includes(key) ? 1 : 0,
+          updated_by: actor?.id || null
+        });
+        const keys = Object.keys(data);
+        const updateKeys = keys.filter((item) => item !== "id");
+        if (!keys.length || !data.setting_key) return null;
+        return query(
+          `INSERT INTO web_settings (${keys.join(", ")})
+           VALUES (${keys.map((item) => `:${item}`).join(", ")})
+           ON DUPLICATE KEY UPDATE ${updateKeys.map((item) => `${item} = VALUES(${item})`).join(", ")}`,
+          data
+        );
+      })
     );
   }
 
@@ -149,12 +188,13 @@ export async function listResource(resourceKey, options = {}) {
   const q = String(options.q || "").trim();
 
   if (databaseEnabled) {
-    const { clause, params } = resourceSearchWhere(config, q, Boolean(options.publicOnly));
+    const columns = await getTableColumns(config.table);
+    const { clause, params } = resourceSearchWhere(config, q, Boolean(options.publicOnly), columns);
     const rows = await query(
-      `SELECT * FROM ${config.table} WHERE ${clause} ORDER BY COALESCE(sort_order, 9999), created_at DESC LIMIT :limit OFFSET :offset`,
+      `SELECT * FROM ${safeTableName(config.table)} WHERE ${clause} ORDER BY ${orderByFor(columns)} LIMIT :limit OFFSET :offset`,
       { ...params, limit, offset }
     );
-    const countRows = await query(`SELECT COUNT(*) AS total FROM ${config.table} WHERE ${clause}`, params);
+    const countRows = await query(`SELECT COUNT(*) AS total FROM ${safeTableName(config.table)} WHERE ${clause}`, params);
     if (rows) return { rows: rows.map(normalizeDbRow), total: countRows?.[0]?.total || rows.length, config };
   }
 
@@ -173,7 +213,9 @@ export async function getResource(resourceKey, id) {
   if (!config) return null;
 
   if (databaseEnabled) {
-    const rows = await query(`SELECT * FROM ${config.table} WHERE id = :id AND deleted_at IS NULL LIMIT 1`, { id });
+    const columns = await getTableColumns(config.table);
+    const deletedClause = hasColumn(columns, "deleted_at") ? "AND deleted_at IS NULL" : "";
+    const rows = await query(`SELECT * FROM ${safeTableName(config.table)} WHERE id = :id ${deletedClause} LIMIT 1`, { id });
     if (rows?.[0]) return normalizeDbRow(rows[0]);
   }
 
@@ -196,12 +238,13 @@ export async function createResource(resourceKey, payload, actor) {
   };
 
   if (databaseEnabled) {
-    const keys = Object.keys(data);
+    const filtered = await filterExistingColumns(config.table, data);
+    const keys = Object.keys(filtered);
     const result = await query(
-      `INSERT INTO ${config.table} (${keys.join(", ")}) VALUES (${keys.map((key) => `:${key}`).join(", ")})`,
-      Object.fromEntries(keys.map((key) => [key, sqlValue(data[key])]))
+      `INSERT INTO ${safeTableName(config.table)} (${keys.join(", ")}) VALUES (${keys.map((key) => `:${key}`).join(", ")})`,
+      Object.fromEntries(keys.map((key) => [key, sqlValue(filtered[key])]))
     );
-    if (result) return data;
+    if (result) return { ...data, ...filtered };
   }
 
   getStore(resourceKey).push(data);
@@ -221,12 +264,14 @@ export async function updateResource(resourceKey, id, payload, actor) {
   };
 
   if (databaseEnabled) {
-    const keys = Object.keys(patch);
+    const filtered = await filterExistingColumns(config.table, patch);
+    const keys = Object.keys(filtered);
+    if (!keys.length) return { before, after: before };
     const result = await query(
-      `UPDATE ${config.table} SET ${keys.map((key) => `${key} = :${key}`).join(", ")} WHERE id = :id`,
-      { ...Object.fromEntries(keys.map((key) => [key, sqlValue(patch[key])])), id }
+      `UPDATE ${safeTableName(config.table)} SET ${keys.map((key) => `${key} = :${key}`).join(", ")} WHERE id = :id`,
+      { ...Object.fromEntries(keys.map((key) => [key, sqlValue(filtered[key])])), id }
     );
-    if (result) return { before, after: { ...before, ...patch } };
+    if (result) return { before, after: { ...before, ...filtered } };
   }
 
   const rows = getStore(resourceKey);
@@ -247,10 +292,15 @@ export async function deleteResource(resourceKey, id, actor) {
   };
 
   if (databaseEnabled) {
-    const result = await query(
-      `UPDATE ${config.table} SET deleted_at = :deleted_at, updated_by = :updated_by, updated_at = :updated_at WHERE id = :id`,
-      { ...patch, id }
-    );
+    const columns = await getTableColumns(config.table);
+    const filtered = await filterExistingColumns(config.table, patch);
+    const keys = Object.keys(filtered);
+    const result = hasColumn(columns, "deleted_at") && keys.length
+      ? await query(
+          `UPDATE ${safeTableName(config.table)} SET ${keys.map((key) => `${key} = :${key}`).join(", ")} WHERE id = :id`,
+          { ...filtered, id }
+        )
+      : await query(`DELETE FROM ${safeTableName(config.table)} WHERE id = :id`, { id });
     if (result) return before;
   }
 

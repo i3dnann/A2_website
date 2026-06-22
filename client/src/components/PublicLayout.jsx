@@ -10,7 +10,8 @@ export function PublicLayout() {
   const [open, setOpen] = useState(false);
   const nav = useMemo(() => {
     const editable = Array.isArray(settings.navLinks) ? settings.navLinks : [];
-    return editable.length ? editable.map((item) => ({ label: item.label, href: item.url || item.href || "/" })) : publicNav;
+    const base = editable.length ? editable.map((item) => ({ label: item.label, href: item.url || item.href || "/" })) : publicNav;
+    return base.some((item) => item.href === "/famous") ? base : [...base, { label: "Famous", href: "/famous" }];
   }, [settings.navLinks]);
 
   return (

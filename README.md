@@ -31,6 +31,8 @@ npm.cmd run dev
 Frontend: `http://localhost:5173`  
 Backend: `http://localhost:3001/health`
 
+Live Netlify/Windows VPS update steps: [`docs/LIVE_SITE_UPDATE_GUIDE.md`](docs/LIVE_SITE_UPDATE_GUIDE.md)
+
 For a real database, set `USE_DATABASE=true`, fill the MySQL values in `.env`, then import:
 
 ```powershell

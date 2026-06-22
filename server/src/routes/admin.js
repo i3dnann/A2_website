@@ -258,6 +258,36 @@ router.post(
   })
 );
 
+router.get(
+  "/tickets/:id",
+  requirePermission("manage_tickets"),
+  asyncHandler(async (req, res) => {
+    const ticket = await getResource("tickets", req.params.id);
+    if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+    const [messages, notes] = await Promise.all([
+      listResource("ticketMessages", { q: ticket.id, limit: 100 }),
+      listResource("ticketNotes", { q: ticket.id, limit: 100 })
+    ]);
+    res.json({
+      ticket,
+      messages: messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)),
+      notes: notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id))
+    });
+  })
+);
+
+router.post(
+  "/tickets/:id/note",
+  requirePermission("manage_tickets"),
+  asyncHandler(async (req, res) => {
+    const ticket = await getResource("tickets", req.params.id);
+    if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+    const note = await createResource("ticketNotes", { ticket_id: ticket.id, admin_id: req.user.id, note: req.body?.note || "" }, req.user);
+    await auditAction({ req, action: "add_ticket_note", targetType: "tickets", targetId: ticket.id, after: note, reason: "internal ticket note", webhookCategory: "admin" });
+    res.status(201).json({ note });
+  })
+);
+
 router.post(
   "/tickets/:id/close",
   requirePermission("close_tickets"),
@@ -285,14 +315,64 @@ router.post(
   })
 );
 
+router.get(
+  "/career-applications/:id",
+  requirePermission("review_career_applications"),
+  asyncHandler(async (req, res) => {
+    const application = await getResource("careerApplications", req.params.id);
+    if (!application) return res.status(404).json({ error: "application_not_found" });
+    const [answers, notes, job] = await Promise.all([
+      listResource("careerAnswers", { q: application.id, limit: 200 }),
+      listResource("careerApplicationNotes", { q: application.id, limit: 100 }),
+      getResource("careerJobs", application.job_id)
+    ]);
+    res.json({
+      application,
+      job,
+      answers: answers.rows.filter((answer) => String(answer.application_id) === String(application.id)),
+      notes: notes.rows.filter((note) => String(note.application_id) === String(application.id))
+    });
+  })
+);
+
 router.post(
   "/career-applications/:id/status",
   requirePermission("review_career_applications"),
   asyncHandler(async (req, res) => {
-    const result = await updateResource("careerApplications", req.params.id, { status: req.body?.status || "Under review", reviewed_by: req.user.id, reviewed_at: new Date().toISOString(), internal_notes: req.body?.internal_notes || "" }, req.user);
+    const status = req.body?.status || "Under review";
+    const result = await updateResource(
+      "careerApplications",
+      req.params.id,
+      {
+        status,
+        reviewed_by: req.user.id,
+        reviewed_at: new Date().toISOString(),
+        internal_notes: req.body?.private_note || req.body?.internal_notes || ""
+      },
+      req.user
+    );
     if (!result) return res.status(404).json({ error: "application_not_found" });
+    const notes = [];
+    if (req.body?.public_note) {
+      notes.push(
+        await createResource(
+          "careerApplicationNotes",
+          { application_id: req.params.id, admin_id: req.user.id, note: req.body.public_note, is_internal: false },
+          req.user
+        )
+      );
+    }
+    if (req.body?.private_note) {
+      notes.push(
+        await createResource(
+          "careerApplicationNotes",
+          { application_id: req.params.id, admin_id: req.user.id, note: req.body.private_note, is_internal: true },
+          req.user
+        )
+      );
+    }
     await auditAction({ req, action: "review_career_application", targetType: "career_applications", targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.reason || "application review", webhookCategory: "admin" });
-    res.json({ application: result.after });
+    res.json({ application: result.after, notes });
   })
 );
 

@@ -26,10 +26,29 @@ async function ownedTickets(userId, q = "") {
   return rows.filter((ticket) => String(ticket.user_id) === String(userId));
 }
 
+async function ownedApplications(userId) {
+  const { rows } = await listResource("careerApplications", { q: userId, limit: 100 });
+  const applications = rows.filter((application) => String(application.user_id) === String(userId));
+  const enriched = [];
+  for (const application of applications) {
+    const [job, notes] = await Promise.all([
+      getResource("careerJobs", application.job_id),
+      listResource("careerApplicationNotes", { q: application.id, limit: 100 })
+    ]);
+    enriched.push({
+      ...application,
+      job_title: job?.title || application.job_id,
+      public_notes: notes.rows.filter((note) => String(note.application_id) === String(application.id) && Number(note.is_internal || 0) !== 1)
+    });
+  }
+  return enriched;
+}
+
 async function accountPayload(req) {
   const characterResult = await getCharactersForAccount(req.user);
   const banStatus = await getBanStatus(characterResult.identifiers || identifiersForAccount(req.user));
   const tickets = await ownedTickets(req.user.id);
+  const applications = await ownedApplications(req.user.id);
   return {
     user: req.user,
     providers: {
@@ -42,7 +61,8 @@ async function accountPayload(req) {
     charactersNotFoundMessage: characterResult.notFound ? characterResult.message : "",
     linkedIdentifiers: characterResult.identifiers,
     banStatus,
-    tickets
+    tickets,
+    applications
   };
 }
 
@@ -113,7 +133,7 @@ router.get(
     const ticket = await getResource("tickets", req.params.id);
     if (!ticket || String(ticket.user_id) !== String(req.user.id)) return res.status(404).json({ error: "ticket_not_found" });
     const { rows } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
-    res.json({ ticket, messages: rows.filter((message) => message.ticket_id === ticket.id && !message.internal_only) });
+    res.json({ ticket, messages: rows.filter((message) => message.ticket_id === ticket.id && Number(message.internal_only || 0) !== 1) });
   })
 );
 
@@ -147,12 +167,19 @@ router.post(
       Closed: result.after.closed_at,
       FinalStatus: "Closed",
       Transcript: messages
-        .filter((message) => message.ticket_id === ticket.id && !message.internal_only)
+        .filter((message) => message.ticket_id === ticket.id && Number(message.internal_only || 0) !== 1)
         .map((message) => `${message.author_type}: ${message.message}`)
         .join("\n")
         .slice(0, 3000)
     });
     res.json({ ticket: result.after });
+  })
+);
+
+router.get(
+  "/career-applications",
+  asyncHandler(async (req, res) => {
+    res.json({ applications: await ownedApplications(req.user.id) });
   })
 );
 

@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS = {
     { label: "Home", url: "/" },
     { label: "Roster", url: "/roster" },
     { label: "Live", url: "/live" },
+    { label: "Famous", url: "/famous" },
     { label: "Team", url: "/team" },
     { label: "Careers", url: "/careers" },
     { label: "News", url: "/news" },
@@ -50,7 +51,8 @@ export const DEFAULT_SETTINGS = {
   featuredLiveLimit: 6,
   webhookStreamerGoLive: true,
   webhookStreamerGoOffline: true,
-  termsVersion: "1.0.0"
+  termsVersion: "1.0.0",
+  mapImageUrl: "/assets/fivem-map.svg"
 };
 
 const timestamps = ["created_at", "updated_at", "created_by", "updated_by", "deleted_at"];

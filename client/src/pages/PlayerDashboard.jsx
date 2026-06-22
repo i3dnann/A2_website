@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, BadgeCheck, Banknote, Briefcase, Gamepad2, Shield, Ticket, UserCircle } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Banknote, Briefcase, Gamepad2, Send, Shield, Ticket, UserCircle } from "lucide-react";
 import { api, apiUrl } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { Button } from "../components/Button.jsx";
@@ -11,6 +12,7 @@ export default function PlayerDashboard({ section = "overview" }) {
     providers: {},
     characters: [],
     tickets: [],
+    applications: [],
     banStatus: {},
     linkedIdentifiers: []
   });
@@ -18,6 +20,7 @@ export default function PlayerDashboard({ section = "overview" }) {
   if (loading) return <Card><div className="h-80 rounded skeleton" /></Card>;
   if (section === "characters") return <CharactersView data={data} />;
   if (section === "tickets") return <TicketsView tickets={data?.tickets || []} />;
+  if (section === "applications") return <ApplicationsView applications={data?.applications || []} />;
   if (section === "settings") return <SettingsView data={data} />;
   return <Overview data={data} />;
 }
@@ -74,6 +77,7 @@ function Overview({ data }) {
         </Card>
       </div>
       <CharactersView data={data} compact />
+      <ApplicationsView applications={data?.applications || []} compact />
     </div>
   );
 }
@@ -125,8 +129,36 @@ function CharactersView({ data, compact = false }) {
 }
 
 function TicketsView({ tickets }) {
+  const [selected, setSelected] = useState(null);
+  const [detail, setDetail] = useState(null);
+  const [reply, setReply] = useState("");
+  const [status, setStatus] = useState("");
+
+  const openTicket = async (ticket) => {
+    setSelected(ticket);
+    setStatus("");
+    const response = await api.get(`/api/player/tickets/${ticket.id}`);
+    setDetail(response);
+  };
+
+  const sendReply = async (event) => {
+    event.preventDefault();
+    if (!selected?.id || !reply.trim()) return;
+    await api.post(`/api/player/tickets/${selected.id}/messages`, { message: reply });
+    setReply("");
+    await openTicket(selected);
+    setStatus("Reply sent.");
+  };
+
+  const closeTicket = async () => {
+    if (!selected?.id) return;
+    await api.post(`/api/player/tickets/${selected.id}/close`, {});
+    await openTicket(selected);
+    setStatus("Ticket closed.");
+  };
+
   return (
-    <div>
+    <div className="grid gap-5">
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-black uppercase tracking-widest text-a2-green">Support</p>
@@ -134,9 +166,11 @@ function TicketsView({ tickets }) {
         </div>
         <Button as={Link} to="/tickets">Open ticket</Button>
       </div>
-      <div className="grid gap-3">
-        {tickets.map((ticket) => (
-          <Card key={ticket.id}>
+      <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+        <div className="grid gap-3 content-start">
+          {tickets.map((ticket) => (
+          <button key={ticket.id} className="text-left" onClick={() => openTicket(ticket)}>
+            <Card className={`transition ${selected?.id === ticket.id ? "border-a2-green/70" : "hover:border-a2-green/40"}`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-black">{ticket.subject}</p>
@@ -144,9 +178,74 @@ function TicketsView({ tickets }) {
               </div>
               <span className="rounded-full border border-a2-border px-3 py-1 text-sm font-bold text-a2-green">{ticket.status}</span>
             </div>
+            </Card>
+          </button>
+          ))}
+          {!tickets.length && <Card className="text-white/55">No tickets yet.</Card>}
+        </div>
+        <Card>
+          {!selected ? (
+            <p className="text-sm text-white/50">Select a ticket to read and reply.</p>
+          ) : (
+            <div className="grid gap-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black">{detail?.ticket?.subject || selected.subject}</h2>
+                  <p className="text-sm text-white/45">{detail?.ticket?.ticket_number || selected.ticket_number || selected.id}</p>
+                </div>
+                <Button type="button" variant="ghost" onClick={closeTicket}>Close ticket</Button>
+              </div>
+              <div className="grid max-h-[420px] gap-3 overflow-auto pr-1">
+                {(detail?.messages || []).map((message) => (
+                  <div key={message.id} className={`rounded-lg border border-a2-border p-3 ${message.author_type === "admin" ? "bg-a2-green/10" : "bg-white/[0.03]"}`}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-white/40">{message.author_type}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-white/70">{message.message}</p>
+                  </div>
+                ))}
+                {!(detail?.messages || []).length && <p className="text-sm text-white/45">No messages loaded yet.</p>}
+              </div>
+              <form className="grid gap-3" onSubmit={sendReply}>
+                <textarea className="form-input min-h-28" value={reply} onChange={(event) => setReply(event.target.value)} placeholder="Write your reply..." />
+                <Button type="submit"><Send size={15} /> Send reply</Button>
+                {status && <p className="text-sm text-a2-success">{status}</p>}
+              </form>
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function ApplicationsView({ applications, compact = false }) {
+  return (
+    <div className="grid gap-4">
+      {!compact && (
+        <header>
+          <p className="text-sm font-black uppercase tracking-widest text-a2-green">Careers</p>
+          <h1 className="mt-2 text-3xl font-black">My applications</h1>
+        </header>
+      )}
+      {compact && applications.length > 0 && <h2 className="text-xl font-black">Recent applications</h2>}
+      <div className="grid gap-3">
+        {applications.map((application) => (
+          <Card key={application.id}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-black">{application.job_title || application.job_id}</p>
+                <p className="text-sm text-white/45">Applied {application.created_at?.slice?.(0, 10) || "recently"}</p>
+              </div>
+              <span className="rounded-full border border-a2-border px-3 py-1 text-sm font-bold text-a2-green">{application.status}</span>
+            </div>
+            {(application.public_notes || []).map((note) => (
+              <div key={note.id} className="mt-3 rounded-lg border border-a2-green/25 bg-a2-green/10 p-3 text-sm text-white/70">
+                <p className="text-xs font-black uppercase tracking-wide text-a2-green">Staff note</p>
+                <p className="mt-1 whitespace-pre-wrap">{note.note}</p>
+              </div>
+            ))}
           </Card>
         ))}
-        {!tickets.length && <Card className="text-white/55">No tickets yet.</Card>}
+        {!applications.length && !compact && <Card className="text-white/55">No applications yet.</Card>}
       </div>
     </div>
   );

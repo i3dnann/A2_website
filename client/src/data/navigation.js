@@ -21,6 +21,7 @@ export const publicNav = [
   { label: "Home", href: "/", icon: Home },
   { label: "Roster", href: "/roster", icon: Video },
   { label: "Live", href: "/live", icon: Sparkles },
+  { label: "Famous", href: "/famous", icon: UserCircle },
   { label: "Team", href: "/team", icon: Users },
   { label: "Careers", href: "/careers", icon: Workflow },
   { label: "News", href: "/news", icon: Newspaper },
@@ -32,6 +33,7 @@ export const accountNav = [
   { label: "Account", href: "/account", icon: LayoutDashboard, permission: "view_player_portal" },
   { label: "Characters", href: "/account/characters", icon: UserCircle, permission: "view_player_portal" },
   { label: "Tickets", href: "/account/tickets", icon: Ticket, permission: "view_player_portal" },
+  { label: "Applications", href: "/account/applications", icon: Workflow, permission: "view_player_portal" },
   { label: "Settings", href: "/account/settings", icon: Settings, permission: "view_player_portal" }
 ];
 

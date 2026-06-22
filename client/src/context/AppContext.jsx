@@ -19,6 +19,7 @@ const defaultSettings = {
   heroSubtitle: "Premium FiveM community",
   heroDescription: "A serious, story-driven QBCore roleplay community.",
   heroBackgroundImage: "/assets/gotham-banner.gif",
+  mapImageUrl: "/assets/fivem-map.svg",
   livePageEnabled: true,
   maintenanceMode: false,
   performanceMode: false
