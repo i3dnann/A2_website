@@ -39,7 +39,8 @@ function canBypassMaintenance(user) {
 export default function App() {
   const { settings, user } = useApp();
   const location = useLocation();
-  const maintenance = maintenanceIsActive(settings) && !canBypassMaintenance(user);
+  const authMaintenancePath = ["/login", "/auth/complete", "/logout"].includes(location.pathname);
+  const maintenance = maintenanceIsActive(settings) && !canBypassMaintenance(user) && !authMaintenancePath;
 
   if (maintenance) return <MaintenanceScreen settings={settings} />;
 
