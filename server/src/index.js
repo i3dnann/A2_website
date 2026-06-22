@@ -19,6 +19,7 @@ import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
 import adminRouter from "./routes/admin.js";
 import playerRouter from "./routes/player.js";
+import accountRouter from "./routes/account.js";
 import kickRouter from "./routes/kick.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -77,6 +78,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/kick", kickRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/player", playerRouter);
+app.use("/api/account", accountRouter);
 app.use("/api/admin", adminRouter);
 
 if (fs.existsSync(clientDistPath)) {
