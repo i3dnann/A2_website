@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Construction, Volume2 } from "lucide-react";
+import "./MaintenanceScreen.css";
 
 function targetMs(settings = {}) {
   const value = settings.maintenanceEndsAt || settings.maintenance_end_at || "";
