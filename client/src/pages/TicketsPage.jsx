@@ -6,6 +6,16 @@ import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
 
+function wordCount(value = "") {
+  return String(value).trim().split(/\s+/).filter(Boolean).length;
+}
+
+function ticketErrorMessage(err) {
+  const code = err.data?.error;
+  if (code === "ticket_message_too_short" || code === "validation_error") return "Please write at least 10 words in the ticket message.";
+  return err.data?.message || code || err.message || "Could not open ticket.";
+}
+
 export default function TicketsPage() {
   const { user } = useApp();
   const [form, setForm] = useState({ category: "General support", subject: "", message: "" });
@@ -16,13 +26,19 @@ export default function TicketsPage() {
   const submit = async (event) => {
     event.preventDefault();
     setStatus("");
+
+    if (wordCount(form.message) < 10) {
+      setStatus("Please write at least 10 words in the ticket message.");
+      return;
+    }
+
     setBusy(true);
     try {
       await api.post("/api/player/tickets", form);
       setForm({ category: "General support", subject: "", message: "" });
       navigate("/account/tickets", { replace: true });
     } catch (err) {
-      setStatus(err.data?.error || err.message || "Could not open ticket.");
+      setStatus(ticketErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -63,6 +79,7 @@ export default function TicketsPage() {
           <label className="grid gap-2 text-sm font-bold">
             Message
             <textarea className="form-input min-h-40" value={form.message} onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))} required />
+            <span className="text-xs text-white/45">Minimum 10 words.</span>
           </label>
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={busy}><Send size={16} /> {busy ? "Submitting..." : "Submit ticket"}</Button>
