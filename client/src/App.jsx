@@ -5,6 +5,8 @@ import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
 import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
 import PlayerDashboard from "./pages/PlayerDashboard.jsx";
 import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
+import GtaMapPage from "./pages/GtaMapPage.jsx";
+import AdminMapPage from "./pages/AdminMapPage.jsx";
 import { ForbiddenPage, MaintenancePage, NotFoundPage } from "./pages/SystemPages.jsx";
 import { PublicLayout } from "./components/PublicLayout.jsx";
 import { DashboardLayout } from "./components/DashboardLayout.jsx";
@@ -40,7 +42,7 @@ export default function App() {
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/news" element={<PublicCollection type="news" />} />
           <Route path="/news/:id" element={<PublicDetail type="news" />} />
-          <Route path="/map" element={<PublicCollection type="map" />} />
+          <Route path="/map" element={<GtaMapPage />} />
           <Route path="/faq" element={<FaqPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/events" element={<PublicCollection type="events" />} />
@@ -73,7 +75,7 @@ export default function App() {
           <Route path="/admin/careers/:id/applications" element={<Guarded permission="review_career_applications"><AdminWorkspace section="careers" resourceOverride="careerApplications" /></Guarded>} />
           <Route path="/admin/tickets" element={<Guarded permission="manage_tickets"><AdminWorkspace section="tickets" /></Guarded>} />
           <Route path="/admin/news" element={<Guarded permission="manage_news"><AdminWorkspace section="news" /></Guarded>} />
-          <Route path="/admin/map" element={<Guarded permission="manage_map"><AdminWorkspace section="map" /></Guarded>} />
+          <Route path="/admin/map" element={<Guarded permission="manage_map"><AdminMapPage /></Guarded>} />
           <Route path="/admin/faq" element={<Guarded permission="manage_faq"><AdminWorkspace section="faq" /></Guarded>} />
           <Route path="/admin/terms" element={<Guarded permission="manage_terms"><AdminWorkspace section="terms" /></Guarded>} />
           <Route path="/admin/events" element={<Guarded permission="manage_events"><AdminWorkspace section="events" /></Guarded>} />
