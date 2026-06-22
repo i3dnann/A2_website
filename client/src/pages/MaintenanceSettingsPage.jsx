@@ -9,9 +9,10 @@ import MaintenanceScreen from "../components/MaintenanceScreen.jsx";
 
 const defaultDraft = {
   maintenanceMode: false,
-  maintenanceTitle: "Website maintenance",
-  maintenanceSubtitle: "We are updating the website. Access will open automatically when the timer ends.",
+  maintenanceTitle: "The city is being rebuilt in the shadows",
+  maintenanceSubtitle: "Gotham City will return soon.",
   maintenanceEndsAt: "",
+  maintenanceCountdownEnabled: true,
   maintenanceSoundUrl: "",
   maintenanceVolume: 35,
   maintenanceFont: "Orbitron"
@@ -55,6 +56,7 @@ export default function MaintenanceSettingsPage() {
     maintenanceTitle: draft.maintenanceTitle || defaultDraft.maintenanceTitle,
     maintenanceSubtitle: draft.maintenanceSubtitle || defaultDraft.maintenanceSubtitle,
     maintenanceEndsAt: draft.maintenanceEndsAt || "",
+    maintenanceCountdownEnabled: draft.maintenanceCountdownEnabled !== false,
     maintenanceSoundUrl: draft.maintenanceSoundUrl || "",
     maintenanceVolume: volumeValue(draft.maintenanceVolume),
     maintenanceFont: draft.maintenanceFont || "Orbitron",
@@ -111,21 +113,27 @@ export default function MaintenanceSettingsPage() {
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Website control</p>
         <h1 className="mt-2 text-3xl font-black md:text-4xl">Maintenance mode</h1>
-        <p className="mt-2 max-w-3xl text-sm text-white/55">Activate a full-screen animated maintenance page with countdown, thunder effect, custom headline, font, uploaded looping audio, and volume control.</p>
+        <p className="mt-2 max-w-3xl text-sm text-white/55">Control the maintenance page layout, countdown, headline, font, audio, and volume.</p>
       </header>
 
       <Card>
         {loading ? <div className="h-80 rounded skeleton" /> : (
           <form className="grid gap-5" onSubmit={save}>
-            <label className="flex items-center gap-3 rounded-xl border border-a2-border bg-white/[0.03] p-4 text-sm font-bold">
-              <input type="checkbox" checked={Boolean(draft.maintenanceMode)} onChange={(event) => setDraft((current) => ({ ...current, maintenanceMode: event.target.checked }))} />
-              Activate maintenance mode
-            </label>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center gap-3 rounded-xl border border-a2-border bg-white/[0.03] p-4 text-sm font-bold">
+                <input type="checkbox" checked={Boolean(draft.maintenanceMode)} onChange={(event) => setDraft((current) => ({ ...current, maintenanceMode: event.target.checked }))} />
+                Activate maintenance mode
+              </label>
+              <label className="flex items-center gap-3 rounded-xl border border-a2-border bg-white/[0.03] p-4 text-sm font-bold">
+                <input type="checkbox" checked={draft.maintenanceCountdownEnabled !== false} onChange={(event) => setDraft((current) => ({ ...current, maintenanceCountdownEnabled: event.target.checked }))} />
+                Show countdown timer
+              </label>
+            </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2 text-sm font-bold">
                 Big header text
-                <input className="form-input" value={draft.maintenanceTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceTitle: event.target.value }))} placeholder="Website maintenance" />
+                <input className="form-input" value={draft.maintenanceTitle || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceTitle: event.target.value }))} placeholder="The city is being rebuilt in the shadows" />
               </label>
               <label className="grid gap-2 text-sm font-bold">
                 Font type
@@ -140,11 +148,13 @@ export default function MaintenanceSettingsPage() {
               <textarea className="form-input min-h-24" value={draft.maintenanceSubtitle || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSubtitle: event.target.value }))} />
             </label>
 
-            <label className="grid gap-2 text-sm font-bold">
-              Countdown end day and time
-              <input className="form-input" type="datetime-local" value={toInputDate(draft.maintenanceEndsAt)} onChange={(event) => setDraft((current) => ({ ...current, maintenanceEndsAt: event.target.value }))} />
-              <span className="text-xs text-white/45">When the countdown ends, normal users can access the website automatically.</span>
-            </label>
+            {draft.maintenanceCountdownEnabled !== false && (
+              <label className="grid gap-2 text-sm font-bold">
+                Countdown end day and time
+                <input className="form-input" type="datetime-local" value={toInputDate(draft.maintenanceEndsAt)} onChange={(event) => setDraft((current) => ({ ...current, maintenanceEndsAt: event.target.value }))} />
+                <span className="text-xs text-white/45">When the countdown ends, normal users can access the website automatically.</span>
+              </label>
+            )}
 
             <div className="grid gap-4 rounded-xl border border-a2-border bg-white/[0.03] p-4">
               <label className="grid gap-2 text-sm font-bold">
@@ -155,7 +165,7 @@ export default function MaintenanceSettingsPage() {
 
               <label className="grid gap-2 text-sm font-bold">
                 Saved audio URL
-                <input className="form-input" value={draft.maintenanceSoundUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSoundUrl: event.target.value }))} placeholder="/uploads/sound.mp3 or https://..." />
+                <input className="form-input" value={draft.maintenanceSoundUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSoundUrl: event.target.value }))} placeholder="/audio/maintenance.mp3 or /uploads/sound.mp3" />
               </label>
 
               <label className="grid gap-2 text-sm font-bold">
