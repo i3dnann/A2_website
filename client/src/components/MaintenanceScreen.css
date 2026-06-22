@@ -133,22 +133,13 @@
   text-transform: uppercase;
 }
 
-.maintenance-sound,
-.maintenance-exit {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+.maintenance-exit,
+.maintenance-volume {
   border: 1px solid rgba(167, 139, 250, 0.45);
   border-radius: 999px;
-  padding: 0.82rem 1.2rem;
   background: rgba(0, 0, 0, 0.38);
   color: #fff;
-  cursor: pointer;
   box-shadow: 0 0 24px rgba(139, 92, 246, 0.16);
-}
-
-.maintenance-sound {
-  margin-top: 2.4rem;
 }
 
 .maintenance-exit {
@@ -156,6 +147,37 @@
   top: 1.25rem;
   right: 1.25rem;
   z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.82rem 1.2rem;
+  cursor: pointer;
+}
+
+.maintenance-volume {
+  display: inline-grid;
+  gap: 0.75rem;
+  margin-top: 2.4rem;
+  padding: 0.9rem 1.25rem;
+  min-width: min(360px, 92vw);
+  text-align: left;
+}
+
+.maintenance-volume span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.maintenance-volume input {
+  width: 100%;
+  accent-color: #a78bfa;
 }
 
 .maintenance-lightning {
