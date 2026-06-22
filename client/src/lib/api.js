@@ -52,5 +52,5 @@ export const api = {
 
 export function imageFallback(seed, width = 900, height = 500) {
   const label = encodeURIComponent(seed || "Gotham City");
-  return `https://dummyimage.com/${width}x${height}/111111/ef4444&text=${label}`;
+  return `https://dummyimage.com/${width}x${height}/111111/8b5cf6&text=${label}`;
 }
