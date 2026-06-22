@@ -1,0 +1,58 @@
+.gta-map-plane-tiles {
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  overflow: hidden;
+  background: #050505;
+  background-image: none;
+  transform-origin: center center;
+}
+
+.gta-map-tile {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  user-select: none;
+  image-rendering: auto;
+}
+
+.gta-map-plane-tiles .gta-map-grid {
+  z-index: 1;
+}
+
+.gta-map-plane-tiles .gta-map-marker {
+  z-index: 4;
+}
+
+.admin-gta-map-tiles {
+  background-image: none;
+  background-color: #050505;
+}
+
+.admin-gta-map-tile-plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4096px;
+  height: 4096px;
+  transform: scale(calc(100% / 4096));
+  transform-origin: top left;
+}
+
+.admin-gta-map-tiles .gta-map-tile {
+  width: 256px;
+  height: 256px;
+}
+
+.admin-gta-map-tiles .admin-gta-map-pin {
+  z-index: 5;
+}
+
+.admin-gta-map-tiles::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, transparent 0 45%, rgba(0, 0, 0, 0.44) 100%);
+}
