@@ -17,7 +17,9 @@ import { getSettings } from "./services/repository.js";
 import { checkAllStreamers } from "./services/streamerService.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
+import adminTicketsRouter from "./routes/adminTickets.js";
 import adminRouter from "./routes/admin.js";
+import playerTicketLocksRouter from "./routes/playerTicketLocks.js";
 import playerRouter from "./routes/player.js";
 import accountRouter from "./routes/account.js";
 import kickRouter from "./routes/kick.js";
@@ -77,8 +79,10 @@ app.get("/health", async (_req, res) => {
 app.use("/api/auth", authRouter);
 app.use("/api/kick", kickRouter);
 app.use("/api/public", publicRouter);
+app.use("/api/player", playerTicketLocksRouter);
 app.use("/api/player", playerRouter);
 app.use("/api/account", accountRouter);
+app.use("/api/admin", adminTicketsRouter);
 app.use("/api/admin", adminRouter);
 
 if (fs.existsSync(clientDistPath)) {
