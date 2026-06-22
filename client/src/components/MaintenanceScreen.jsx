@@ -53,6 +53,10 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
     await audioRef.current.play().catch(() => null);
   };
 
+  useEffect(() => {
+    if (soundUrl) startSound();
+  }, [soundUrl]);
+
   return (
     <main className="maintenance-screen">
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop />}
