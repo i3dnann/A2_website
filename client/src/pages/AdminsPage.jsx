@@ -5,6 +5,44 @@ import { useApi } from "../lib/useApi.js";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
 
+const FALLBACK_PERMISSIONS = [
+  "manage_home",
+  "manage_partners",
+  "manage_journey",
+  "manage_famous",
+  "manage_roster",
+  "manage_live",
+  "manage_team",
+  "manage_careers",
+  "review_career_applications",
+  "manage_tickets",
+  "close_tickets",
+  "manage_news",
+  "manage_map",
+  "manage_faq",
+  "manage_terms",
+  "manage_events",
+  "manage_users",
+  "manage_admins",
+  "manage_permissions",
+  "manage_theme",
+  "manage_webhooks",
+  "manage_files",
+  "view_audit_logs",
+  "master_access",
+  "view_player_portal"
+];
+
+const FALLBACK_ROLES = ["Support", "Moderator", "Admin", "Super Admin", "Master Admin"];
+
+const FALLBACK_DEFAULTS = {
+  Support: ["view_player_portal", "manage_tickets", "close_tickets", "review_career_applications"],
+  Moderator: ["view_player_portal", "manage_tickets", "close_tickets", "review_career_applications", "manage_roster", "manage_faq", "view_audit_logs"],
+  Admin: ["view_player_portal", "manage_home", "manage_partners", "manage_journey", "manage_famous", "manage_roster", "manage_live", "manage_team", "manage_careers", "review_career_applications", "manage_tickets", "close_tickets", "manage_news", "manage_map", "manage_faq", "manage_terms", "manage_events", "manage_users", "manage_theme", "manage_webhooks", "manage_files", "view_audit_logs"],
+  "Super Admin": FALLBACK_PERMISSIONS.filter((permission) => permission !== "master_access"),
+  "Master Admin": FALLBACK_PERMISSIONS
+};
+
 const emptyDraft = {
   email: "",
   username: "",
@@ -25,11 +63,11 @@ export default function AdminsPage() {
   const [draft, setDraft] = useState(emptyDraft);
   const [status, setStatus] = useState("");
   const { data } = useApi(() => api.get(`/api/admin/admins?q=${encodeURIComponent(q)}`), [q, refresh], { rows: [] });
-  const { data: security } = useApi(() => api.get("/api/admin/permissions"), [], { roles: [], permissions: [], defaults: {} });
+  const { data: security } = useApi(() => api.get("/api/admin/permissions"), [], { roles: FALLBACK_ROLES, permissions: FALLBACK_PERMISSIONS, defaults: FALLBACK_DEFAULTS });
 
-  const adminRoles = useMemo(() => (security?.roles || []).filter((role) => role !== "Player"), [security]);
-  const permissions = security?.permissions || [];
-  const defaults = security?.defaults || {};
+  const adminRoles = useMemo(() => ((security?.roles?.length ? security.roles : FALLBACK_ROLES) || []).filter((role) => role !== "Player"), [security]);
+  const permissions = security?.permissions?.length ? security.permissions : FALLBACK_PERMISSIONS;
+  const defaults = Object.keys(security?.defaults || {}).length ? security.defaults : FALLBACK_DEFAULTS;
 
   useEffect(() => {
     if (!draft.permissions?.length && draft.roles?.length) {
