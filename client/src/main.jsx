@@ -12,9 +12,25 @@ function normalizeGtaMapTiles() {
     document.querySelectorAll('img[src*="/atlas/"]').forEach((img) => {
       img.src = img.src.replace("/atlas/", "/mainmap/");
     });
+
+    document.querySelectorAll(".gta-map-stage").forEach((stage) => {
+      stage.style.perspective = "none";
+    });
+
+    document.querySelectorAll(".gta-map-plane-tiles").forEach((plane) => {
+      const current = plane.style.transform || "";
+      const next = current.replace(/\s*rotateX\([^)]*\)/g, "");
+      if (next !== current) plane.style.transform = next;
+    });
   };
+
   fix();
-  new MutationObserver(fix).observe(document.documentElement, { childList: true, subtree: true });
+  new MutationObserver(fix).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["style", "src"]
+  });
 }
 
 normalizeGtaMapTiles();
