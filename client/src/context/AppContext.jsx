@@ -28,6 +28,7 @@ const defaultSettings = {
   maintenanceSubtitle: "Gotham City will return soon.",
   maintenanceEndsAt: "",
   maintenanceCountdownEnabled: true,
+  maintenanceYoutubeUrl: "",
   maintenanceSoundUrl: "",
   maintenanceVolume: 35,
   maintenanceFont: "Orbitron",
@@ -131,27 +132,18 @@ export function AppProvider({ children }) {
     document.body.classList.toggle("performance-mode", Boolean(settings.performanceMode));
   }, [settings]);
 
-  const value = useMemo(() => {
-    const permissions = asList(user?.permissions);
-    const roles = asList(user?.roles);
-    const hasElevatedRole = roles.some((role) => ["Master", "Owner", "Admin", "Super Admin"].includes(role));
-    const hasPermission = (permission) => {
-      if (!permission) return true;
-      if (!user) return false;
-      return permissions.includes("master_access") || hasElevatedRole || permissions.includes(permission);
-    };
-
-    return {
+  const value = useMemo(
+    () => ({
       settings,
       setSettings,
       user,
       setUser,
-      providers,
+      providers: asList(providers),
       loading,
-      apiHealthy,
-      hasPermission
-    };
-  }, [settings, user, providers, loading, apiHealthy]);
+      apiHealthy
+    }),
+    [settings, user, providers, loading, apiHealthy]
+  );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
