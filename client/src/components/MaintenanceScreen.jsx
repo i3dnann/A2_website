@@ -18,6 +18,12 @@ function parts(ms) {
   };
 }
 
+function volumeValue(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 35;
+  return Math.min(100, Math.max(5, number));
+}
+
 const fonts = {
   Orbitron: "Orbitron, Inter, sans-serif",
   Inter: "Inter, sans-serif",
@@ -28,6 +34,7 @@ const fonts = {
 
 export default function MaintenanceScreen({ settings = {}, onExit }) {
   const [now, setNow] = useState(Date.now());
+  const [volume, setVolume] = useState(volumeValue(settings.maintenanceVolume));
   const audioRef = useRef(null);
   const endAt = targetMs(settings);
   const remaining = endAt ? endAt - now : 0;
@@ -46,20 +53,26 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
     if (!onExit && endAt && remaining <= 0) window.location.reload();
   }, [endAt, remaining, onExit]);
 
-  const startSound = async () => {
+  const startSound = async (nextVolume = volume) => {
     if (!audioRef.current) return;
     audioRef.current.loop = true;
-    audioRef.current.volume = 0.35;
+    audioRef.current.volume = volumeValue(nextVolume) / 100;
     await audioRef.current.play().catch(() => null);
   };
 
   useEffect(() => {
-    if (soundUrl) startSound();
+    if (soundUrl) startSound(volume);
   }, [soundUrl]);
 
+  const changeVolume = async (event) => {
+    const next = volumeValue(event.target.value);
+    setVolume(next);
+    await startSound(next);
+  };
+
   return (
-    <main className="maintenance-screen">
-      {soundUrl && <audio ref={audioRef} src={soundUrl} loop />}
+    <main className="maintenance-screen" onPointerDown={() => startSound(volume)}>
+      {soundUrl && <audio ref={audioRef} src={soundUrl} loop preload="auto" />}
       <div className="maintenance-lightning" />
       <div className="maintenance-lightning second" />
       {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
@@ -73,7 +86,12 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
           <TimeBox label="Minutes" value={time.minutes} />
           <TimeBox label="Seconds" value={time.seconds} />
         </div>
-        {soundUrl && <button type="button" className="maintenance-sound" onClick={startSound}><Volume2 size={17} /> Play maintenance sound</button>}
+        {soundUrl && (
+          <label className="maintenance-volume">
+            <span><Volume2 size={17} /> Volume {volume}%</span>
+            <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
+          </label>
+        )}
       </section>
     </main>
   );
