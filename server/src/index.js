@@ -70,7 +70,7 @@ app.get("/health", async (_req, res) => {
   const dbOk = await pingDatabase();
   res.json({
     ok: true,
-    service: "a2-studio-api",
+    service: "gotham-city-api",
     time: new Date().toISOString(),
     database: dbOk ? "online" : "disabled_or_unavailable",
     frontend: env.FRONTEND_URL
@@ -122,6 +122,6 @@ cron.schedule("*/2 * * * *", async () => {
 
 const port = env.PORT;
 app.listen(port, () => {
-  console.log(`A2 Studio API listening on http://localhost:${port}`);
+  console.log(`Gotham City API listening on http://localhost:${port}`);
   console.log(`Static uploads served from ${path.resolve(__dirname, "..", "..", "uploads")}`);
 });
