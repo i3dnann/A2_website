@@ -1,0 +1,78 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Construction, Volume2 } from "lucide-react";
+
+function targetMs(settings = {}) {
+  const value = settings.maintenanceEndsAt || settings.maintenance_end_at || "";
+  const parsed = value ? new Date(value).getTime() : 0;
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parts(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return {
+    days: Math.floor(total / 86400),
+    hours: Math.floor((total % 86400) / 3600),
+    minutes: Math.floor((total % 3600) / 60),
+    seconds: total % 60
+  };
+}
+
+const fonts = {
+  Orbitron: "Orbitron, Inter, sans-serif",
+  Inter: "Inter, sans-serif",
+  Serif: "Georgia, serif",
+  Mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
+  Impact: "Impact, Haettenschweiler, Arial Black, sans-serif"
+};
+
+export default function MaintenanceScreen({ settings = {} }) {
+  const [now, setNow] = useState(Date.now());
+  const audioRef = useRef(null);
+  const endAt = targetMs(settings);
+  const remaining = endAt ? endAt - now : 0;
+  const time = useMemo(() => parts(remaining), [remaining]);
+  const title = settings.maintenanceTitle || "Website maintenance";
+  const subtitle = settings.maintenanceSubtitle || "We are updating the website. Access will open automatically when the timer ends.";
+  const fontFamily = fonts[settings.maintenanceFont] || fonts.Orbitron;
+  const soundUrl = settings.maintenanceSoundUrl || "";
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (endAt && remaining <= 0) window.location.reload();
+  }, [endAt, remaining]);
+
+  const startSound = async () => {
+    if (!audioRef.current) return;
+    audioRef.current.loop = true;
+    audioRef.current.volume = 0.35;
+    await audioRef.current.play().catch(() => null);
+  };
+
+  return (
+    <main className="maintenance-screen">
+      {soundUrl && <audio ref={audioRef} src={soundUrl} loop />}
+      <div className="maintenance-lightning" />
+      <div className="maintenance-lightning second" />
+      <section className="maintenance-card">
+        <div className="maintenance-icon"><Construction size={38} /></div>
+        <h1 style={{ fontFamily }}>{title}</h1>
+        <p>{subtitle}</p>
+        <div className="maintenance-countdown" style={{ fontFamily }}>
+          <TimeBox label="Days" value={time.days} />
+          <TimeBox label="Hours" value={time.hours} />
+          <TimeBox label="Minutes" value={time.minutes} />
+          <TimeBox label="Seconds" value={time.seconds} />
+        </div>
+        {soundUrl && <button type="button" className="maintenance-sound" onClick={startSound}><Volume2 size={17} /> Play maintenance sound</button>}
+      </section>
+    </main>
+  );
+}
+
+function TimeBox({ label, value }) {
+  return <div><strong>{String(value).padStart(2, "0")}</strong><span>{label}</span></div>;
+}
