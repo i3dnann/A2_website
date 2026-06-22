@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Clock, Save, UploadCloud, Volume2 } from "lucide-react";
+import { Clock, Save } from "lucide-react";
 import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { useApp } from "../context/AppContext.jsx";
@@ -72,7 +72,7 @@ export default function MaintenanceSettingsPage() {
     }
   };
 
-  if (preview) return <MaintenanceScreen settings={draft} />;
+  if (preview) return <MaintenanceScreen settings={draft} onExit={() => setPreview(false)} />;
 
   return (
     <div className="grid gap-5">
