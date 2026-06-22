@@ -4,6 +4,8 @@ import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage, T
 import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
 import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
 import PlayerDashboard from "./pages/PlayerDashboard.jsx";
+import AccountSettingsPage from "./pages/AccountSettingsPage.jsx";
+import AdminsPage from "./pages/AdminsPage.jsx";
 import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import GtaMapPage from "./pages/GtaMapPage.jsx";
 import AdminMapPage from "./pages/AdminMapPage.jsx";
@@ -60,7 +62,7 @@ export default function App() {
           <Route path="/account/characters" element={<Guarded permission="view_player_portal"><PlayerDashboard section="characters" /></Guarded>} />
           <Route path="/account/tickets" element={<Guarded permission="view_player_portal"><PlayerDashboard section="tickets" /></Guarded>} />
           <Route path="/account/applications" element={<Guarded permission="view_player_portal"><PlayerDashboard section="applications" /></Guarded>} />
-          <Route path="/account/settings" element={<Guarded permission="view_player_portal"><PlayerDashboard section="settings" /></Guarded>} />
+          <Route path="/account/settings" element={<Guarded permission="view_player_portal"><AccountSettingsPage /></Guarded>} />
 
           <Route path="/admin" element={<Guarded permission="manage_home"><AdminWorkspace /></Guarded>} />
           <Route path="/admin/settings" element={<Guarded permission="manage_home"><AdminWorkspace section="settings" /></Guarded>} />
@@ -80,7 +82,7 @@ export default function App() {
           <Route path="/admin/terms" element={<Guarded permission="manage_terms"><AdminWorkspace section="terms" /></Guarded>} />
           <Route path="/admin/events" element={<Guarded permission="manage_events"><AdminWorkspace section="events" /></Guarded>} />
           <Route path="/admin/users" element={<Guarded permission="manage_users"><AdminWorkspace section="users" /></Guarded>} />
-          <Route path="/admin/admins" element={<Guarded permission="manage_admins"><AdminWorkspace section="admins" /></Guarded>} />
+          <Route path="/admin/admins" element={<Guarded permission="manage_admins"><AdminsPage /></Guarded>} />
           <Route path="/admin/permissions" element={<Guarded permission="manage_permissions"><AdminWorkspace section="permissions" /></Guarded>} />
           <Route path="/admin/webhooks" element={<Guarded permission="manage_webhooks"><AdminWorkspace section="webhooks" /></Guarded>} />
           <Route path="/admin/audit-logs" element={<Guarded permission="view_audit_logs"><AdminWorkspace section="audit-logs" /></Guarded>} />
