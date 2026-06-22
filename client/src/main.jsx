@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "./i18n";
 import "./index.css";
+import "./map.css";
 import App from "./App.jsx";
 import { AppProvider } from "./context/AppContext.jsx";
 
