@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Crosshair, MapPin, Minus, Plus, RotateCcw, Search, Shield, X } from "lucide-react";
 import { api } from "../lib/api.js";
-import { useApp } from "../context/AppContext.jsx";
 import { Card } from "../components/Card.jsx";
+
+const TILE_SIZE = 256;
+const TILE_LEVEL = 4;
+const TILE_COUNT = 2 ** TILE_LEVEL;
+const GTA_TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/atlas";
 
 const DEFAULT_ZONE_TYPES = [
   "all",
@@ -52,19 +56,40 @@ function coordsText(zone) {
   return `${x || 0}, ${y || 0}, ${z || 0}`;
 }
 
+function tileUrl(x, y) {
+  return `${GTA_TILE_BASE}/${TILE_LEVEL}/${x}_${y}.png`;
+}
+
+function GtaTileLayer() {
+  const tiles = [];
+  for (let y = 0; y < TILE_COUNT; y += 1) {
+    for (let x = 0; x < TILE_COUNT; x += 1) {
+      tiles.push(
+        <img
+          key={`${x}-${y}`}
+          src={tileUrl(x, y)}
+          alt=""
+          draggable="false"
+          loading="lazy"
+          className="gta-map-tile"
+          style={{ left: x * TILE_SIZE, top: y * TILE_SIZE }}
+        />
+      );
+    }
+  }
+  return <>{tiles}</>;
+}
+
 export default function GtaMapPage() {
-  const { settings } = useApp();
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [activeType, setActiveType] = useState("all");
   const [selected, setSelected] = useState(null);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.36);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(null);
   const mapRef = useRef(null);
-
-  const mapImage = settings?.mapImageUrl || "/assets/fivem-map.svg";
 
   useEffect(() => {
     let active = true;
@@ -130,9 +155,14 @@ export default function GtaMapPage() {
   }, [dragging]);
 
   const resetView = () => {
-    setZoom(1);
+    setZoom(0.36);
     setOffset({ x: 0, y: 0 });
     setSelected(null);
+  };
+
+  const focusZone = (zone) => {
+    setSelected(zone);
+    setZoom((current) => Math.max(current, 0.58));
   };
 
   const copyCoords = async (zone) => {
@@ -146,9 +176,9 @@ export default function GtaMapPage() {
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-sm font-black uppercase tracking-widest text-a2-green">City map</p>
-          <h1 className="mt-3 text-4xl font-black md:text-5xl">Interactive GTA Map</h1>
+          <h1 className="mt-3 text-4xl font-black md:text-5xl">3D GTA V Map</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/55">
-            Explore safe zones, danger zones, police areas, event locations, shops, and points of interest across the city.
+            Real GTA V atlas tiles with 3D perspective, pan, zoom, clickable city pins, and zone information.
           </p>
         </div>
         <div className="rounded-2xl border border-a2-border bg-black/45 px-4 py-3 text-sm text-white/50">
@@ -177,8 +207,8 @@ export default function GtaMapPage() {
 
           <div className="gta-map-shell">
             <div className="gta-map-controls">
-              <button type="button" onClick={() => setZoom((value) => clamp(value + 0.16, 0.75, 2.4))} aria-label="Zoom in"><Plus size={16} /></button>
-              <button type="button" onClick={() => setZoom((value) => clamp(value - 0.16, 0.75, 2.4))} aria-label="Zoom out"><Minus size={16} /></button>
+              <button type="button" onClick={() => setZoom((value) => clamp(value + 0.08, 0.24, 1.35))} aria-label="Zoom in"><Plus size={16} /></button>
+              <button type="button" onClick={() => setZoom((value) => clamp(value - 0.08, 0.24, 1.35))} aria-label="Zoom out"><Minus size={16} /></button>
               <button type="button" onClick={resetView} aria-label="Reset map"><RotateCcw size={16} /></button>
             </div>
 
@@ -191,16 +221,18 @@ export default function GtaMapPage() {
               }}
               onWheel={(event) => {
                 event.preventDefault();
-                setZoom((value) => clamp(value + (event.deltaY > 0 ? -0.08 : 0.08), 0.75, 2.4));
+                setZoom((value) => clamp(value + (event.deltaY > 0 ? -0.04 : 0.04), 0.24, 1.35));
               }}
             >
               <div
-                className="gta-map-plane"
+                className="gta-map-plane gta-map-plane-tiles"
                 style={{
-                  "--gta-map-image": `url("${mapImage}")`,
-                  transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotateX(7deg)`
+                  width: TILE_COUNT * TILE_SIZE,
+                  height: TILE_COUNT * TILE_SIZE,
+                  transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom}) rotateX(12deg)`
                 }}
               >
+                <GtaTileLayer />
                 <div className="gta-map-grid" />
                 {(loading ? Array.from({ length: 8 }) : filtered).map((zone, index) => {
                   if (loading) return <span key={index} className="gta-map-marker skeleton-marker" style={{ left: `${20 + index * 8}%`, top: `${30 + (index % 4) * 12}%` }} />;
@@ -215,7 +247,7 @@ export default function GtaMapPage() {
                       onPointerDown={(event) => event.stopPropagation()}
                       onClick={(event) => {
                         event.stopPropagation();
-                        setSelected(zone);
+                        focusZone(zone);
                       }}
                     >
                       <span className="gta-map-marker-core"><MapPin size={20} /></span>
@@ -234,7 +266,7 @@ export default function GtaMapPage() {
               {selected && <button type="button" className="text-white/45 hover:text-white" onClick={() => setSelected(null)}><X size={18} /></button>}
             </div>
             {!selected ? (
-              <p className="mt-4 text-sm leading-6 text-white/50">Click any pin on the map to view the zone type, note, radius, and FiveM coordinates.</p>
+              <p className="mt-4 text-sm leading-6 text-white/50">Click any pin on the 3D GTA map to view the zone type, note, radius, and FiveM coordinates.</p>
             ) : (
               <div className="mt-4 grid gap-3">
                 {selected.image_url && <img src={selected.image_url} alt="" className="h-40 w-full rounded-xl object-cover opacity-90" />}
@@ -267,7 +299,7 @@ export default function GtaMapPage() {
                   key={zone.id}
                   type="button"
                   className={`rounded-xl border p-3 text-left transition ${selected?.id === zone.id ? "border-a2-green bg-a2-green/10" : "border-a2-border bg-white/[0.03] hover:border-a2-green/45"}`}
-                  onClick={() => setSelected(zone)}
+                  onClick={() => focusZone(zone)}
                 >
                   <span className="flex items-center gap-2 font-black"><Crosshair size={15} style={{ color: zoneColor(zone) }} />{zone.zone_name}</span>
                   <span className="mt-1 block text-xs font-bold" style={{ color: zoneColor(zone) }}>{zone.zone_type || "Point of Interest"}</span>
