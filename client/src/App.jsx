@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
-import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage, TicketsPage } from "./pages/PublicCollection.jsx";
+import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage } from "./pages/PublicCollection.jsx";
+import TicketsPage from "./pages/TicketsPage.jsx";
 import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
 import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
 import PlayerDashboard from "./pages/PlayerDashboard.jsx";
