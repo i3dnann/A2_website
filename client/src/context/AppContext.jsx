@@ -86,6 +86,12 @@ export function AppProvider({ children }) {
     });
   };
 
+  const hasPermission = (permission) => {
+    if (!permission) return true;
+    const permissions = asList(user?.permissions);
+    return permissions.includes("master_access") || permissions.includes(permission);
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -140,7 +146,8 @@ export function AppProvider({ children }) {
       setSettings,
       user,
       setUser,
-      providers: asList(providers),
+      providers,
+      hasPermission,
       loading,
       apiHealthy
     }),
