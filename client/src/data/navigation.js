@@ -1,5 +1,6 @@
 import {
   Calendar,
+  Construction,
   FileQuestion,
   Home,
   LayoutDashboard,
@@ -40,6 +41,7 @@ export const accountNav = [
 export const adminNav = [
   { label: "Admin", href: "/admin", icon: LayoutDashboard, permission: "manage_home" },
   { label: "Settings", href: "/admin/settings", icon: Settings, permission: "manage_home" },
+  { label: "Maintenance", href: "/admin/maintenance", icon: Construction, permission: "manage_home" },
   { label: "Home", href: "/admin/home", icon: Home, permission: "manage_home" },
   { label: "Partners", href: "/admin/partners", icon: Star, permission: "manage_partners" },
   { label: "Journey", href: "/admin/journey", icon: Workflow, permission: "manage_journey" },
