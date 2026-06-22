@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LogIn, MapPin, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { fontStack } from "../data/fonts.js";
 import "./MaintenanceScreen.css";
 
 function targetMs(settings = {}) {
@@ -38,14 +39,6 @@ function youtubeEmbedUrl(value = "") {
   return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`;
 }
 
-const fonts = {
-  Orbitron: "Orbitron, Inter, sans-serif",
-  Inter: "Inter, sans-serif",
-  Serif: "Georgia, serif",
-  Mono: "ui-monospace, SFMono-Regular, Menlo, monospace",
-  Impact: "Impact, Haettenschweiler, Arial Black, sans-serif"
-};
-
 export default function MaintenanceScreen({ settings = {}, onExit }) {
   const [now, setNow] = useState(Date.now());
   const [volume, setVolume] = useState(volumeValue(settings.maintenanceVolume));
@@ -56,7 +49,7 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   const time = useMemo(() => parts(remaining), [remaining]);
   const title = settings.maintenanceTitle || "The city is being rebuilt in the shadows";
   const subtitle = settings.maintenanceSubtitle || "Gotham City is under maintenance. The signal will return soon.";
-  const fontFamily = fonts[settings.maintenanceFont] || fonts.Orbitron;
+  const fontFamily = fontStack(settings.maintenanceFont || settings.headerFont || "Orbitron");
   const soundUrl = settings.maintenanceSoundUrl || "";
   const videoUrl = youtubeEmbedUrl(settings.maintenanceYoutubeUrl || settings.maintenanceVideoUrl);
   const brand = settings.websiteName || "Gotham City";
@@ -107,7 +100,7 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
               </label>
             )}
             <Link to="/login" className="maintenance-login" onPointerDown={(event) => event.stopPropagation()}>
-              <LogIn size={16} /> Admin Login
+              <LogIn size={16} /> Admin Only
             </Link>
             {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
           </div>
