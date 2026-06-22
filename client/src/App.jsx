@@ -12,6 +12,7 @@ import { AdminWorkspace } from "./pages/AdminWorkspace.jsx";
 import GtaMapPage from "./pages/GtaMapPage.jsx";
 import AdminMapPage from "./pages/AdminMapPage.jsx";
 import AdminTicketManager from "./components/AdminTicketManager.jsx";
+import MediaLibraryPage from "./pages/MediaLibraryPage.jsx";
 import MaintenanceScreen from "./components/MaintenanceScreen.jsx";
 import { ForbiddenPage, NotFoundPage } from "./pages/SystemPages.jsx";
 import { PublicLayout } from "./components/PublicLayout.jsx";
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="/admin/webhooks" element={<Guarded permission="manage_webhooks"><AdminWorkspace section="webhooks" /></Guarded>} />
           <Route path="/admin/audit-logs" element={<Guarded permission="view_audit_logs"><AdminWorkspace section="audit-logs" /></Guarded>} />
           <Route path="/admin/theme" element={<Guarded permission="manage_theme"><AdminWorkspace section="theme" /></Guarded>} />
+          <Route path="/admin/media" element={<Guarded permission="manage_home"><MediaLibraryPage /></Guarded>} />
           <Route path="/dashboard" element={<Navigate to="/account" replace />} />
         </Route>
       </Routes>
