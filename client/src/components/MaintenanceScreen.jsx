@@ -100,19 +100,18 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
             <span>{brand}</span>
           </div>
           <div className="maintenance-top-actions">
+            {soundUrl && (
+              <label className="maintenance-volume" onPointerDown={(event) => event.stopPropagation()}>
+                <span><Volume2 size={16} /> {volume}%</span>
+                <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
+              </label>
+            )}
             <Link to="/login" className="maintenance-login" onPointerDown={(event) => event.stopPropagation()}>
               <LogIn size={16} /> Admin Login
             </Link>
             {onExit && <button type="button" className="maintenance-exit" onClick={onExit}>Exit preview</button>}
           </div>
         </header>
-
-        {soundUrl && (
-          <label className="maintenance-volume" onPointerDown={(event) => event.stopPropagation()}>
-            <span><Volume2 size={16} /> {volume}%</span>
-            <input type="range" min="5" max="100" step="1" value={volume} onChange={changeVolume} />
-          </label>
-        )}
 
         <div className="maintenance-content">
           <p className="maintenance-kicker">Maintenance Mode</p>
