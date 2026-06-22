@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Calendar, ChevronRight, FileQuestion, MapPin, Search, Send, Shield, Ticket } from "lucide-react";
+import { Calendar, ChevronRight, FileQuestion, Globe2, Instagram, MapPin, MessageCircle, Music2, Radio, Search, Send, Shield, Ticket, Twitch, Twitter, Youtube } from "lucide-react";
 import { api, imageFallback } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { useApp } from "../context/AppContext.jsx";
@@ -16,6 +16,73 @@ const labels = {
   careers: { title: "Careers", eyebrow: "Applications", image: "title" },
   map: { title: "Map Zones", eyebrow: "Safe and dangerous areas", image: "zone_name" }
 };
+
+const socialPlatforms = [
+  { key: "discord_url", label: "Discord", Icon: MessageCircle },
+  { key: "twitch_url", label: "Twitch", Icon: Twitch },
+  { key: "kick_url", label: "Kick", Icon: Radio },
+  { key: "youtube_url", label: "YouTube", Icon: Youtube },
+  { key: "tiktok_url", label: "TikTok", Icon: Music2 },
+  { key: "instagram_url", label: "Instagram", Icon: Instagram },
+  { key: "x_url", label: "X", Icon: Twitter },
+  { key: "twitter_url", label: "Twitter", Icon: Twitter },
+  { key: "website_url", label: "Website", Icon: Globe2 }
+];
+
+function normalizeUrl(url) {
+  const value = String(url || "").trim();
+  if (!value) return "";
+  if (/^(https?:\/\/|mailto:|fivem:\/\/)/i.test(value)) return value;
+  return `https://${value}`;
+}
+
+function socialLinksFor(row = {}) {
+  const links = socialPlatforms
+    .map((platform) => ({ ...platform, url: normalizeUrl(row[platform.key]) }))
+    .filter((platform) => platform.url);
+
+  if (row.social_links_json) {
+    try {
+      const parsed = typeof row.social_links_json === "string" ? JSON.parse(row.social_links_json) : row.social_links_json;
+      if (parsed && typeof parsed === "object") {
+        Object.entries(parsed).forEach(([label, url]) => {
+          const href = normalizeUrl(url);
+          if (href) links.push({ key: `custom-${label}`, label: String(label), url: href, Icon: Globe2 });
+        });
+      }
+    } catch {
+      // Ignore invalid JSON from older rows.
+    }
+  }
+
+  return links;
+}
+
+function SocialLinks({ row }) {
+  const links = socialLinksFor(row);
+  if (!links.length) return null;
+
+  return (
+    <div className="mt-5">
+      <h3 className="text-sm font-black uppercase tracking-widest text-white/40">Social media</h3>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {links.map(({ key, label, url, Icon }) => (
+          <a
+            key={`${key}-${url}`}
+            href={url}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label={label}
+            title={label}
+            className="grid h-12 w-12 place-items-center rounded-full border border-a2-border bg-white/[0.04] text-white/75 transition hover:border-a2-green/60 hover:bg-a2-green/10 hover:text-white"
+          >
+            <Icon size={21} />
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function PublicCollection({ type }) {
   const [q, setQ] = useState("");
@@ -81,6 +148,7 @@ export function PublicDetail({ type }) {
             <Link to={`/${type}`} className="text-sm font-bold text-a2-green">Back to {labels[type]?.title || type}</Link>
             <h1 className="mt-3 text-4xl font-black md:text-6xl">{title}</h1>
             <p className="mt-3 max-w-3xl text-white/62">{row.subtitle || row.header || row.category || row.role_name || row.location}</p>
+            {type === "team" && <SocialLinks row={row} />}
           </div>
         </div>
       </section>
@@ -92,7 +160,7 @@ export function PublicDetail({ type }) {
           <h2 className="font-black">Details</h2>
           <dl className="mt-4 grid gap-3 text-sm">
             {Object.entries(row)
-              .filter(([key, value]) => ["category", "department", "role_name", "gang_business", "location", "starts_at", "ends_at", "event_status", "version", "effective_date"].includes(key) && value)
+              .filter(([key, value]) => ["category", "department", "role_name", "role_title", "gang_business", "location", "starts_at", "ends_at", "event_status", "version", "effective_date"].includes(key) && value)
               .map(([key, value]) => (
                 <div key={key} className="rounded-lg border border-a2-border bg-white/[0.03] p-3">
                   <dt className="text-xs uppercase tracking-wide text-white/35">{key.replaceAll("_", " ")}</dt>
@@ -100,6 +168,7 @@ export function PublicDetail({ type }) {
                 </div>
               ))}
           </dl>
+          {type !== "team" && <SocialLinks row={row} />}
         </Card>
       </section>
     </main>
