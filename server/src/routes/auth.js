@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { randomBytes, randomUUID } from "node:crypto";
+import jwt from "jsonwebtoken";
 import { fetch } from "undici";
 import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
 import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordMemberRoles, getDiscordUser } from "../services/discord.js";
-import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, signUser } from "../services/users.js";
+import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement } from "../services/users.js";
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
@@ -14,6 +15,8 @@ import { kickConfigured } from "../services/kickService.js";
 
 const router = Router();
 const oauthStates = new Map();
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const SESSION_EXPIRES_IN = "30d";
 
 const registerSchema = z.object({
   username: z.string().min(2).max(80),
@@ -41,8 +44,8 @@ function readState(state) {
 }
 
 function setSession(res, user) {
-  const token = signUser(user);
-  res.cookie("a2_session", token, cookieOptions);
+  const token = jwt.sign({ sub: user.id }, env.JWT_SECRET, { expiresIn: SESSION_EXPIRES_IN });
+  res.cookie("a2_session", token, { ...cookieOptions, maxAge: SESSION_MAX_AGE_MS });
   return token;
 }
 
