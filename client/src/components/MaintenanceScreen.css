@@ -102,17 +102,29 @@
   text-transform: uppercase;
 }
 
-.maintenance-sound {
+.maintenance-sound,
+.maintenance-exit {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 2rem;
   border: 1px solid rgba(139, 92, 246, 0.45);
   border-radius: 999px;
   padding: 0.8rem 1.15rem;
   background: rgba(139, 92, 246, 0.12);
   color: #fff;
   cursor: pointer;
+}
+
+.maintenance-sound {
+  margin-top: 2rem;
+}
+
+.maintenance-exit {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.58);
 }
 
 .maintenance-lightning {
