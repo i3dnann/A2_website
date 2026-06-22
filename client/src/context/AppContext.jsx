@@ -2,10 +2,10 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
 
 const defaultSettings = {
-  websiteName: "A2 Studio",
+  websiteName: "Gotham City",
   logoUrl: "/assets/gotham-logo.png",
   faviconUrl: "/assets/gotham-logo.png",
-  primaryColor: "#8b5cf6",
+  primaryColor: "#ef4444",
   backgroundColor: "#000000",
   textColor: "#ffffff",
   secondaryColor: "#111111",
@@ -14,10 +14,10 @@ const defaultSettings = {
   mutedTextColor: "#b8b8b8",
   dangerColor: "#ff3333",
   warningColor: "#ffaa00",
-  successColor: "#35ff6b",
-  heroTitle: "A2 Studio Roleplay",
-  heroSubtitle: "Premium FiveM community",
-  heroDescription: "A serious, story-driven QBCore roleplay community.",
+  successColor: "#38bdf8",
+  heroTitle: "Gotham City",
+  heroSubtitle: "Gotham City FiveM server",
+  heroDescription: "A serious, story-driven FiveM server with city news, creator roster, live streams, events, support, careers, and player account tools.",
   heroBackgroundImage: "/assets/gotham-banner.gif",
   mapImageUrl: "/assets/fivem-map.svg",
   livePageEnabled: true,
@@ -32,20 +32,59 @@ const defaultSettings = {
   performanceMode: false
 };
 
+const textReplacements = [
+  ["A2 Studio Roleplay", "Gotham City"],
+  ["A2 Studio", "Gotham City"],
+  ["Premium FiveM community", "Gotham City FiveM server"],
+  ["premium FiveM community", "Gotham City FiveM server"],
+  ["QBCore roleplay community", "FiveM roleplay server"],
+  ["QBCore roleplay", "FiveM roleplay"]
+];
+
+const colorReplacements = new Map([
+  ["#b7fe1a", "#ef4444"],
+  ["#35ff6b", "#38bdf8"]
+]);
+
+function normalizeSettingValue(value) {
+  if (typeof value !== "string") return value;
+  const color = value.trim().toLowerCase();
+  if (colorReplacements.has(color)) return colorReplacements.get(color);
+  return textReplacements.reduce((current, [from, to]) => current.replaceAll(from, to), value);
+}
+
+function normalizeSettings(settings = {}) {
+  return Object.fromEntries(Object.entries(settings || {}).map(([key, value]) => [key, normalizeSettingValue(value)]));
+}
+
+function asList(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  if (typeof value === "string") return value.split(",").map((item) => item.trim()).filter(Boolean);
+  return [];
+}
+
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettingsState] = useState(defaultSettings);
   const [user, setUser] = useState(null);
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiHealthy, setApiHealthy] = useState(true);
 
+  const setSettings = (updater) => {
+    setSettingsState((current) => {
+      const next = typeof updater === "function" ? updater(current) : updater;
+      return normalizeSettings({ ...current, ...(next || {}) });
+    });
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
-      localStorage.setItem("a2_session_token", token);
+      localStorage.setItem("gotham_session_token", token);
+      localStorage.removeItem("a2_session_token");
       window.history.replaceState(null, "", window.location.pathname);
     }
 
@@ -88,18 +127,27 @@ export function AppProvider({ children }) {
     document.body.classList.toggle("performance-mode", Boolean(settings.performanceMode));
   }, [settings]);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const permissions = asList(user?.permissions);
+    const roles = asList(user?.roles);
+    const hasElevatedRole = roles.some((role) => ["Master", "Owner", "Admin", "Super Admin"].includes(role));
+    const hasPermission = (permission) => {
+      if (!permission) return true;
+      if (!user) return false;
+      return permissions.includes("master_access") || hasElevatedRole || permissions.includes(permission);
+    };
+
+    return {
       settings,
       setSettings,
       user,
       setUser,
       providers,
       loading,
-      apiHealthy
-    }),
-    [settings, user, providers, loading, apiHealthy]
-  );
+      apiHealthy,
+      hasPermission
+    };
+  }, [settings, user, providers, loading, apiHealthy]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
