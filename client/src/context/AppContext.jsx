@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../lib/api.js";
 
+const PURPLE = "#8b5cf6";
+
 const defaultSettings = {
   websiteName: "Gotham City",
   logoUrl: "/assets/gotham-logo.png",
   faviconUrl: "/assets/gotham-logo.png",
-  primaryColor: "#ef4444",
+  primaryColor: PURPLE,
   backgroundColor: "#000000",
   textColor: "#ffffff",
   secondaryColor: "#111111",
@@ -14,7 +16,7 @@ const defaultSettings = {
   mutedTextColor: "#b8b8b8",
   dangerColor: "#ff3333",
   warningColor: "#ffaa00",
-  successColor: "#38bdf8",
+  successColor: PURPLE,
   heroTitle: "Gotham City",
   heroSubtitle: "Gotham City FiveM server",
   heroDescription: "A serious, story-driven FiveM server with city news, creator roster, live streams, events, support, careers, and player account tools.",
@@ -42,8 +44,10 @@ const textReplacements = [
 ];
 
 const colorReplacements = new Map([
-  ["#b7fe1a", "#ef4444"],
-  ["#35ff6b", "#38bdf8"]
+  ["#b7fe1a", PURPLE],
+  ["#35ff6b", PURPLE],
+  ["#38bdf8", PURPLE],
+  ["#ef4444", PURPLE]
 ]);
 
 function normalizeSettingValue(value) {
