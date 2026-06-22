@@ -4,6 +4,7 @@ import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
+import CredentialUpdateForm from "../components/CredentialUpdateForm.jsx";
 
 export default function AccountSettingsPage() {
   const [error, setError] = useState("");
@@ -61,6 +62,8 @@ export default function AccountSettingsPage() {
           busy={busy === "steam"}
         />
       </div>
+
+      <CredentialUpdateForm />
     </div>
   );
 }
