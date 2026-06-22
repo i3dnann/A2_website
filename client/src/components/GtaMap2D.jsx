@@ -3,11 +3,13 @@ import { MapPin, Minus, Plus, RotateCcw } from "lucide-react";
 
 const TILE_SIZE = 256;
 const TILE_LEVEL = 3;
-const TILE_COUNT = 2 ** TILE_LEVEL;
-const MAP_SIZE = TILE_SIZE * TILE_COUNT;
+const TILE_COLS = 8;
+const TILE_ROWS = 12;
+const MAP_WIDTH = TILE_SIZE * TILE_COLS;
+const MAP_HEIGHT = TILE_SIZE * TILE_ROWS;
 const TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/mainmap";
-const DEFAULT_ZOOM = 0.28;
-const MIN_ZOOM = 0.2;
+const DEFAULT_ZOOM = 0.2;
+const MIN_ZOOM = 0.16;
 const MAX_ZOOM = 1.8;
 
 function clamp(value, min, max) {
@@ -21,8 +23,8 @@ function pinValue(value, fallback = 50) {
 
 export function GtaTiles() {
   const tiles = [];
-  for (let y = 0; y < TILE_COUNT; y += 1) {
-    for (let x = 0; x < TILE_COUNT; x += 1) {
+  for (let y = 0; y < TILE_ROWS; y += 1) {
+    for (let x = 0; x < TILE_COLS; x += 1) {
       tiles.push(
         <img
           key={`${x}-${y}`}
@@ -91,7 +93,7 @@ export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = 
   };
 
   return (
-    <div className="gta-map-shell" style={{ minHeight: editable ? 660 : 620 }}>
+    <div className="gta-map-shell" style={{ minHeight: editable ? 760 : 720 }}>
       <div className="gta-map-controls">
         <button type="button" onClick={() => setZoom((value) => clamp(value + 0.1, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom in"><Plus size={16} /></button>
         <button type="button" onClick={() => setZoom((value) => clamp(value - 0.1, MIN_ZOOM, MAX_ZOOM))} aria-label="Zoom out"><Minus size={16} /></button>
@@ -114,8 +116,8 @@ export default function GtaMap2D({ zones = [], selectedId, onSelect, editable = 
           style={{
             left: "50%",
             top: "50%",
-            width: MAP_SIZE,
-            height: MAP_SIZE,
+            width: MAP_WIDTH,
+            height: MAP_HEIGHT,
             transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) scale(${zoom})`
           }}
         >
