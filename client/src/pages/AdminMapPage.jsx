@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, MapPin, Plus, RefreshCw, Save, Search, Trash2 } from "lucide-react";
 import { api } from "../lib/api.js";
-import { useApp } from "../context/AppContext.jsx";
 import { Card } from "../components/Card.jsx";
 import { Button } from "../components/Button.jsx";
 
+const TILE_SIZE = 256;
+const TILE_LEVEL = 4;
+const TILE_COUNT = 2 ** TILE_LEVEL;
+const GTA_TILE_BASE = "https://cdn.jsdelivr.net/gh/ONyambura/gtav_map_tiles@main/atlas";
 const ZONE_TYPES = ["Safe Zone", "Danger Zone", "Police Zone", "Hospital", "Gang Area", "Event Zone", "Shop", "Point of Interest"];
 
 const defaults = {
@@ -45,8 +48,31 @@ function cleanPayload(draft) {
   };
 }
 
+function tileUrl(x, y) {
+  return `${GTA_TILE_BASE}/${TILE_LEVEL}/${x}_${y}.png`;
+}
+
+function GtaTileLayer() {
+  const tiles = [];
+  for (let y = 0; y < TILE_COUNT; y += 1) {
+    for (let x = 0; x < TILE_COUNT; x += 1) {
+      tiles.push(
+        <img
+          key={`${x}-${y}`}
+          src={tileUrl(x, y)}
+          alt=""
+          draggable="false"
+          loading="lazy"
+          className="gta-map-tile"
+          style={{ left: x * TILE_SIZE, top: y * TILE_SIZE }}
+        />
+      );
+    }
+  }
+  return <>{tiles}</>;
+}
+
 export default function AdminMapPage() {
-  const { settings } = useApp();
   const [rows, setRows] = useState([]);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState(null);
@@ -54,8 +80,6 @@ export default function AdminMapPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("");
   const mapRef = useRef(null);
-
-  const mapImage = settings?.mapImageUrl || "/assets/fivem-map.svg";
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -131,9 +155,9 @@ export default function AdminMapPage() {
     <div className="grid gap-5">
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">CMS</p>
-        <h1 className="mt-3 text-3xl font-black md:text-5xl">Map pin editor</h1>
+        <h1 className="mt-3 text-3xl font-black md:text-5xl">3D GTA map pin editor</h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-white/50">
-          Add safe zones, dangerous zones, event locations, shops, and other GTA map pins. Click the preview map to place the selected pin.
+          Add safe zones, dangerous zones, event locations, shops, and other pins. Click the real GTA V map preview to place the selected pin.
         </p>
       </header>
 
@@ -172,13 +196,16 @@ export default function AdminMapPage() {
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-black">Visual pin placement</h2>
-                <p className="mt-1 text-sm text-white/45">Click anywhere on the map to move this pin. Then press Save.</p>
+                <p className="mt-1 text-sm text-white/45">Click anywhere on the GTA map to move this pin. Then press Save.</p>
               </div>
               <span className="rounded-full border border-a2-border bg-black/40 px-3 py-1 text-xs font-bold text-white/55">
                 X {numberValue(draft.position_x).toFixed(2)} / Y {numberValue(draft.position_y).toFixed(2)}
               </span>
             </div>
-            <div className="admin-gta-map" ref={mapRef} style={{ "--gta-map-image": `url("${mapImage}")` }} onClick={placePin}>
+            <div className="admin-gta-map admin-gta-map-tiles" ref={mapRef} onClick={placePin}>
+              <div className="admin-gta-map-tile-plane">
+                <GtaTileLayer />
+              </div>
               {rows.map((zone) => (
                 <span
                   key={zone.id}
