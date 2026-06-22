@@ -6,6 +6,7 @@ import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
 import MaintenanceScreen from "../components/MaintenanceScreen.jsx";
+import { fontOptions } from "../data/fonts.js";
 
 const defaultDraft = {
   maintenanceMode: false,
@@ -18,8 +19,6 @@ const defaultDraft = {
   maintenanceVolume: 35,
   maintenanceFont: "Orbitron"
 };
-
-const fonts = ["Orbitron", "Inter", "Serif", "Mono", "Impact"];
 
 function toInputDate(value) {
   if (!value) return "";
@@ -140,7 +139,7 @@ export default function MaintenanceSettingsPage() {
               <label className="grid gap-2 text-sm font-bold">
                 Font type
                 <select className="form-input" value={draft.maintenanceFont || "Orbitron"} onChange={(event) => setDraft((current) => ({ ...current, maintenanceFont: event.target.value }))}>
-                  {fonts.map((font) => <option key={font}>{font}</option>)}
+                  {fontOptions.map((font) => <option key={font.value} value={font.value}>{font.label}</option>)}
                 </select>
               </label>
             </div>
