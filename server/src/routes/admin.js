@@ -11,6 +11,7 @@ import { checkAllStreamers, checkStreamerLiveStatus, withLiveStatus } from "../s
 import { deactivateWebUser, listWebUsers, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
 import { publicFileUrl } from "../utils/sanitize.js";
 import { sendWebhook } from "../services/webhook.js";
+import { cleanKickSlug } from "../services/kickService.js";
 
 const router = Router();
 const settingsSchema = z.record(z.any());
@@ -27,6 +28,14 @@ const webhookKeys = [
 function requireAnyAdmin(req, res, next) {
   if (ADMIN_PERMISSIONS.some((permission) => hasPermission(req.user, permission))) return next();
   return res.status(403).json({ error: "admin_permission_required" });
+}
+
+function normalizeAdminResourcePayload(resource, payload = {}) {
+  if (resource !== "streamers") return payload;
+  return {
+    ...payload,
+    kick_username: cleanKickSlug(payload.kick_username || "")
+  };
 }
 
 router.use(requireAuth, requireAnyAdmin);
@@ -394,7 +403,8 @@ router.post(
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const row = await createResource(req.params.resource, req.body, req.user);
+    const payload = normalizeAdminResourcePayload(req.params.resource, req.body || {});
+    const row = await createResource(req.params.resource, payload, req.user);
     await auditAction({ req, action: `create_${req.params.resource}`, targetType: req.params.resource, targetId: row.id, after: row, reason: req.body?.reason || "created", webhookCategory: "admin" });
     res.status(201).json({ row });
   })
@@ -406,7 +416,8 @@ router.patch(
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const result = await updateResource(req.params.resource, req.params.id, req.body, req.user);
+    const payload = normalizeAdminResourcePayload(req.params.resource, req.body || {});
+    const result = await updateResource(req.params.resource, req.params.id, payload, req.user);
     if (!result) return res.status(404).json({ error: "not_found" });
     await auditAction({ req, action: `update_${req.params.resource}`, targetType: req.params.resource, targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.reason || "updated", webhookCategory: "admin" });
     res.json({ row: result.after });

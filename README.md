@@ -31,7 +31,8 @@ npm.cmd run dev
 Frontend: `http://localhost:5173`  
 Backend: `http://localhost:3001/health`
 
-Live Netlify/Windows VPS update steps: [`docs/LIVE_SITE_UPDATE_GUIDE.md`](docs/LIVE_SITE_UPDATE_GUIDE.md)
+Live Netlify/Windows VPS update steps: [`docs/LIVE_SITE_UPDATE_GUIDE.md`](docs/LIVE_SITE_UPDATE_GUIDE.md)  
+Kick live status setup: [`KICK_SETUP.md`](KICK_SETUP.md)
 
 For a real database, set `USE_DATABASE=true`, fill the MySQL values in `.env`, then import:
 
@@ -88,7 +89,7 @@ Steam:
 Twitch/Kick live status:
 
 - Twitch: `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`
-- Kick: `KICK_API_KEY` or `KICK_CLIENT_ID` + `KICK_CLIENT_SECRET`
+- Kick: `KICK_API_BASE_URL`, `KICK_OAUTH_BASE_URL`, `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET`
 
 Missing live credentials do not crash the site; streamers show offline/unknown.
 

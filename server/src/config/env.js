@@ -41,7 +41,8 @@ const schema = z.object({
   TWITCH_ACCESS_TOKEN: z.string().default(""),
 
   KICK_API_KEY: z.string().default(""),
-  KICK_API_BASE_URL: z.string().default("https://api.kick.com"),
+  KICK_API_BASE_URL: z.string().default("https://api.kick.com/public/v1"),
+  KICK_OAUTH_BASE_URL: z.string().default("https://id.kick.com"),
   KICK_CLIENT_ID: z.string().default(""),
   KICK_CLIENT_SECRET: z.string().default(""),
 

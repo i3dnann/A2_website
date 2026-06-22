@@ -18,7 +18,7 @@ export function DashboardLayout() {
 
   return (
     <div className="a2-shell min-h-screen bg-black">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 border-r border-a2-border bg-black/88 p-4 backdrop-blur-xl lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-72 flex-col border-r border-a2-border bg-black/88 p-4 backdrop-blur-xl lg:flex">
         <NavLink to="/" className="mb-6 flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center overflow-hidden rounded-full border border-a2-green/40 bg-a2-green/10 font-black text-a2-green">
             {settings.logoUrl ? <img src={settings.logoUrl} className="h-full w-full rounded-full object-cover" alt={settings.websiteName || "A2 Studio"} /> : "A2"}
@@ -28,8 +28,10 @@ export function DashboardLayout() {
             <p className="truncate text-xs text-white/45">{user?.username || "Dashboard"}</p>
           </div>
         </NavLink>
-        <DashboardNav title="Account" items={accountItems} />
-        {adminItems.length > 0 && <DashboardNav title="Admin" items={adminItems} />}
+        <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          <DashboardNav title="Account" items={accountItems} />
+          {adminItems.length > 0 && <DashboardNav title="Admin" items={adminItems} />}
+        </div>
       </aside>
 
       <main className="lg:pl-72">

@@ -459,6 +459,9 @@ function FieldInput({ field, value, onChange }) {
       </label>
     );
   }
+  if (field === "kick_username") {
+    return <label className="grid gap-2 text-sm font-bold capitalize">{label}<input className="form-input" value={value || ""} onChange={(event) => onChange(event.target.value)} placeholder="Kick username only, for example xqc" /></label>;
+  }
   return <label className="grid gap-2 text-sm font-bold capitalize">{label}<input className="form-input" value={value || ""} onChange={(event) => onChange(event.target.value)} /></label>;
 }
 
@@ -628,6 +631,7 @@ function normalizeDraft(draft, fields) {
       const value = draft[field];
       if (field.startsWith("is_") || field.startsWith("show") || field.endsWith("_enabled") || booleanFields.has(field)) return [field, Boolean(value)];
       if (field.endsWith("_json") || field === "navLinks") return [field, parseJsonField(value)];
+      if (field === "kick_username") return [field, cleanKickSlug(value)];
       return [field, value ?? ""];
     })
   );
@@ -667,6 +671,24 @@ function parseList(value) {
 
 function isTrue(value) {
   return value === true || value === 1 || value === "1" || value === "true";
+}
+
+function cleanKickSlug(value = "") {
+  let input = String(value || "").trim();
+  try {
+    if (/^https?:\/\//i.test(input)) input = new URL(input).pathname.split("/").filter(Boolean)[0] || "";
+  } catch {
+    input = input.replace(/^https?:\/\//i, "");
+  }
+  return input
+    .replace(/^www\./i, "")
+    .replace(/^kick\.com\//i, "")
+    .replace(/^@/, "")
+    .split(/[/?#]/)[0]
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 25);
 }
 
 function rowTitle(row) {

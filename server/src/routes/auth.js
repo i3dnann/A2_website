@@ -10,6 +10,7 @@ import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginO
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
+import { kickConfigured } from "../services/kickService.js";
 
 const router = Router();
 const oauthStates = new Map();
@@ -59,7 +60,7 @@ router.get("/providers", (_req, res) => {
       setupWarning: env.STEAM_API_KEY ? "" : "Steam API key is missing. OpenID linking can still work, but profile enrichment is disabled."
     },
     twitch: { configured: Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) },
-    kick: { configured: Boolean(env.KICK_API_KEY || (env.KICK_CLIENT_ID && env.KICK_CLIENT_SECRET)) }
+    kick: { configured: Boolean(env.KICK_API_KEY || kickConfigured()) }
   });
 });
 

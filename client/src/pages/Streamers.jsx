@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ExternalLink, Search, Video, X } from "lucide-react";
 import { api, imageFallback } from "../lib/api.js";
@@ -10,9 +10,12 @@ export function StreamersPage() {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState("");
   const [selected, setSelected] = useState(null);
+  const [kickStatuses, setKickStatuses] = useState({});
   const { data, loading } = useApi(() => api.get(`/api/public/streamers?q=${encodeURIComponent(q)}${category ? `&category=${encodeURIComponent(category)}` : ""}`), [q, category], { streamers: [] });
-  const streamers = data?.streamers || [];
+  const streamers = useMemo(() => applyKickStatuses(data?.streamers || [], kickStatuses), [data?.streamers, kickStatuses]);
   const categories = ["", "Police", "EMS", "Gang", "Civilian", "Business", "Staff", "Other"];
+
+  useKickStatusChecks(data?.streamers || [], setKickStatuses);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
@@ -49,7 +52,9 @@ function StreamerCard({ streamer, loading, onClick }) {
               <p className="truncate text-lg font-black">{streamer.display_name}</p>
               <p className="text-sm text-a2-green">{streamer.category || "Other"}</p>
             </div>
-            <span className={`ml-auto rounded-full px-2 py-1 text-xs font-black ${streamer.is_live ? "bg-a2-green text-black" : "bg-white/10 text-white/50"}`}>{streamer.is_live ? "LIVE" : "OFFLINE"}</span>
+            <div className="ml-auto">
+              <LiveBadge streamer={streamer} />
+            </div>
           </div>
           <p className="mt-4 line-clamp-3 text-sm leading-6 text-white/55">{streamer.bio || "Creator profile managed from the admin panel."}</p>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-white/55">
@@ -88,7 +93,9 @@ function StreamerModal({ streamer, onClose }) {
               <h2 className="text-3xl font-black">{streamer.display_name}</h2>
               <p className="text-a2-green">{streamer.character_name || streamer.category || "Creator"}</p>
             </div>
-            <span className={`ml-auto rounded-full px-3 py-1 text-xs font-black ${streamer.is_live ? "bg-a2-green text-black" : "bg-white/10 text-white/50"}`}>{streamer.is_live ? "LIVE NOW" : "OFFLINE"}</span>
+            <div className="ml-auto">
+              <LiveBadge streamer={streamer} large />
+            </div>
           </div>
           <p className="mt-5 leading-7 text-white/62">{streamer.bio}</p>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -125,15 +132,20 @@ export function StreamerDetail() {
 export function LivePage() {
   const [q, setQ] = useState("");
   const [platform, setPlatform] = useState("");
+  const [kickStatuses, setKickStatuses] = useState({});
   const { data, loading } = useApi(() => api.get(`/api/public/live?q=${encodeURIComponent(q)}${platform ? `&platform=${platform}` : ""}`), [q, platform], { streamers: [], totalLiveChannels: 0, totalLiveViewers: 0 });
-  const streamers = data?.streamers || [];
+  const streamers = useMemo(() => applyKickStatuses(data?.streamers || [], kickStatuses), [data?.streamers, kickStatuses]);
+  const totalLiveChannels = streamers.filter((streamer) => streamer.is_live).length;
+  const totalLiveViewers = streamers.reduce((sum, streamer) => sum + Number(streamer.viewer_count || 0), 0);
+
+  useKickStatusChecks(data?.streamers || [], setKickStatuses);
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
       <Header eyebrow="Live city" title="Community livestreams" />
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <Card><p className="text-sm text-white/50">Live channels</p><p className="mt-2 text-3xl font-black">{data?.totalLiveChannels || 0}</p></Card>
-        <Card><p className="text-sm text-white/50">Total viewers</p><p className="mt-2 text-3xl font-black">{data?.totalLiveViewers || 0}</p></Card>
+        <Card><p className="text-sm text-white/50">Live channels</p><p className="mt-2 text-3xl font-black">{totalLiveChannels}</p></Card>
+        <Card><p className="text-sm text-white/50">Total viewers</p><p className="mt-2 text-3xl font-black">{totalLiveViewers}</p></Card>
         <Card><p className="text-sm text-white/50">Tracked creators</p><p className="mt-2 text-3xl font-black">{streamers.length}</p></Card>
       </div>
       <div className="mt-6 grid gap-3 md:grid-cols-[1fr_auto]">
@@ -156,7 +168,7 @@ export function LivePage() {
                 <div className="p-5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-black">{streamer.display_name}</p>
-                    <span className={`rounded-full px-2 py-1 text-xs font-black ${streamer.is_live ? "bg-a2-green text-black" : "bg-white/10 text-white/50"}`}>{streamer.is_live ? "LIVE" : "OFFLINE"}</span>
+                    <LiveBadge streamer={streamer} />
                   </div>
                   <p className="mt-2 line-clamp-2 text-sm text-white/55">{streamer.stream_title || streamer.bio || "Offline or status unknown."}</p>
                   <div className="mt-4 flex items-center justify-between gap-3 text-sm text-white/45">
@@ -181,4 +193,97 @@ function Header({ eyebrow, title }) {
       <h1 className="mt-3 text-4xl font-black md:text-5xl">{title}</h1>
     </header>
   );
+}
+
+function LiveBadge({ streamer, large = false }) {
+  const text = streamer.live_status_checking ? "CHECKING" : streamer.live_status_error ? "UNKNOWN" : streamer.is_live ? (large ? "LIVE NOW" : "LIVE") : "OFFLINE";
+  const color = streamer.live_status_checking
+    ? "bg-white/10 text-white/65"
+    : streamer.live_status_error
+      ? "bg-a2-warning/20 text-a2-warning"
+      : streamer.is_live
+        ? "bg-a2-green text-black"
+        : "bg-white/10 text-white/50";
+  return <span className={`rounded-full px-2 py-1 text-xs font-black ${color}`}>{text}</span>;
+}
+
+function cleanKickSlug(value = "") {
+  let input = String(value || "").trim();
+  if (!input) return "";
+  try {
+    if (/^https?:\/\//i.test(input)) {
+      const url = new URL(input);
+      input = url.pathname.split("/").filter(Boolean)[0] || "";
+    }
+  } catch {
+    input = input.replace(/^https?:\/\//i, "");
+  }
+  return input
+    .replace(/^www\./i, "")
+    .replace(/^kick\.com\//i, "")
+    .replace(/^@/, "")
+    .split(/[/?#]/)[0]
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 25);
+}
+
+function hasLiveStatus(status) {
+  return status?.is_live === true || status?.is_live === 1 || status?.is_live === "1" || status?.is_live === "true";
+}
+
+function useKickStatusChecks(streamers, setKickStatuses) {
+  useEffect(() => {
+    const slugs = [...new Set((streamers || []).map((streamer) => cleanKickSlug(streamer.kick_username)).filter(Boolean))];
+    if (!slugs.length) return;
+    let cancelled = false;
+
+    slugs.forEach((slug) => {
+      setKickStatuses((current) => ({
+        ...current,
+        [slug]: { ...(current[slug] || {}), loading: true, error: "" }
+      }));
+      api
+        .get(`/api/kick/status/${encodeURIComponent(slug)}`)
+        .then((status) => {
+          if (!cancelled) setKickStatuses((current) => ({ ...current, [slug]: { loading: false, data: status, error: status.error || "" } }));
+        })
+        .catch((error) => {
+          if (!cancelled) setKickStatuses((current) => ({ ...current, [slug]: { loading: false, data: null, error: error.data?.error || error.message || "kick_status_failed" } }));
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [streamers, setKickStatuses]);
+}
+
+function applyKickStatuses(streamers, kickStatuses) {
+  return (streamers || []).map((streamer) => {
+    const slug = cleanKickSlug(streamer.kick_username);
+    if (!slug) return streamer;
+    const status = kickStatuses[slug];
+    if (!status) return streamer;
+    if (status.loading) return { ...streamer, live_status_checking: true };
+    if (status.error && !status.data) return { ...streamer, live_status_error: status.error };
+
+    const kick = status.data;
+    const otherPlatformLive = (streamer.live_statuses || []).some((item) => String(item.platform).toLowerCase() !== "kick" && hasLiveStatus(item));
+    const stream = kick?.stream || {};
+    const channel = kick?.channel || {};
+    return {
+      ...streamer,
+      kick_username: kick?.slug || slug,
+      live_status_checking: false,
+      live_status_error: kick?.error || "",
+      is_live: Boolean(otherPlatformLive || kick?.online),
+      stream_title: kick?.online ? stream.stream_title || channel.stream_title || streamer.stream_title || "" : otherPlatformLive ? streamer.stream_title : "",
+      viewer_count: kick?.online ? stream.viewer_count || channel.stream?.viewer_count || streamer.viewer_count || null : otherPlatformLive ? streamer.viewer_count : null,
+      thumbnail_url: kick?.online ? stream.thumbnail || channel.stream?.thumbnail || streamer.thumbnail_url || "" : otherPlatformLive ? streamer.thumbnail_url : "",
+      stream_url: kick?.online ? `https://kick.com/${kick.slug || slug}` : otherPlatformLive ? streamer.stream_url : "",
+      last_checked_at: kick?.checkedAt || streamer.last_checked_at
+    };
+  });
 }

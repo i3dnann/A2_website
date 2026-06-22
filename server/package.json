@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/player.js && node --check src/services/qbcoreService.js"
+    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/player.js && node --check src/routes/kick.js && node --check src/services/qbcoreService.js && node --check src/services/kickService.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

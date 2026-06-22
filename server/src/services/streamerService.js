@@ -2,10 +2,9 @@ import { fetch } from "undici";
 import { env } from "../config/env.js";
 import { getSettings, getStreamerLiveStatuses, listResource, setStreamerLiveStatus } from "./repository.js";
 import { sendWebhook } from "./webhook.js";
+import { cleanKickSlug, getKickStatus, kickConfigured } from "./kickService.js";
 
 let twitchToken = env.TWITCH_ACCESS_TOKEN || "";
-let kickToken = "";
-let kickTokenExpiresAt = 0;
 let running = false;
 
 async function getTwitchToken() {
@@ -60,62 +59,27 @@ async function checkTwitch(streamer) {
   });
 }
 
-async function getKickToken() {
-  if (kickToken && Date.now() < kickTokenExpiresAt - 60000) return kickToken;
-  if (!env.KICK_CLIENT_ID || !env.KICK_CLIENT_SECRET) return "";
-
-  const body = new URLSearchParams({
-    grant_type: "client_credentials",
-    client_id: env.KICK_CLIENT_ID,
-    client_secret: env.KICK_CLIENT_SECRET
-  });
-
-  const response = await fetch("https://id.kick.com/oauth/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body
-  });
-
-  if (!response.ok) return "";
-  const data = await response.json();
-  kickToken = data.access_token || "";
-  kickTokenExpiresAt = Date.now() + Number(data.expires_in || 3600) * 1000;
-  return kickToken;
-}
-
 async function checkKick(streamer) {
-  if (!streamer.kick_username || !env.KICK_API_BASE_URL) {
+  const slug = cleanKickSlug(streamer.kick_username);
+  if (!slug || !kickConfigured()) {
     return setStreamerLiveStatus(streamer.id, "Kick", { is_live: false, raw_response_json: { skipped: "missing_kick_credentials_or_username" } });
   }
 
   try {
-    const token = env.KICK_API_KEY || (await getKickToken());
-    if (!token) {
-      return setStreamerLiveStatus(streamer.id, "Kick", {
-        is_live: false,
-        raw_response_json: { skipped: "missing_kick_token" }
-      });
-    }
-
-    const params = new URLSearchParams();
-    params.append("slug", streamer.kick_username);
-    const response = await fetch(`${env.KICK_API_BASE_URL.replace(/\/$/, "")}/public/v1/channels?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error(`kick_${response.status}`);
-    const data = await response.json();
-    const channel = data.data?.[0] || {};
-    const stream = channel.stream || {};
+    const data = await getKickStatus(slug);
+    const stream = data.stream || {};
+    const channel = data.channel || {};
     return setStreamerLiveStatus(streamer.id, "Kick", {
-      is_live: Boolean(stream.is_live),
-      stream_title: channel.stream_title || "",
-      viewer_count: stream.viewer_count || null,
-      thumbnail_url: stream.thumbnail || "",
-      stream_url: `https://kick.com/${streamer.kick_username}`,
-      started_at: stream.start_time || null,
+      is_live: Boolean(data.online),
+      stream_title: stream.stream_title || channel.stream_title || "",
+      viewer_count: stream.viewer_count || channel.stream?.viewer_count || null,
+      thumbnail_url: stream.thumbnail || channel.stream?.thumbnail || channel.banner_picture || "",
+      stream_url: `https://kick.com/${data.slug || slug}`,
+      started_at: stream.started_at || stream.start_time || channel.stream?.start_time || null,
       raw_response_json: data
     });
   } catch (error) {
+    console.warn("[streamers] Kick live check failed:", slug, error.message);
     return setStreamerLiveStatus(streamer.id, "Kick", {
       is_live: false,
       raw_response_json: { error: error.message }
