@@ -76,16 +76,6 @@ export default function MaintenanceSettingsPage() {
     await savePayload(buildPayload());
   };
 
-  const openPreviewInTab = () => {
-    const payload = buildPayload();
-    try {
-      sessionStorage.setItem("maintenance_preview", JSON.stringify(payload));
-    } catch (e) {
-      // ignore sessionStorage errors
-    }
-    window.open("/maintenance-preview", "_blank");
-  };
-
   const uploadSound = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -196,7 +186,6 @@ export default function MaintenanceSettingsPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit"><Save size={15} /> Save maintenance mode</Button>
               <Button type="button" variant="ghost" onClick={() => setPreview(true)}><Clock size={15} /> Preview full screen</Button>
-              <Button type="button" variant="outline" onClick={openPreviewInTab}><Clock size={15} /> Open preview in new tab</Button>
               {uploading && <span className="text-sm text-white/55">Uploading sound...</span>}
               {status && <span className="text-sm text-a2-success">{status}</span>}
             </div>
