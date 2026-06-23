@@ -41,14 +41,16 @@ function canBypassMaintenance(user) {
 export default function App() {
   const { settings, user } = useApp();
   const location = useLocation();
+  const isPreviewPath = location.pathname === "/maintenance-preview";
   const authMaintenancePath = ["/login", "/auth/complete", "/logout"].includes(location.pathname);
-  const maintenance = maintenanceIsActive(settings) && !canBypassMaintenance(user) && !authMaintenancePath;
+  const maintenance = maintenanceIsActive(settings) && !canBypassMaintenance(user) && !authMaintenancePath && !isPreviewPath;
 
   if (maintenance) return <MaintenanceScreen settings={settings} />;
 
   return (
     <ErrorBoundary resetKey={location.pathname}>
       <Routes>
+        <Route path="/maintenance-preview" element={<MaintenanceScreen settings={JSON.parse(sessionStorage.getItem("maintenance_preview") || "{}")} />} />
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
           <Route path="/login" element={<LoginPage />} />

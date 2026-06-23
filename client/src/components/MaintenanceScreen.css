@@ -90,15 +90,25 @@
   display: grid;
   grid-template-rows: auto 1fr auto;
   border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  backdrop-filter: blur(10px) saturate(1.2);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.02);
   text-align: center;
   animation: maintenanceRise 760ms ease both;
 }
 
 .maintenance-card::before {
-  content: none;
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(59,130,246,0.02));
+  pointer-events: none;
 }
 
 .maintenance-topbar {
@@ -190,7 +200,7 @@
   align-content: center;
   justify-items: center;
   min-height: calc(100vh - 11rem);
-  padding: clamp(4.5rem, 8vw, 7rem) clamp(1rem, 5vw, 5rem) 3rem;
+  padding: clamp(3rem, 7vw, 6rem) clamp(1rem, 4vw, 4rem) 3rem;
 }
 
 .maintenance-kicker {
@@ -228,16 +238,18 @@
 .maintenance-countdown {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.5rem, 2vw, 2rem);
-  margin: clamp(2.2rem, 5vw, 3.8rem) auto 0;
-  width: min(1180px, 100%);
+  gap: clamp(0.8rem, 2.5vw, 2rem);
+  margin: clamp(1.6rem, 4vw, 3rem) auto 0;
+  width: min(1100px, 100%);
 }
 
 .maintenance-countdown div {
   position: relative;
-  padding: 0 0 1.15rem;
-  border: 0;
-  background: transparent;
+  padding: clamp(1rem, 2.5vw, 1.6rem) 0 1.2rem;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
 .maintenance-countdown div::after {
@@ -253,22 +265,20 @@
 
 .maintenance-countdown strong {
   display: block;
-  font-size: clamp(3.2rem, 11vw, 10.8rem);
-  font-weight: 250;
-  line-height: 0.9;
+  font-size: clamp(2.2rem, 6.6vw, 6.4rem);
+  font-weight: 700;
+  line-height: 1;
   color: var(--color-text, #ffffff);
-  letter-spacing: -0.04em;
-  text-shadow:
-    0 0 28px rgba(139, 92, 246, 0.44),
-    0 26px 70px rgba(0, 0, 0, 0.42);
+  letter-spacing: -0.02em;
+  text-shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
 
 .maintenance-countdown span {
   display: block;
   margin-top: 0.85rem;
-  color: rgba(255, 255, 255, 0.68);
-  font-size: clamp(0.7rem, 1vw, 0.86rem);
-  font-weight: 950;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: clamp(0.68rem, 1vw, 0.9rem);
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -363,8 +373,8 @@
     padding: 0.62rem 0.82rem;
     font-size: 0.68rem;
   }
-  .maintenance-content { min-height: calc(100vh - 9rem); padding-top: 5.5rem; }
-  .maintenance-countdown { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .maintenance-content { min-height: calc(100vh - 9rem); padding-top: 5.2rem; }
+  .maintenance-countdown { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; }
   .maintenance-volume {
     grid-template-columns: auto minmax(72px, 1fr);
     min-width: 0;
