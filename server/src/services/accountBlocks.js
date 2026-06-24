@@ -99,6 +99,30 @@ export async function blockUserIdentity(user = {}, actor = {}, reason = "Account
   return { entries: entries.length, ips };
 }
 
+export async function unblockUserIdentity(user = {}) {
+  await ensureTables();
+  const email = String(user.email || "").trim().toLowerCase();
+  const discordId = String(user.discord_id || "");
+  const steamId = String(user.steam_id || "");
+  const ips = await knownIpsForUser(user.id);
+  if (databaseEnabled) {
+    await query(
+      `UPDATE web_account_blocks SET active = 0 WHERE active = 1 AND (
+        (:user_id <> '' AND blocked_user_id = :user_id) OR
+        (:email <> '' AND LOWER(email) = :email) OR
+        (:discord_id <> '' AND discord_id = :discord_id) OR
+        (:steam_id <> '' AND steam_id = :steam_id) OR
+        (ip_address IN (:ips))
+      )`,
+      { user_id: user.id || "", email, discord_id: discordId, steam_id: steamId, ips: ips.length ? ips : ["__no_ip__"] }
+    );
+  }
+  memoryBlocks.forEach((entry) => {
+    if ((user.id && entry.blocked_user_id === user.id) || (email && String(entry.email || "").toLowerCase() === email) || (discordId && entry.discord_id === discordId) || (steamId && entry.steam_id === steamId) || (entry.ip_address && ips.includes(entry.ip_address))) entry.active = 0;
+  });
+  return { ok: true };
+}
+
 export async function isAccountBlocked({ email = "", provider = "", providerUserId = "", ipAddress = "" } = {}) {
   await ensureTables();
   const normalizedEmail = String(email || "").trim().toLowerCase();
