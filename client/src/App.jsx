@@ -96,6 +96,7 @@ export default function App() {
           <Route path="/admin/settings" element={<Guarded permission="manage_home"><AdminWorkspace section="settings" /></Guarded>} />
           <Route path="/admin/maintenance" element={<Guarded permission="manage_home"><MaintenanceSettingsPage /></Guarded>} />
           <Route path="/admin/home" element={<Guarded permission="manage_home"><AdminWorkspace section="home" /></Guarded>} />
+          <Route path="/admin/gallery" element={<Guarded permission="manage_gallery"><AdminWorkspace section="gallery" /></Guarded>} />
           <Route path="/admin/partners" element={<Guarded permission="manage_partners"><AdminWorkspace section="partners" /></Guarded>} />
           <Route path="/admin/journey" element={<Guarded permission="manage_journey"><AdminWorkspace section="journey" /></Guarded>} />
           <Route path="/admin/famous" element={<Guarded permission="manage_famous"><AdminWorkspace section="famous" /></Guarded>} />
