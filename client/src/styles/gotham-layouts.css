@@ -1,0 +1,143 @@
+.gotham-button {
+  min-height: 2.75rem;
+  box-shadow: 0 14px 34px rgba(139, 92, 246, 0.18), inset 0 1px 0 rgba(255,255,255,0.13);
+}
+
+.gotham-button:hover {
+  transform: translateY(-1px);
+}
+
+.gotham-home-gotham-noir .gotham-hero-realistic {
+  min-height: 88vh;
+}
+
+.gotham-home-gotham-noir .gotham-hero-inner {
+  justify-items: center;
+  text-align: center;
+}
+
+.gotham-home-gotham-noir .gotham-hero-copy {
+  display: grid;
+  justify-items: center;
+  margin-inline: auto;
+}
+
+.gotham-home-gotham-noir .gotham-title {
+  max-width: 1080px;
+  letter-spacing: -0.06em;
+}
+
+.gotham-home-gotham-noir .gotham-action-row {
+  justify-content: center;
+}
+
+.gotham-home-gotham-noir .gotham-section > .mb-5 {
+  justify-content: center;
+  text-align: center;
+}
+
+.gotham-home-gotham-noir .gotham-stat-row {
+  max-width: 1120px;
+}
+
+.gotham-home-gotham-tactical .gotham-hero-realistic {
+  min-height: 78vh;
+}
+
+.gotham-home-gotham-tactical .gotham-hero-inner {
+  align-items: end;
+  padding-bottom: 7rem;
+}
+
+.gotham-home-gotham-tactical .gotham-hero-copy {
+  max-width: 760px;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid rgba(110, 231, 183, 0.26);
+  border-radius: 1.4rem;
+  background: rgba(2, 10, 8, 0.56);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 28px 90px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.gotham-home-gotham-tactical .gotham-title {
+  font-size: clamp(3.2rem, 8vw, 7.8rem);
+  letter-spacing: -0.055em;
+}
+
+.gotham-tactical-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 1.3rem;
+}
+
+.gotham-tactical-strip span {
+  border: 1px solid rgba(110, 231, 183, 0.22);
+  border-radius: 0.7rem;
+  background: rgba(110, 231, 183, 0.08);
+  padding: 0.65rem 0.75rem;
+  color: rgba(255,255,255,0.78);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gotham-command-layout > .grid > .gotham-section,
+.gotham-command-layout > .grid > .gotham-section > .grid,
+.gotham-command-layout > .grid > .gotham-section > .gotham-panel {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.gotham-command-layout .gotham-section {
+  padding-bottom: 0;
+}
+
+.gotham-command-layout .gotham-section::before {
+  display: none;
+}
+
+body[data-ui-theme="gotham-realistic"] .gotham-button,
+body[data-ui-theme="gotham-noir"] .gotham-button,
+body[data-ui-theme="gotham-tactical"] .gotham-button {
+  border-color: color-mix(in srgb, var(--color-primary) 58%, white 12%);
+}
+
+body[data-ui-theme="gotham-noir"] .gotham-button {
+  background-color: rgba(255,255,255,0.14);
+  color: #fff;
+}
+
+body[data-ui-theme="gotham-tactical"] .gotham-button {
+  background-color: rgba(110,231,183,0.18);
+  color: #fff;
+}
+
+body[data-ui-theme="gotham-realistic"] .gotham-panel,
+body[data-ui-theme="gotham-realistic"] .glass {
+  background-color: rgba(18,18,28,0.76) !important;
+}
+
+body[data-ui-theme="gotham-noir"] .gotham-panel,
+body[data-ui-theme="gotham-noir"] .glass {
+  background-color: rgba(24,24,27,0.82) !important;
+  border-color: rgba(255,255,255,0.16) !important;
+}
+
+body[data-ui-theme="gotham-tactical"] .gotham-panel,
+body[data-ui-theme="gotham-tactical"] .glass {
+  background-color: rgba(4,18,15,0.78) !important;
+  border-color: rgba(110,231,183,0.22) !important;
+}
+
+@media (max-width: 760px) {
+  .gotham-tactical-strip {
+    grid-template-columns: 1fr;
+  }
+  .gotham-home-gotham-tactical .gotham-hero-inner {
+    align-items: center;
+    padding-bottom: 4rem;
+  }
+}
