@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
-import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage } from "./pages/PublicCollection.jsx";
+import { FaqPage, PublicCollection, PublicDetail, TermsPage } from "./pages/PublicCollection.jsx";
 import { SnapshotsPage, SnapshotDetailPage } from "./pages/SnapshotsPage.jsx";
 import TicketsPage from "./pages/TicketsPage.jsx";
 import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
@@ -70,7 +70,7 @@ export default function App() {
           <Route path="/team" element={<PublicCollection type="team" />} />
           <Route path="/team/:id" element={<PublicDetail type="team" />} />
           <Route path="/careers" element={<PublicCollection type="careers" />} />
-          <Route path="/careers/:id" element={<CareerDetailPage />} />
+          <Route path="/careers/:id" element={<PublicDetail type="careers" />} />
           <Route path="/tickets" element={<TicketsPage />} />
           <Route path="/news" element={<PublicCollection type="news" />} />
           <Route path="/news/:id" element={<PublicDetail type="news" />} />
