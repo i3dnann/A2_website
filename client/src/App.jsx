@@ -3,6 +3,7 @@ import Home from "./pages/Home.jsx";
 import { FaqPage, PublicCollection, PublicDetail, TermsPage } from "./pages/PublicCollection.jsx";
 import { SnapshotsPage, SnapshotDetailPage } from "./pages/SnapshotsPage.jsx";
 import AdminGalleryPage from "./pages/AdminGalleryPage.jsx";
+import AdminUsersPage from "./pages/AdminUsersPage.jsx";
 import TicketsPage from "./pages/TicketsPage.jsx";
 import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
 import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
@@ -112,7 +113,7 @@ export default function App() {
           <Route path="/admin/faq" element={<Guarded permission="manage_faq"><AdminWorkspace section="faq" /></Guarded>} />
           <Route path="/admin/terms" element={<Guarded permission="manage_terms"><AdminWorkspace section="terms" /></Guarded>} />
           <Route path="/admin/events" element={<Guarded permission="manage_events"><AdminWorkspace section="events" /></Guarded>} />
-          <Route path="/admin/users" element={<Guarded permission="manage_users"><AdminWorkspace section="users" /></Guarded>} />
+          <Route path="/admin/users" element={<Guarded permission="manage_users"><AdminUsersPage /></Guarded>} />
           <Route path="/admin/admins" element={<Guarded permission="manage_admins"><AdminsPage /></Guarded>} />
           <Route path="/admin/permissions" element={<Guarded permission="manage_permissions"><AdminWorkspace section="permissions" /></Guarded>} />
           <Route path="/admin/webhooks" element={<Guarded permission="manage_webhooks"><AdminWorkspace section="webhooks" /></Guarded>} />
