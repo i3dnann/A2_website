@@ -1,0 +1,133 @@
+.gotham-global-effects {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  overflow: hidden;
+  mix-blend-mode: screen;
+}
+
+.gotham-global-effects::before,
+.gotham-global-effects::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+body[data-effect="none"] .gotham-global-effects,
+body.performance-mode .gotham-global-effects {
+  display: none;
+}
+
+body[data-effect="rain"] .gotham-global-effects::before {
+  opacity: 0.32;
+  background-image: repeating-linear-gradient(106deg, transparent 0 44px, rgba(255,255,255,0.5) 45px, transparent 48px);
+  filter: blur(0.25px);
+  animation: globalRainFall 3.6s linear infinite;
+}
+
+body[data-effect="rain"] .gotham-global-effects::after {
+  opacity: 0.12;
+  background-image: repeating-linear-gradient(106deg, transparent 0 90px, rgba(139,92,246,0.42) 92px, transparent 96px);
+  animation: globalRainFallSlow 7.4s linear infinite;
+}
+
+body[data-effect="snow"] .gotham-global-effects::before {
+  opacity: 0.86;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.95) 0 1.5px, transparent 2.4px),
+    radial-gradient(circle, rgba(255,255,255,0.7) 0 1px, transparent 2.2px),
+    radial-gradient(circle, rgba(255,255,255,0.45) 0 1px, transparent 2px);
+  background-size: 110px 110px, 170px 170px, 260px 260px;
+  animation: globalSnowFall 13s linear infinite;
+}
+
+body[data-effect="snow"] .gotham-global-effects::after {
+  opacity: 0.34;
+  background-image: radial-gradient(circle, rgba(139,92,246,0.55) 0 1px, transparent 2px);
+  background-size: 210px 210px;
+  animation: globalSnowFallSlow 21s linear infinite;
+}
+
+body[data-effect="fog"] .gotham-global-effects::before {
+  inset: auto -25% 0 -25%;
+  height: 58%;
+  opacity: 0.55;
+  background:
+    radial-gradient(ellipse at 18% 82%, rgba(255,255,255,0.2), transparent 28rem),
+    radial-gradient(ellipse at 75% 86%, rgba(139,92,246,0.24), transparent 36rem),
+    linear-gradient(180deg, transparent, rgba(255,255,255,0.14));
+  filter: blur(16px);
+  animation: globalFogDrift 14s ease-in-out infinite alternate;
+}
+
+body[data-effect="embers"] .gotham-global-effects::before {
+  opacity: 0.52;
+  background-image:
+    radial-gradient(circle, rgba(255,146,64,0.95) 0 1.5px, transparent 2.7px),
+    radial-gradient(circle, rgba(139,92,246,0.65) 0 1px, transparent 2.2px);
+  background-size: 150px 150px, 230px 230px;
+  animation: globalEmbersRise 16s linear infinite;
+}
+
+body[data-effect="bats"] .gotham-global-effects::before,
+body[data-effect="bats"] .gotham-global-effects::after {
+  inset: auto auto auto -22vw;
+  width: 150px;
+  height: 58px;
+  opacity: 0.34;
+  background: rgba(255,255,255,0.78);
+  clip-path: polygon(0 50%, 10% 34%, 22% 44%, 31% 22%, 42% 46%, 50% 16%, 58% 46%, 69% 22%, 78% 44%, 90% 34%, 100% 50%, 84% 64%, 67% 58%, 50% 74%, 33% 58%, 16% 64%);
+  filter: drop-shadow(0 0 12px rgba(139,92,246,0.35));
+  animation: globalBatFlight 21s linear infinite;
+}
+
+body[data-effect="bats"] .gotham-global-effects::before {
+  top: 16vh;
+}
+
+body[data-effect="bats"] .gotham-global-effects::after {
+  top: 31vh;
+  opacity: 0.2;
+  animation-delay: 7s;
+  animation-duration: 28s;
+  transform: scale(0.62);
+}
+
+@keyframes globalRainFall {
+  from { background-position: 0 -260px; }
+  to { background-position: -130px 360px; }
+}
+
+@keyframes globalRainFallSlow {
+  from { background-position: 0 -400px; }
+  to { background-position: -100px 520px; }
+}
+
+@keyframes globalSnowFall {
+  from { background-position: 0 -140px, 40px -220px, 80px -310px; }
+  to { background-position: 0 100vh, 40px 100vh, 80px 100vh; }
+}
+
+@keyframes globalSnowFallSlow {
+  from { background-position: 0 -220px; }
+  to { background-position: 90px 100vh; }
+}
+
+@keyframes globalFogDrift {
+  from { transform: translateX(-4%); }
+  to { transform: translateX(4%); }
+}
+
+@keyframes globalEmbersRise {
+  from { background-position: 0 100vh, 30px 100vh; }
+  to { background-position: 80px -20vh, 160px -20vh; }
+}
+
+@keyframes globalBatFlight {
+  0% { translate: 0 0; scale: 0.7; }
+  35% { translate: 48vw 4vh; scale: 0.92; }
+  70% { translate: 94vw -2vh; scale: 0.7; }
+  100% { translate: 140vw 3vh; scale: 0.56; }
+}
