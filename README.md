@@ -4,7 +4,7 @@ Professional FiveM QBCore roleplay community website for A2 Studio. The frontend
 
 ## Features
 
-- Public pages: home, roster, live streams, team, careers, tickets, news, map, FAQ, terms, events, journey, famous characters.
+- Public pages: home, roster, live streams, team, careers, tickets, news, snapshots, map, FAQ, terms, events, journey, famous characters.
 - Account system: email/password, Discord OAuth2, Steam OpenID, linked providers per user.
 - Player dashboard: account status, linked identifiers, ban status, tickets, and QBCore character data after Steam is connected.
 - Admin panel: settings, homepage, theme/colors, performance mode, partners, journey, famous characters, roster/live, team, careers/questions/applications, tickets, news, map zones, FAQ, terms, events, users, admins, permissions, webhooks, audit logs, uploads.
