@@ -35,7 +35,7 @@ const defaults = {
   textFont: "Inter",
   buttonFont: "Montserrat",
   adobeFontsKitUrl: "",
-  websiteAnimationType: "smooth-fade",
+  websiteAnimationType: "3d-city",
   performanceMode: false
 };
 
