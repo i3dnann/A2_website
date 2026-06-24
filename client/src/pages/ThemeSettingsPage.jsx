@@ -6,7 +6,7 @@ import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
 import { animationOptions, fontOptions } from "../data/fonts.js";
-import { globalEffectOptions, uiThemeOptions } from "../data/themeOptions.js";
+import { uiThemeOptions } from "../data/themeOptions.js";
 
 const colorFields = [
   ["primaryColor", "Primary color"],
@@ -37,7 +37,6 @@ const defaults = {
   buttonFont: "Montserrat",
   adobeFontsKitUrl: "",
   uiTheme: "gotham-realistic",
-  globalEffect: "rain",
   websiteAnimationType: "cinematic-rise",
   performanceMode: false
 };
@@ -64,21 +63,21 @@ export default function ThemeSettingsPage() {
       buttonFont: draft.buttonFont || defaults.buttonFont,
       adobeFontsKitUrl: draft.adobeFontsKitUrl || "",
       uiTheme: draft.uiTheme || defaults.uiTheme,
-      globalEffect: draft.globalEffect || defaults.globalEffect,
+      globalEffect: "none",
       websiteAnimationType: draft.websiteAnimationType || defaults.websiteAnimationType,
       performanceMode: Boolean(draft.performanceMode)
     };
     const response = await api.patch("/api/admin/theme", payload);
     setSettings((current) => ({ ...current, ...(response.settings || payload) }));
-    setStatus("Theme, fonts, UI style, and effects saved.");
+    setStatus("Theme, fonts, UI style, and colors saved.");
   };
 
   return (
     <div className="grid gap-5">
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Theme control</p>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">UI style, effects, fonts and colors</h1>
-        <p className="mt-2 max-w-3xl text-sm text-white/55">Choose one of three Gotham UI styles, apply global weather/effect layers, and control website-wide fonts.</p>
+        <h1 className="mt-2 text-3xl font-black md:text-4xl">UI style, fonts and colors</h1>
+        <p className="mt-2 max-w-3xl text-sm text-white/55">Choose one of three Gotham UI styles and control website-wide fonts and colors.</p>
       </header>
 
       <Card>
@@ -86,12 +85,10 @@ export default function ThemeSettingsPage() {
           <form className="grid gap-6" onSubmit={save}>
             <section className="grid gap-4 rounded-xl border border-a2-border bg-white/[0.03] p-4">
               <div className="flex items-center gap-2 text-sm font-black uppercase tracking-widest text-a2-green"><Sparkles size={16} /> Website UI style</div>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Select label="UI design" value={draft.uiTheme || defaults.uiTheme} options={uiThemeOptions} onChange={(value) => setField("uiTheme", value)} />
-                <Select label="Whole website effect" value={draft.globalEffect || defaults.globalEffect} options={globalEffectOptions} onChange={(value) => setField("globalEffect", value)} />
                 <Select label="Page animation" value={draft.websiteAnimationType || defaults.websiteAnimationType} options={animationOptions} onChange={(value) => setField("websiteAnimationType", value)} />
               </div>
-              <p className="rounded-lg border border-a2-border bg-black/30 p-3 text-xs leading-6 text-white/50">Effects apply to the whole website. Use Performance mode if the browser gets heavy.</p>
               <label className="flex items-center gap-3 rounded-lg border border-a2-border bg-black/30 p-3 text-sm font-bold">
                 <input type="checkbox" checked={Boolean(draft.performanceMode)} onChange={(event) => setField("performanceMode", event.target.checked)} />
                 Performance mode
