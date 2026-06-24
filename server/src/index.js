@@ -53,6 +53,12 @@ function requireImage(req, res, next) {
   return next();
 }
 
+function requireAdminImage(req, res, next) {
+  if (req.file && !String(req.file.mimetype || "").startsWith("image/")) return res.status(400).json({ error: "only_images_allowed" });
+  if (!req.file && !req.body?.image_url) return res.status(400).json({ error: "image_required" });
+  return next();
+}
+
 const photoPath = "/gal" + "lery";
 
 app.get("/health", async (_req, res) => {
@@ -81,8 +87,9 @@ app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (re
   res.json({ rows, total: rows.length });
 });
 
-app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireImage, async (req, res) => {
-  const row = await shots.createGalleryPhoto({ image_url: `/uploads/${req.file.filename}`, user: req.user }, req.user, "Approved");
+app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireAdminImage, async (req, res) => {
+  const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image_url;
+  const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, req.body?.status || "Approved");
   res.status(201).json({ row });
 });
 
