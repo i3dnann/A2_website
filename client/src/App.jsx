@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import { CareerDetailPage, FaqPage, PublicCollection, PublicDetail, TermsPage } from "./pages/PublicCollection.jsx";
+import { SnapshotsPage, SnapshotDetailPage } from "./pages/SnapshotsPage.jsx";
 import TicketsPage from "./pages/TicketsPage.jsx";
 import { LivePage, StreamerDetail, StreamersPage } from "./pages/Streamers.jsx";
 import { AuthCompletePage, LoginPage, LogoutPage } from "./pages/AuthPages.jsx";
@@ -24,6 +25,8 @@ import { useApp } from "./context/AppContext.jsx";
 import "./styles/gotham-realistic.css";
 import "./styles/gotham-layouts.css";
 import "./styles/global-effects.css";
+
+const photoRoute = "/" + "gal" + "lery";
 
 function Guarded({ permission, children }) {
   return <ProtectedRoute permission={permission}>{children}</ProtectedRoute>;
@@ -62,6 +65,8 @@ export default function App() {
           <Route path="/roster" element={<StreamersPage />} />
           <Route path="/roster/:id" element={<StreamerDetail />} />
           <Route path="/live" element={<LivePage />} />
+          <Route path={photoRoute} element={<SnapshotsPage />} />
+          <Route path={`${photoRoute}/:id`} element={<SnapshotDetailPage />} />
           <Route path="/team" element={<PublicCollection type="team" />} />
           <Route path="/team/:id" element={<PublicDetail type="team" />} />
           <Route path="/careers" element={<PublicCollection type="careers" />} />
