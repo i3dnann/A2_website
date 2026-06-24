@@ -1,65 +1,37 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { BarChart3, Bell, BriefcaseBusiness, FileText, Image, KeyRound, Map, Newspaper, Palette, Radio, Shield, Ticket, Users } from "lucide-react";
+import { BarChart3, Bell, BriefcaseBusiness, Image, KeyRound, Map, Newspaper, Palette, Plus, Radio, RefreshCw, Save, Shield, Ticket, Trash2, Users } from "lucide-react";
 import AdminPermissionsPage from "./AdminPermissionsPage.jsx";
 import AdminWebhooksPage from "./AdminWebhooksPage.jsx";
+import { api } from "../lib/api.js";
+import { useApi } from "../lib/useApi.js";
+import { Button } from "../components/Button.jsx";
 import { Card } from "../components/Card.jsx";
 
-const adminCards = [
-  ["Homepage", "/admin/home", "Edit hero, text, links, and main website settings.", Palette],
-  ["Gallery", "/admin/gallery", "Review, approve, deny, and delete gallery pictures.", Image],
-  ["Users", "/admin/users", "Activate, deactivate, ban, unban, and delete accounts.", Users],
-  ["Permissions", "/admin/permissions", "View every permission and assign/remove access.", KeyRound],
-  ["Webhooks", "/admin/webhooks", "Configure Discord embeds for logs, tickets, and accounts.", Bell],
-  ["Tickets", "/admin/tickets", "Answer player tickets and close support cases.", Ticket],
-  ["Live", "/admin/live", "Manage streamer/live page settings.", Radio],
-  ["Roster", "/admin/roster", "Manage streamers and public roster entries.", Shield],
-  ["News", "/admin/news", "Create and edit news posts.", Newspaper],
-  ["Careers", "/admin/careers", "Manage jobs, applications, and career questions.", BriefcaseBusiness],
-  ["Map", "/admin/map", "Manage safe zones and dangerous zones.", Map],
-  ["Audit logs", "/admin/audit-logs", "Review recent admin and security actions.", BarChart3]
-];
+const adminCards = [["Homepage","/admin/home","Edit hero, text, links, and main website settings.",Palette],["Gallery","/admin/gallery","Review, approve, deny, and delete gallery pictures.",Image],["Users","/admin/users","Activate, deactivate, ban, unban, and delete accounts.",Users],["Permissions","/admin/permissions","View every permission and assign/remove access.",KeyRound],["Webhooks","/admin/webhooks","Configure Discord embeds for logs, tickets, and accounts.",Bell],["Tickets","/admin/tickets","Answer player tickets and close support cases.",Ticket],["Live","/admin/live","Manage streamer/live page settings.",Radio],["Roster","/admin/roster","Manage streamers and public roster entries.",Shield],["News","/admin/news","Create and edit news posts.",Newspaper],["Careers","/admin/careers","Manage jobs, applications, and career questions.",BriefcaseBusiness],["Map","/admin/map","Manage safe zones and dangerous zones.",Map],["Audit logs","/admin/audit-logs","Review recent admin and security actions.",BarChart3]];
+const resources = { partners:"partners", journey:"journey", famous:"famous", roster:"streamers", team:"team", careers:"careerJobs", news:"news", map:"mapZones", faq:"faqItems", terms:"terms", events:"events", "audit-logs":"auditLogs" };
+const careerResources = ["careerJobs", "careerSections", "careerQuestions", "careerApplications"];
+const faqResources = ["faqCategories", "faqItems"];
 
-export function AdminWorkspace({ section = "dashboard" }) {
+export function AdminWorkspace({ section = "dashboard", resourceOverride }) {
+  if (section === "dashboard") return <AdminDashboard />;
   if (section === "permissions") return <AdminPermissionsPage />;
   if (section === "webhooks") return <AdminWebhooksPage />;
-  if (section !== "dashboard") return <SectionPlaceholder section={section} />;
-  return <AdminDashboard />;
+  if (["settings", "home", "theme", "live"].includes(section)) return <SettingsEditor mode={section} />;
+  if (section === "careers") return <ResourceTabs title="Careers" list={careerResources} initial={resourceOverride || "careerJobs"} />;
+  if (section === "faq") return <ResourceTabs title="FAQ" list={faqResources} initial="faqItems" />;
+  return <ResourceManager resource={resourceOverride || resources[section] || "partners"} title={title(resourceOverride || resources[section] || section)} />;
 }
 
-function AdminDashboard() {
-  return (
-    <div className="grid gap-6">
-      <header>
-        <p className="text-sm font-black uppercase tracking-widest text-a2-green">Admin panel</p>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">Gotham City control center</h1>
-        <p className="mt-2 text-sm text-white/55">Choose what you want to manage. These cards open the real admin pages directly.</p>
-      </header>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {adminCards.map(([title, href, text, Icon]) => (
-          <Link key={href} to={href}>
-            <Card className="h-full transition hover:border-a2-green/60 hover:bg-a2-green/5">
-              <Icon className="text-a2-green" size={24} />
-              <h2 className="mt-4 text-xl font-black">{title}</h2>
-              <p className="mt-2 text-sm leading-6 text-white/55">{text}</p>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SectionPlaceholder({ section }) {
-  return (
-    <div className="grid gap-5">
-      <header>
-        <p className="text-sm font-black uppercase tracking-widest text-a2-green">Admin section</p>
-        <h1 className="mt-2 text-3xl font-black md:text-4xl">{section}</h1>
-      </header>
-      <Card>
-        <p className="text-sm text-white/55">This section is opened from the admin dashboard or sidebar. Go back to the control center and select the correct page.</p>
-        <Link to="/admin" className="mt-4 inline-flex text-sm font-black text-a2-green">Back to control center →</Link>
-      </Card>
-    </div>
-  );
-}
+function AdminDashboard(){return <div className="grid gap-6"><Header eyebrow="Admin panel" title="Gotham City control center" text="Choose what you want to manage. These cards open the real admin pages directly."/><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{adminCards.map(([t,h,d,I])=><Link key={h} to={h}><Card className="h-full transition hover:border-a2-green/60 hover:bg-a2-green/5"><I className="text-a2-green" size={24}/><h2 className="mt-4 text-xl font-black">{t}</h2><p className="mt-2 text-sm leading-6 text-white/55">{d}</p></Card></Link>)}</div></div>}
+function Header({eyebrow,title:textTitle,text}){return <header><p className="text-sm font-black uppercase tracking-widest text-a2-green">{eyebrow}</p><h1 className="mt-2 text-3xl font-black md:text-4xl">{textTitle}</h1>{text&&<p className="mt-2 text-sm text-white/55">{text}</p>}</header>}
+function ResourceTabs({title:heading,list,initial}){const[active,setActive]=useState(initial);return <div className="grid gap-5"><Header eyebrow="CMS" title={heading}/><div className="flex flex-wrap gap-2">{list.map(r=><button key={r} onClick={()=>setActive(r)} className={`rounded-lg px-3 py-2 text-sm font-bold ${active===r?"bg-a2-green text-black":"border border-a2-border text-white/60"}`}>{title(r)}</button>)}</div><ResourceManager resource={active} title={title(active)} embedded/></div>}
+function ResourceManager({resource,title:heading,embedded=false}){const[q,setQ]=useState("");const[selected,setSelected]=useState(null);const[draft,setDraft]=useState(defaults(resource));const[msg,setMsg]=useState("");const[refresh,setRefresh]=useState(0);const{data,loading}=useApi(()=>api.get(`/api/admin/${resource}?q=${encodeURIComponent(q)}`),[resource,q,refresh],{rows:[],config:null});const rows=data?.rows||[];const fields=data?.config?.fields?.length?data.config.fields:defaultFields(resource);useEffect(()=>{setSelected(null);setDraft(defaults(resource));setMsg("")},[resource]);const pick=row=>{setSelected(row);setDraft(row||defaults(resource));setMsg("")};const save=async e=>{e.preventDefault();const body=Object.fromEntries(fields.map(f=>[f,draft[f]??""]));const res=selected?.id?await api.patch(`/api/admin/${resource}/${selected.id}`,body):await api.post(`/api/admin/${resource}`,body);setSelected(res.row);setDraft(res.row);setRefresh(v=>v+1);setMsg("Saved.")};const del=async()=>{if(!selected?.id)return;await api.delete(`/api/admin/${resource}/${selected.id}`,{});pick(null);setRefresh(v=>v+1)};return <div className="grid gap-5">{!embedded&&<Header eyebrow="CMS" title={heading}/>}<div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]"><Card><div className="mb-4 flex items-center gap-2"><input className="form-input" placeholder="Search..." value={q} onChange={e=>setQ(e.target.value)}/><Button type="button" variant="ghost" onClick={()=>setRefresh(v=>v+1)}><RefreshCw size={15}/></Button></div><table className="w-full text-left text-sm"><thead className="text-xs uppercase text-white/35"><tr><th className="py-2">Title</th><th>Status</th><th>Updated</th></tr></thead><tbody>{(loading?Array.from({length:8}):rows).map((row,i)=><tr key={row?.id||i} onClick={()=>row&&pick(row)} className="cursor-pointer border-t border-a2-border hover:bg-white/[0.04]"><td className="py-3 font-bold">{loading?<div className="h-4 rounded skeleton"/>:rowTitle(row)}</td><td className="py-3 text-white/50">{row?row.status||String(row.is_visible??""):""}</td><td className="py-3 text-white/35">{row?.updated_at?.slice?.(0,10)||""}</td></tr>)}</tbody></table>{!loading&&!rows.length&&<p className="py-6 text-center text-sm text-white/45">No rows yet.</p>}</Card><Card><div className="mb-4 flex items-center justify-between gap-3"><h2 className="text-xl font-black">{selected?"Edit item":"Create item"}</h2><Button type="button" variant="ghost" onClick={()=>pick(null)}><Plus size={15}/> New</Button></div><form className="grid gap-3" onSubmit={save}>{fields.map(f=><Field key={f} name={f} value={draft[f]} set={v=>setDraft(c=>({...c,[f]:v}))}/>) }<div className="flex flex-wrap gap-2 pt-2"><Button type="submit"><Save size={15}/> Save</Button>{selected?.id&&<Button type="button" variant="danger" onClick={del}><Trash2 size={15}/> Remove</Button>}</div>{msg&&<p className="text-sm text-a2-green">{msg}</p>}</form></Card></div></div>}
+function SettingsEditor({mode}){const{data}=useApi(()=>api.get("/api/public/settings"),[mode],{settings:{}});const[draft,setDraft]=useState({});const[msg,setMsg]=useState("");const fields=settingsFields(mode);useEffect(()=>setDraft(data?.settings||{}),[data]);const save=async e=>{e.preventDefault();await api.patch("/api/admin/theme",Object.fromEntries(fields.map(f=>[f,draft[f]??""])));setMsg("Saved.")};return <div className="grid gap-5"><Header eyebrow="Settings" title={settingsTitle(mode)}/><Card><form className="grid gap-3" onSubmit={save}>{fields.map(f=><Field key={f} name={f} value={draft[f]} set={v=>setDraft(c=>({...c,[f]:v}))}/>) }<Button type="submit"><Save size={15}/> Save</Button>{msg&&<p className="text-sm text-a2-green">{msg}</p>}</form></Card></div>}
+function Field({name,value,set}){const bool=typeof value==="boolean"||["is_visible","is_hidden","is_featured","maintenanceMode","partnersEnabled","performanceMode","showOfflineStreamers","showViewerCount","showThumbnails"].includes(name);if(bool)return <label className="flex items-center gap-2 text-sm text-white/65"><input type="checkbox" checked={value===true||value===1||value==="1"||value==="true"} onChange={e=>set(e.target.checked)}/>{title(name)}</label>;return <label className="grid gap-1 text-sm text-white/65">{title(name)}<input className="form-input" value={value??""} onChange={e=>set(e.target.value)}/></label>}
+function title(s=""){return String(s).replace(/_/g," ").replace(/([A-Z])/g," $1").replace(/^./,c=>c.toUpperCase()).replace("Faq","FAQ")}
+function rowTitle(r={}){return r.title||r.name||r.partner_name||r.display_name||r.character_name||r.zone_name||r.question||r.subject||r.username||r.id}
+function defaults(){return {sort_order:1,is_visible:true,status:"Draft"}}
+function defaultFields(resource){if(resource==="streamers")return["display_name","kick_username","twitch_username","youtube_url","profile_image_url","status","sort_order","is_visible"];if(resource==="mapZones")return["zone_name","zone_type","description","x","y","radius","color","is_visible"];if(resource==="auditLogs")return["action","target_type","target_id","reason","status"];return["title","subtitle","description","content","image_url","status","sort_order","is_visible"]}
+function settingsTitle(mode){if(mode==="home")return"Homepage content";if(mode==="theme")return"Theme and colors";if(mode==="live")return"Live stream settings";return"Website settings"}
+function settingsFields(mode){if(mode==="home")return["websiteName","logoUrl","faviconUrl","heroTitle","heroSubtitle","heroDescription","heroBackgroundImage","heroPrimaryButtonText","heroPrimaryButtonLink","heroSecondaryButtonText","heroSecondaryButtonLink"];if(mode==="theme")return["primaryColor","backgroundColor","textColor","secondaryColor","cardBackground","borderColor","mutedTextColor","dangerColor","warningColor","successColor","performanceMode"];if(mode==="live")return["livePageEnabled","showOfflineStreamers","showViewerCount","showThumbnails","featuredLiveLimit"];return["websiteName","logoUrl","faviconUrl","maintenanceMode","performanceMode","partnersEnabled","mapImageUrl"]}
