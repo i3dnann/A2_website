@@ -2,7 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { useState } from "react";
 import { Search, Upload } from "lucide-react";
 import { API_BASE, api } from "../lib/api.js";
-import { uploadGalleryImageToFirebase, firebaseGalleryUploadsEnabled } from "../lib/firebaseUpload.js";
+import { uploadGalleryImageToCloudinary, cloudinaryUploadsEnabled } from "../lib/cloudinaryUpload.js";
 import { useApi } from "../lib/useApi.js";
 import { useApp } from "../context/AppContext.jsx";
 import { Button } from "../components/Button.jsx";
@@ -30,9 +30,9 @@ export function SnapshotsPage() {
     if (!file) return setStatus("Choose one picture first.");
     try {
       setBusy(true);
-      const firebaseUrl = firebaseGalleryUploadsEnabled() ? await uploadGalleryImageToFirebase(file) : null;
-      if (firebaseUrl) {
-        await api.post("/api/public/gallery", { image_url: firebaseUrl });
+      const hostedUrl = cloudinaryUploadsEnabled() ? await uploadGalleryImageToCloudinary(file) : null;
+      if (hostedUrl) {
+        await api.post("/api/public/gallery", { image_url: hostedUrl });
       } else {
         const formData = new FormData();
         formData.append("file", file);
@@ -42,7 +42,7 @@ export function SnapshotsPage() {
       setStatus("Picture sent. Admin must approve it before it appears.");
       reload?.();
     } catch (error) {
-      setStatus(error?.message || "Upload failed. Check Firebase settings or backend logs.");
+      setStatus(error?.message || "Upload failed. Check Cloudinary settings or backend logs.");
     } finally {
       setBusy(false);
     }
