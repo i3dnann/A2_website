@@ -116,6 +116,101 @@ body[data-animation="shadow-glitch"] .font-black {
   animation: shadowGlitch 3.8s steps(1, end) infinite;
 }
 
+body[data-animation="3d-city"] {
+  perspective: 1500px;
+}
+
+body[data-animation="3d-city"] .a2-shell {
+  position: relative;
+  transform-style: preserve-3d;
+  background-image:
+    linear-gradient(rgba(139, 92, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(139, 92, 246, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.12), transparent 34rem);
+  background-size: 46px 46px, 46px 46px, auto;
+}
+
+body[data-animation="3d-city"] header.sticky,
+body[data-animation="3d-city"] aside,
+body[data-animation="3d-city"] footer,
+body[data-animation="3d-city"] .glass,
+body[data-animation="3d-city"] .rounded-xl,
+body[data-animation="3d-city"] .rounded-2xl,
+body[data-animation="3d-city"] .rounded-lg:not(input):not(textarea):not(select),
+body[data-animation="3d-city"] .gta-map-shell,
+body[data-animation="3d-city"] .map-board {
+  transform-style: preserve-3d;
+  transform: translateZ(0) rotateX(0deg) rotateY(0deg);
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.5),
+    0 0 28px rgba(139, 92, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, filter 260ms ease;
+}
+
+body[data-animation="3d-city"] .glass:hover,
+body[data-animation="3d-city"] .rounded-xl:hover,
+body[data-animation="3d-city"] .rounded-2xl:hover,
+body[data-animation="3d-city"] .rounded-lg:not(input):not(textarea):not(select):hover,
+body[data-animation="3d-city"] .gta-map-shell:hover,
+body[data-animation="3d-city"] .map-board:hover {
+  transform: translateY(-8px) translateZ(34px) rotateX(2deg) rotateY(-2deg);
+  border-color: rgba(139, 92, 246, 0.56);
+  box-shadow:
+    0 38px 95px rgba(0, 0, 0, 0.64),
+    0 0 42px rgba(139, 92, 246, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+body[data-animation="3d-city"] main > section,
+body[data-animation="3d-city"] main > div,
+body[data-animation="3d-city"] .mx-auto.max-w-7xl,
+body[data-animation="3d-city"] .mx-auto.max-w-6xl {
+  transform-style: preserve-3d;
+  animation: site3DReveal 780ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+body[data-animation="3d-city"] h1,
+body[data-animation="3d-city"] h2,
+body[data-animation="3d-city"] .font-black {
+  text-shadow:
+    0 2px 0 rgba(139, 92, 246, 0.22),
+    0 14px 35px rgba(0, 0, 0, 0.48),
+    0 0 34px rgba(139, 92, 246, 0.2);
+}
+
+body[data-animation="3d-city"] img,
+body[data-animation="3d-city"] video,
+body[data-animation="3d-city"] iframe {
+  transform: translateZ(0);
+  transition: transform 260ms ease, filter 260ms ease;
+}
+
+body[data-animation="3d-city"] img:hover,
+body[data-animation="3d-city"] video:hover,
+body[data-animation="3d-city"] iframe:hover {
+  transform: translateZ(26px) scale(1.015);
+  filter: saturate(1.08) contrast(1.03);
+}
+
+body[data-animation="3d-city"] button,
+body[data-animation="3d-city"] a.inline-flex,
+body[data-animation="3d-city"] nav a {
+  transform-style: preserve-3d;
+  transition: transform 160ms ease, filter 160ms ease, box-shadow 160ms ease;
+}
+
+body[data-animation="3d-city"] button:hover,
+body[data-animation="3d-city"] a.inline-flex:hover,
+body[data-animation="3d-city"] nav a:hover {
+  transform: translateY(-2px) translateZ(18px);
+  filter: brightness(1.08);
+}
+
+body[data-animation="3d-city"] .gta-map-plane {
+  transform: rotateX(10deg) rotateZ(-1deg) scale(0.98);
+}
+
 .a2-shell {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
@@ -323,4 +418,18 @@ body[data-animation="shadow-glitch"] .font-black {
   93% { text-shadow: 2px 0 #8b5cf6, -2px 0 #fff; transform: translateX(1px); }
   94% { text-shadow: -2px 0 #8b5cf6, 2px 0 #fff; transform: translateX(-1px); }
   95% { text-shadow: none; transform: translateX(0); }
+}
+
+@keyframes site3DReveal {
+  from { opacity: 0; transform: translateY(28px) translateZ(-80px) rotateX(8deg); }
+  to { opacity: 1; transform: translateY(0) translateZ(0) rotateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-animation="3d-city"] *,
+  body[data-animation="3d-city"] *::before,
+  body[data-animation="3d-city"] *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }
