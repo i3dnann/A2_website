@@ -21,6 +21,8 @@ import { DashboardLayout } from "./components/DashboardLayout.jsx";
 import { ProtectedRoute } from "./components/ProtectedRoute.jsx";
 import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
 import { useApp } from "./context/AppContext.jsx";
+import "./styles/gotham-realistic.css";
+import "./styles/gotham-layouts.css";
 
 function Guarded({ permission, children }) {
   return <ProtectedRoute permission={permission}>{children}</ProtectedRoute>;
@@ -48,6 +50,7 @@ export default function App() {
 
   return (
     <ErrorBoundary resetKey={location.pathname}>
+      <div className="gotham-global-effects" aria-hidden="true" />
       <Routes>
         <Route element={<PublicLayout />}>
           <Route index element={<Home />} />
