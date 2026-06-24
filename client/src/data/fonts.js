@@ -29,6 +29,7 @@ export const fontOptions = [
 ];
 
 export const animationOptions = [
+  { label: "3D Gotham City", value: "3d-city" },
   { label: "None", value: "none" },
   { label: "Smooth Fade", value: "smooth-fade" },
   { label: "Gotham Pulse", value: "gotham-pulse" },
