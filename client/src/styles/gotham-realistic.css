@@ -1,0 +1,207 @@
+.gotham-preview-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 8%, rgba(139, 92, 246, 0.15), transparent 30rem),
+    radial-gradient(circle at 84% 18%, rgba(255, 255, 255, 0.06), transparent 24rem),
+    linear-gradient(180deg, #030306 0%, #070711 38%, #000 100%);
+}
+
+.gotham-hero-realistic {
+  position: relative;
+  min-height: 94vh;
+  overflow: hidden;
+  isolation: isolate;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+}
+
+.gotham-hero-realistic::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.84) 0%, rgba(0, 0, 0, 0.62) 42%, rgba(0, 0, 0, 0.22) 100%),
+    radial-gradient(circle at 28% 48%, rgba(139, 92, 246, 0.16), transparent 24rem),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.22), #000 96%);
+  pointer-events: none;
+}
+
+.gotham-hero-realistic::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  z-index: 2;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 84px 84px;
+  transform: rotateX(58deg) rotateZ(-7deg) translateY(22%);
+  transform-origin: center bottom;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.gotham-hero-image {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.46;
+  filter: grayscale(0.22) contrast(1.12) saturate(0.88) brightness(0.72);
+  transform: scale(1.04);
+}
+
+.gotham-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.26;
+  background-image: repeating-linear-gradient(105deg, transparent 0 24px, rgba(255,255,255,0.28) 25px, transparent 27px);
+  animation: gothamRain 1.2s linear infinite;
+}
+
+.gotham-fog {
+  position: absolute;
+  inset: auto -15% 0 -15%;
+  z-index: 4;
+  height: 42%;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 25% 90%, rgba(139, 92, 246, 0.2), transparent 34rem),
+    radial-gradient(ellipse at 65% 95%, rgba(255, 255, 255, 0.13), transparent 42rem),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.72));
+  filter: blur(6px);
+}
+
+.gotham-hero-inner {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  min-height: 94vh;
+  align-items: center;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(6rem, 10vw, 9rem) 1rem 5rem;
+}
+
+.gotham-eyebrow {
+  display: inline-flex;
+  width: max-content;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid rgba(139, 92, 246, 0.42);
+  border-radius: 999px;
+  background: rgba(10, 10, 16, 0.72);
+  padding: 0.65rem 0.95rem;
+  color: #c4b5fd;
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: 0 0 30px rgba(139, 92, 246, 0.18), inset 0 1px 0 rgba(255,255,255,0.1);
+  backdrop-filter: blur(14px);
+}
+
+.gotham-logo-crest {
+  width: clamp(5rem, 9vw, 7.4rem);
+  height: clamp(5rem, 9vw, 7.4rem);
+  margin: 1.4rem 0;
+  border-radius: 28px;
+  border: 1px solid rgba(139, 92, 246, 0.38);
+  object-fit: cover;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.6), 0 0 40px rgba(139, 92, 246, 0.24);
+}
+
+.gotham-title {
+  max-width: 980px;
+  font-size: clamp(4rem, 11vw, 10.4rem);
+  line-height: 0.78;
+  letter-spacing: -0.095em;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 0 rgba(139, 92, 246, 0.38),
+    0 20px 80px rgba(0, 0, 0, 0.72),
+    0 0 55px rgba(139, 92, 246, 0.28);
+}
+
+.gotham-description {
+  max-width: 720px;
+  margin-top: 1.4rem;
+  color: rgba(255,255,255,0.72);
+  font-size: clamp(1rem, 1.7vw, 1.32rem);
+  line-height: 1.8;
+}
+
+.gotham-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2.1rem;
+}
+
+.gotham-action-row .inline-flex {
+  border-radius: 999px;
+  min-height: 48px;
+  padding-inline: 1.25rem;
+  box-shadow: 0 16px 38px rgba(0,0,0,0.36), 0 0 28px rgba(139,92,246,0.16);
+}
+
+.gotham-stat-row {
+  position: relative;
+  z-index: 6;
+  margin-top: -3.2rem;
+}
+
+.gotham-section {
+  position: relative;
+}
+
+.gotham-section::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -1rem;
+  width: min(720px, 80vw);
+  height: 1px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(139,92,246,0.52), transparent);
+}
+
+.gotham-panel {
+  border: 1px solid rgba(139, 92, 246, 0.22) !important;
+  background:
+    linear-gradient(145deg, rgba(18, 18, 27, 0.88), rgba(5, 5, 9, 0.72)) !important;
+  box-shadow: 0 26px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08) !important;
+}
+
+.gotham-card-image {
+  filter: grayscale(0.14) contrast(1.08) saturate(0.92);
+}
+
+.gotham-side-label {
+  position: absolute;
+  right: clamp(1rem, 3vw, 3rem);
+  bottom: clamp(2rem, 5vw, 5rem);
+  z-index: 5;
+  writing-mode: vertical-rl;
+  text-transform: uppercase;
+  letter-spacing: 0.36em;
+  color: rgba(255,255,255,0.24);
+  font-size: 0.75rem;
+  font-weight: 950;
+}
+
+@keyframes gothamRain {
+  from { background-position: 0 0; }
+  to { background-position: -90px 180px; }
+}
+
+@media (max-width: 760px) {
+  .gotham-title { font-size: clamp(3.3rem, 18vw, 5.2rem); }
+  .gotham-side-label { display: none; }
+  .gotham-hero-inner { padding-top: 5rem; }
+}
