@@ -23,6 +23,7 @@ import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
 import { useApp } from "./context/AppContext.jsx";
 import "./styles/gotham-realistic.css";
 import "./styles/gotham-layouts.css";
+import "./styles/global-effects.css";
 
 function Guarded({ permission, children }) {
   return <ProtectedRoute permission={permission}>{children}</ProtectedRoute>;
