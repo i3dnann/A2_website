@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Ban, CheckCircle2, RefreshCw, Search, Trash2, UserX } from "lucide-react";
 import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { Button } from "../components/Button.jsx";
@@ -19,11 +19,15 @@ export default function AdminUsersPage() {
   const rows = data?.rows || [];
   const reload = () => setRefresh((value) => value + 1);
 
+  const act = async (user, action, body = {}) => {
+    await api.post(`/api/admin/users/${user.id}/${action}`, body);
+    setStatus(`${action} completed for ${user.username || user.email}.`);
+    reload();
+  };
+
   const banUser = async (user) => {
     const reason = prompt(`Reason for banning ${user.username || user.email}?`, "Banned by admin") || "Banned by admin";
-    await api.post(`/api/admin/users/${user.id}/ban`, { reason });
-    setStatus(`Banned ${user.username || user.email}. Their account identifiers and known IPs are blocked.`);
-    reload();
+    await act(user, "ban", { reason });
   };
 
   const deleteUser = async (user) => {
@@ -38,9 +42,8 @@ export default function AdminUsersPage() {
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Website users</p>
         <h1 className="mt-2 text-3xl font-black md:text-4xl">User accounts</h1>
-        <p className="mt-2 text-sm text-white/55">View all registered website users, delete accounts, or ban accounts and known IPs.</p>
+        <p className="mt-2 text-sm text-white/55">View all registered website users, activate, deactivate, ban, unban, or delete accounts.</p>
       </header>
-
       <Card>
         <div className="mb-4 flex items-center gap-2">
           <div className="flex flex-1 items-center gap-2 rounded-lg border border-a2-border bg-white/[0.04] px-3 py-2">
@@ -51,23 +54,10 @@ export default function AdminUsersPage() {
         </div>
         {status && <p className="mb-4 rounded-lg border border-a2-green/35 bg-a2-green/10 p-3 text-sm text-a2-green">{status}</p>}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="text-xs uppercase text-white/35">
-              <tr>
-                <th className="py-2">User</th>
-                <th>Email</th>
-                <th>Discord</th>
-                <th>Steam</th>
-                <th>Status</th>
-                <th>Roles</th>
-                <th>Last login</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
+          <table className="w-full min-w-[960px] text-left text-sm">
+            <thead className="text-xs uppercase text-white/35"><tr><th className="py-2">User</th><th>Email</th><th>Discord</th><th>Steam</th><th>Status</th><th>Roles</th><th>Last login</th><th>Actions</th></tr></thead>
             <tbody>
-              {(loading ? Array.from({ length: 8 }) : rows).map((user, index) => loading ? (
-                <tr key={index} className="border-t border-a2-border"><td className="py-4" colSpan={8}><div className="h-8 rounded skeleton" /></td></tr>
-              ) : (
+              {(loading ? Array.from({ length: 8 }) : rows).map((user, index) => loading ? <tr key={index} className="border-t border-a2-border"><td className="py-4" colSpan={8}><div className="h-8 rounded skeleton" /></td></tr> : (
                 <tr key={user.id} className="border-t border-a2-border align-top">
                   <td className="py-3 font-bold">{user.username || "Unknown"}</td>
                   <td className="py-3 text-white/60">{user.email || "-"}</td>
@@ -76,12 +66,12 @@ export default function AdminUsersPage() {
                   <td className="py-3"><span className={`rounded-full border px-2 py-1 text-xs font-black ${badgeClass(user.account_status)}`}>{user.account_status}</span></td>
                   <td className="py-3 text-white/50">{(user.roles || []).join(", ") || "Player"}</td>
                   <td className="py-3 text-white/40">{user.last_login_at?.slice?.(0, 16) || "-"}</td>
-                  <td className="py-3">
-                    <div className="flex flex-wrap gap-2">
-                      {user.account_status !== "banned" && <Button type="button" variant="danger" onClick={() => banUser(user)}><Ban size={14} /> Ban</Button>}
-                      <Button type="button" variant="ghost" onClick={() => deleteUser(user)}><Trash2 size={14} /> Delete</Button>
-                    </div>
-                  </td>
+                  <td className="py-3"><div className="flex flex-wrap gap-2">
+                    {user.account_status !== "active" && <Button type="button" onClick={() => act(user, "activate")}><CheckCircle2 size={14} /> Activate</Button>}
+                    {user.account_status === "active" && <Button type="button" variant="ghost" onClick={() => act(user, "deactivate")}><UserX size={14} /> Deactivate</Button>}
+                    {user.account_status === "banned" ? <Button type="button" onClick={() => act(user, "unban")}><CheckCircle2 size={14} /> Unban</Button> : <Button type="button" variant="danger" onClick={() => banUser(user)}><Ban size={14} /> Ban</Button>}
+                    <Button type="button" variant="ghost" onClick={() => deleteUser(user)}><Trash2 size={14} /> Delete</Button>
+                  </div></td>
                 </tr>
               ))}
             </tbody>
