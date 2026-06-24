@@ -15,6 +15,7 @@ import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.
 import { pingDatabase } from "./config/db.js";
 import { getSettings } from "./services/repository.js";
 import { checkAllStreamers } from "./services/streamerService.js";
+import { publicFileUrl } from "./utils/sanitize.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
 import adminTicketsRouter from "./routes/adminTickets.js";
@@ -78,7 +79,7 @@ app.get(`/api/public${photoPath}/:id`, async (req, res) => {
 });
 
 app.post(`/api/public${photoPath}`, requireAuth, upload.single("file"), requireImage, async (req, res) => {
-  const row = await shots.createGalleryPhoto({ image_url: `/uploads/${req.file.filename}`, user: req.user }, req.user, "Pending");
+  const row = await shots.createGalleryPhoto({ image_url: publicFileUrl(req, req.file), user: req.user }, req.user, "Pending");
   res.status(201).json({ row, message: "Image sent for admin review." });
 });
 
@@ -88,7 +89,7 @@ app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (re
 });
 
 app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireAdminImage, async (req, res) => {
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : req.body.image_url;
+  const imageUrl = req.file ? publicFileUrl(req, req.file) : req.body.image_url;
   const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, req.body?.status || "Approved");
   res.status(201).json({ row });
 });
