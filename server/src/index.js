@@ -54,7 +54,7 @@ function requireImage(req, res, next) {
   return next();
 }
 
-function requireAdminImage(req, res, next) {
+function requireGalleryImage(req, res, next) {
   if (req.file && !String(req.file.mimetype || "").startsWith("image/")) return res.status(400).json({ error: "only_images_allowed" });
   if (!req.file && !req.body?.image_url) return res.status(400).json({ error: "image_required" });
   return next();
@@ -78,8 +78,9 @@ app.get(`/api/public${photoPath}/:id`, async (req, res) => {
   res.json({ row });
 });
 
-app.post(`/api/public${photoPath}`, requireAuth, upload.single("file"), requireImage, async (req, res) => {
-  const row = await shots.createGalleryPhoto({ image_url: publicFileUrl(req, req.file), user: req.user }, req.user, "Pending");
+app.post(`/api/public${photoPath}`, requireAuth, upload.single("file"), requireGalleryImage, async (req, res) => {
+  const imageUrl = req.file ? publicFileUrl(req, req.file) : req.body.image_url;
+  const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, "Pending");
   res.status(201).json({ row, message: "Image sent for admin review." });
 });
 
@@ -88,7 +89,7 @@ app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (re
   res.json({ rows, total: rows.length });
 });
 
-app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireAdminImage, async (req, res) => {
+app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireGalleryImage, async (req, res) => {
   const imageUrl = req.file ? publicFileUrl(req, req.file) : req.body.image_url;
   const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, req.body?.status || "Approved");
   res.status(201).json({ row });
