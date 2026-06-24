@@ -1,6 +1,13 @@
 import { addAuditLog } from "./repository.js";
 import { sendWebhook } from "./webhook.js";
 
+const accountEvents = {
+  email_login: "User Login",
+  discord_login: "User Login",
+  steam_login: "User Login",
+  logout: "User Logout"
+};
+
 export async function auditAction({
   req,
   action,
@@ -14,20 +21,11 @@ export async function auditAction({
 }) {
   const staff = req?.user || { id: "system", username: "system" };
   const ip = req?.ip || req?.headers?.["x-forwarded-for"] || "";
-  const entry = await addAuditLog({
-    action,
-    staff,
-    targetType,
-    targetId,
-    before,
-    after,
-    reason,
-    ip,
-    status
-  });
+  const entry = await addAuditLog({ action, staff, targetType, targetId, before, after, reason, ip, status });
+  const isAccountEvent = Boolean(accountEvents[action]);
 
-  await sendWebhook(webhookCategory, {
-    title: `Admin action: ${action}`,
+  await sendWebhook(isAccountEvent ? "accounts" : webhookCategory, {
+    title: accountEvents[action] || `Admin action: ${action}`,
     color: status === "success" ? 0xb7fe1a : 0xff3333,
     Staff: staff.username || staff.email || staff.discord_username || staff.id,
     Target: `${targetType || "unknown"}:${targetId || ""}`,
