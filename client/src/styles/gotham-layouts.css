@@ -1,9 +1,14 @@
 .gotham-button {
   min-height: 2.75rem;
   box-shadow: 0 14px 34px rgba(139, 92, 246, 0.18), inset 0 1px 0 rgba(255,255,255,0.13);
+  color: inherit;
 }
 
 .gotham-button:hover { transform: translateY(-1px); }
+.gotham-button:active, .gotham-button:focus, .gotham-button:focus-visible { filter: brightness(1.18); color: #fff; outline: 2px solid color-mix(in srgb, var(--color-primary) 72%, white 8%); outline-offset: 2px; }
+.gotham-button.bg-a2-green, .gotham-button.bg-a2-green:active, .gotham-button.bg-a2-green:focus, .gotham-button.bg-a2-green:focus-visible { color: #050008 !important; background-color: var(--color-primary) !important; }
+.gotham-action-row .gotham-button, body[data-ui-theme="gotham-realistic"] .gotham-button { color: #fff; }
+.gotham-action-row .gotham-button.bg-a2-green, body[data-ui-theme="gotham-realistic"] .gotham-button.bg-a2-green { color: #050008 !important; }
 
 .dxna-section { scroll-margin-top: 96px; }
 .dxna-kicker { color: var(--color-primary); font-size: .78rem; font-weight: 950; letter-spacing: .18em; text-transform: uppercase; }
