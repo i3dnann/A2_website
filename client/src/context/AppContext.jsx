@@ -22,7 +22,7 @@ const defaultSettings = {
   textFont: "Inter",
   buttonFont: "Montserrat",
   adobeFontsKitUrl: "",
-  websiteAnimationType: "smooth-fade",
+  websiteAnimationType: "3d-city",
   heroTitle: "Gotham City",
   heroSubtitle: "Gotham City FiveM server",
   heroDescription: "FiveM Roleplay Server",
