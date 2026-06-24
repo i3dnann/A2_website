@@ -22,7 +22,9 @@ const defaultSettings = {
   textFont: "Inter",
   buttonFont: "Montserrat",
   adobeFontsKitUrl: "",
-  websiteAnimationType: "3d-city",
+  uiTheme: "gotham-realistic",
+  globalEffect: "rain",
+  websiteAnimationType: "cinematic-rise",
   heroTitle: "Gotham City",
   heroSubtitle: "Gotham City FiveM server",
   heroDescription: "FiveM Roleplay Server",
@@ -154,6 +156,8 @@ export function AppProvider({ children }) {
     root.style.setProperty("--font-body", fontStack(settings.textFont || defaultSettings.textFont));
     root.style.setProperty("--font-button", fontStack(settings.buttonFont || defaultSettings.buttonFont));
     document.body.dataset.animation = settings.websiteAnimationType || defaultSettings.websiteAnimationType;
+    document.body.dataset.uiTheme = settings.uiTheme || defaultSettings.uiTheme;
+    document.body.dataset.effect = settings.globalEffect || defaultSettings.globalEffect;
     ensureStylesheet("gotham-google-fonts", googleFontsUrl([settings.headerFont, settings.textFont, settings.buttonFont, settings.maintenanceFont]));
     ensureStylesheet("gotham-adobe-fonts", settings.adobeFontsKitUrl || "");
     document.title = settings.websiteName || defaultSettings.websiteName;
