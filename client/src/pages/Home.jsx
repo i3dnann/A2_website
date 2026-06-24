@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { BriefcaseBusiness, CheckCircle2, ChevronRight, FileText, Radio, ScrollText, Shield, Sparkles, Star, Users, Video } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,7 +26,31 @@ export default function Home() {
   const home = data?.settings || settings;
   const uiTheme = home.uiTheme || settings.uiTheme || "gotham-realistic";
   const heroImage = home.heroBackgroundImage || imageFallback(`${home.websiteName || "Gotham City"} dark cinematic city skyline`, 1800, 980);
-  const liveCount = (data?.streamers || []).filter((streamer) => streamer.is_live).length;
+  const fallbackLiveCount = (data?.streamers || []).filter((streamer) => streamer.is_live).length;
+  const [liveCount, setLiveCount] = useState(fallbackLiveCount);
+
+  useEffect(() => {
+    setLiveCount(fallbackLiveCount);
+  }, [fallbackLiveCount]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadLiveCount = async () => {
+      try {
+        const live = await api.get("/api/public/live");
+        const count = Number(live?.totalLiveChannels ?? (live?.streamers || []).filter((streamer) => streamer.is_live).length ?? 0);
+        if (!cancelled) setLiveCount(count);
+      } catch {
+        if (!cancelled) setLiveCount(fallbackLiveCount);
+      }
+    };
+    loadLiveCount();
+    const timer = setInterval(loadLiveCount, 20000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [fallbackLiveCount]);
 
   return (
     <main className={`gotham-preview-shell gotham-home-${uiTheme}`}>
@@ -82,7 +107,7 @@ function Hero({ home, heroImage, uiTheme }) {
 }
 
 function StatsRow({ liveCount, data }) {
-  return <section className="gotham-stat-row dxna-stats mx-auto grid max-w-7xl gap-4 px-4 pb-16 md:grid-cols-4"><StatCard label="Uniqueness" value="∞" hint="Ways to start your adventure" icon={Sparkles} /><StatCard label="Creators" value={data?.streamers?.length || 0} hint="Registered creators only" icon={Users} /><StatCard label="Server Health" value="99.2%" hint="Reliable restarts and support" icon={Shield} /><StatCard label="Live Now" value={liveCount} hint="Creator channels online" icon={Video} /></section>;
+  return <section className="gotham-stat-row dxna-stats mx-auto grid max-w-7xl gap-4 px-4 pb-16 md:grid-cols-4"><StatCard label="Uniqueness" value="∞" hint="Ways to start your adventure" icon={Sparkles} /><StatCard label="Creators" value={data?.streamers?.length || 0} hint="Registered creators only" icon={Users} /><StatCard label="Server Health" value="99.2%" hint="Reliable restarts and support" icon={Shield} /><StatCard label="Live Now" value={liveCount} hint="Auto-updates from Live page" icon={Video} /></section>;
 }
 
 function AboutServer({ home }) { return <section id="about" className="dxna-section gotham-section mx-auto grid max-w-7xl gap-6 px-4 pb-16 lg:grid-cols-[0.95fr_1.05fr]"><div><p className="dxna-kicker">About the server</p><h2 className="dxna-heading">Our story</h2><p className="dxna-copy">{home.heroDescription || "Gotham City is a cinematic FiveM roleplay city built for serious stories, strong characters, live events, and a community where every choice leaves a mark."}</p><div className="mt-5 flex flex-wrap gap-3"><Button as={Link} to="/tickets" variant="ghost">Contact staff</Button><Button as={Link} to="/terms" variant="ghost">Read rules</Button></div></div><Card className="gotham-panel dxna-about-card"><div className="grid gap-4 sm:grid-cols-2"><MiniStat label="Room for" value="128 Players" text="Plenty of seats for big nights in the city." /><MiniStat label="Discord Crew" value="Community" text="Announcements, support, and city updates." /><MiniStat label="Reliability" value="99.2%" text="Steady restarts and active monitoring." /><MiniStat label="Powered by" value="QBCore" text="Custom flavor on top of a battle-tested base." /></div></Card></section>; }
