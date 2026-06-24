@@ -8,6 +8,7 @@ import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
 import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordMemberRoles, getDiscordUser } from "../services/discord.js";
 import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement } from "../services/users.js";
+import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks.js";
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
@@ -50,6 +51,7 @@ function setSession(res, user) {
 }
 
 async function finishOAuth(req, res, user, action) {
+  await recordUserIp(user.id, req.ip);
   const token = setSession(res, user);
   await auditAction({ req: { ...req, user }, action, targetType: "web_users", targetId: user.id, webhookCategory: "security" });
   return res.redirect(`${env.FRONTEND_URL}/auth/complete?token=${encodeURIComponent(token)}`);
@@ -72,7 +74,9 @@ router.post(
   authLimiter,
   asyncHandler(async (req, res) => {
     const body = registerSchema.parse(req.body || {});
+    await assertAccountNotBlocked({ email: body.email, ipAddress: req.ip });
     const user = await registerEmailUser({ ...body, ipAddress: req.ip });
+    await recordUserIp(user.id, req.ip);
     const token = setSession(res, user);
     await sendWebhook("accounts", {
       title: "User account created",
@@ -89,7 +93,9 @@ router.post(
   authLimiter,
   asyncHandler(async (req, res) => {
     const body = loginSchema.parse(req.body || {});
+    await assertAccountNotBlocked({ email: body.email, ipAddress: req.ip });
     const user = await loginEmailUser(body);
+    await recordUserIp(user.id, req.ip);
     const token = setSession(res, user);
     await auditAction({ req: { ...req, user }, action: "email_login", targetType: "web_users", targetId: user.id, webhookCategory: "security" });
     res.json({ user, token });
@@ -132,6 +138,7 @@ router.get(
       avatar_url: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : "",
       roles
     };
+    await assertAccountNotBlocked({ provider: "discord", providerUserId: discordUser.id, email: profile.email, ipAddress: req.ip });
 
     if (oauthState.mode === "link") {
       const user = await linkProvider(oauthState.userId, "discord", discordUser.id, profile);
@@ -192,6 +199,7 @@ router.get(
     const steamId = await verifySteamOpenId(req.query);
     if (!steamId) return res.status(400).send("Steam OpenID verification failed.");
     const profile = { username: `Steam ${steamId}`, steam_id: steamId };
+    await assertAccountNotBlocked({ provider: "steam", providerUserId: steamId, ipAddress: req.ip });
 
     if (oauthState.mode === "link") {
       const user = await linkProvider(oauthState.userId, "steam", steamId, profile);
@@ -214,6 +222,7 @@ router.get(
 
 router.post("/terms-agreement", requireAuth, asyncHandler(async (req, res) => {
   const agreement = await saveTermsAgreement({ userId: req.user.id, termsVersion: req.body?.termsVersion || "1.0.0", ipAddress: req.ip });
+  await recordUserIp(req.user.id, req.ip);
   res.json({ agreement });
 }));
 
