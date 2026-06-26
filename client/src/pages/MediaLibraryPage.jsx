@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Upload, Trash2, Copy, Check, Image, File, X, Loader2, Music, Video } from "lucide-react";
+import { apiUrl } from "../lib/api.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/avif"];
 const AUDIO_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/flac"];
@@ -11,11 +12,37 @@ function formatBytes(bytes = 0) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function fileUrl(file) {
-  if (file.url) return file.url;
-  if (file.blob_key) return `/api/media/file?key=${encodeURIComponent(file.blob_key)}`;
-  if (file.stored_name) return `/api/media/file?key=${encodeURIComponent(file.stored_name)}`;
+function isAbsoluteUrl(value = "") {
+  return /^https?:\/\//i.test(String(value));
+}
+
+function normalizeMediaUrl(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (isAbsoluteUrl(raw) || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
+  if (raw.startsWith("/")) return apiUrl(raw);
+  return apiUrl(`/uploads/${encodeURIComponent(raw)}`);
+}
+
+function fileUrl(file = {}) {
+  const direct = file.url || file.image_url || file.file_url;
+  if (direct) return normalizeMediaUrl(direct);
+  const key = file.blob_key || file.stored_name;
+  if (key) return apiUrl(`/api/media/file?key=${encodeURIComponent(key)}`);
   return "";
+}
+
+function mediaKind(file = {}) {
+  const mime = String(file.mime_type || file.mimetype || file.type || "").toLowerCase();
+  const name = String(file.original_name || file.name || file.url || file.stored_name || "").toLowerCase();
+  if (mime.startsWith("image/") || IMAGE_TYPES.includes(mime) || /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/.test(name)) return "image";
+  if (mime.startsWith("audio/") || AUDIO_TYPES.includes(mime) || /\.(mp3|wav|ogg|oga|m4a|aac|flac)(\?.*)?$/.test(name)) return "audio";
+  if (mime.startsWith("video/") || VIDEO_TYPES.includes(mime) || /\.(mp4|m4v|webm|mov)(\?.*)?$/.test(name)) return "video";
+  return "file";
+}
+
+function displayName(file = {}) {
+  return file.original_name || file.name || file.stored_name || file.blob_key || "Untitled file";
 }
 
 function CopyButton({ text }) {
@@ -34,14 +61,16 @@ function CopyButton({ text }) {
 
 function FileCard({ file, onDelete }) {
   const [deleting, setDeleting] = useState(false);
-  const isImage = IMAGE_TYPES.includes(file.mime_type);
-  const isAudio = AUDIO_TYPES.includes(file.mime_type);
-  const isVideo = VIDEO_TYPES.includes(file.mime_type);
+  const kind = mediaKind(file);
+  const isImage = kind === "image";
+  const isAudio = kind === "audio";
+  const isVideo = kind === "video";
+  const name = displayName(file);
   const url = fileUrl(file);
   const absoluteUrl = url?.startsWith("http") ? url : window.location.origin + url;
 
   const handleDelete = async () => {
-    if (!confirm(`Delete "${file.original_name}"?`)) return;
+    if (!confirm(`Delete "${name}"?`)) return;
     setDeleting(true);
     try {
       const res = await fetch("/api/media/delete", {
@@ -59,7 +88,7 @@ function FileCard({ file, onDelete }) {
     <div className="group relative rounded-xl border border-white/10 bg-white/4 overflow-hidden hover:border-white/20 transition">
       <div className="aspect-square w-full bg-white/5 flex items-center justify-center overflow-hidden">
         {isImage ? (
-          <img src={url} alt={file.original_name} className="w-full h-full object-cover" />
+          <img src={url} alt={name} className="w-full h-full object-cover" />
         ) : isVideo ? (
           <video src={url} className="w-full h-full object-cover" muted preload="metadata" />
         ) : isAudio ? (
@@ -70,7 +99,7 @@ function FileCard({ file, onDelete }) {
       </div>
       {isAudio && <audio src={url} controls preload="none" className="w-full px-2 py-2" />}
       <div className="p-2.5">
-        <p className="text-xs font-semibold truncate text-white/80" title={file.original_name}>{file.original_name}</p>
+        <p className="text-xs font-semibold truncate text-white/80" title={name}>{name}</p>
         <div className="mt-1 flex items-center justify-between gap-1">
           <span className="text-xs text-white/35">{formatBytes(file.size || file.size_bytes || 0)}</span>
           <div className="flex items-center gap-0.5">
@@ -198,16 +227,16 @@ export default function MediaLibraryPage() {
   };
 
   const filtered = filter === "images"
-    ? files.filter((f) => IMAGE_TYPES.includes(f.mime_type))
+    ? files.filter((f) => mediaKind(f) === "image")
     : filter === "audio"
-      ? files.filter((f) => AUDIO_TYPES.includes(f.mime_type))
+      ? files.filter((f) => mediaKind(f) === "audio")
       : filter === "video"
-        ? files.filter((f) => VIDEO_TYPES.includes(f.mime_type))
+        ? files.filter((f) => mediaKind(f) === "video")
         : files;
 
-  const imageCount = files.filter((f) => IMAGE_TYPES.includes(f.mime_type)).length;
-  const audioCount = files.filter((f) => AUDIO_TYPES.includes(f.mime_type)).length;
-  const videoCount = files.filter((f) => VIDEO_TYPES.includes(f.mime_type)).length;
+  const imageCount = files.filter((f) => mediaKind(f) === "image").length;
+  const audioCount = files.filter((f) => mediaKind(f) === "audio").length;
+  const videoCount = files.filter((f) => mediaKind(f) === "video").length;
 
   return (
     <div className="space-y-6">
