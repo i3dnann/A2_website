@@ -1,21 +1,45 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Trash2, Copy, Check, Image, File, X, Loader2, Music, Video } from "lucide-react";
+import { Upload, Trash2, Copy, Check, Image, File, X, Loader2, Music, Video, Eye } from "lucide-react";
+import { apiUrl } from "../lib/api.js";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/avif"];
 const AUDIO_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/flac"];
 const VIDEO_TYPES = ["video/mp4", "video/x-m4v", "video/webm", "video/quicktime"];
 
 function formatBytes(bytes = 0) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  const value = Number(bytes || 0);
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function fileUrl(file) {
-  if (file.url) return file.url;
-  if (file.blob_key) return `/uploads/${encodeURIComponent(file.blob_key)}`;
-  if (file.stored_name) return `/uploads/${encodeURIComponent(file.stored_name)}`;
-  return "";
+function isAbsoluteUrl(value = "") {
+  return /^https?:\/\//i.test(String(value));
+}
+
+function normalizeMediaUrl(value = "") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (isAbsoluteUrl(raw) || raw.startsWith("data:") || raw.startsWith("blob:")) return raw;
+  if (raw.startsWith("/")) return apiUrl(raw);
+  return apiUrl(`/uploads/${encodeURIComponent(raw)}`);
+}
+
+function fileUrl(file = {}) {
+  return normalizeMediaUrl(file.url || file.image_url || file.file_url || file.blob_key || file.stored_name || "");
+}
+
+function mediaKind(file = {}) {
+  const mime = String(file.mime_type || file.mimetype || file.type || "").toLowerCase();
+  const name = String(file.original_name || file.name || file.url || file.stored_name || "").toLowerCase();
+  if (mime.startsWith("image/") || IMAGE_TYPES.includes(mime) || /\.(png|jpe?g|webp|gif|svg|avif)(\?.*)?$/.test(name)) return "image";
+  if (mime.startsWith("audio/") || AUDIO_TYPES.includes(mime) || /\.(mp3|wav|ogg|oga|m4a|aac|flac)(\?.*)?$/.test(name)) return "audio";
+  if (mime.startsWith("video/") || VIDEO_TYPES.includes(mime) || /\.(mp4|m4v|webm|mov)(\?.*)?$/.test(name)) return "video";
+  return "file";
+}
+
+function displayName(file = {}) {
+  return file.original_name || file.name || file.stored_name || file.blob_key || "Untitled file";
 }
 
 function CopyButton({ text }) {
@@ -26,27 +50,59 @@ function CopyButton({ text }) {
     setTimeout(() => setCopied(false), 2000);
   };
   return (
-    <button onClick={copy} className="rounded p-1 text-white/45 hover:text-white transition" title="Copy URL">
+    <button onClick={copy} className="rounded p-1 text-white/45 hover:text-white transition" title="Copy URL" type="button">
       {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}
     </button>
   );
 }
 
-function FileCard({ file, onDelete }) {
-  const [deleting, setDeleting] = useState(false);
-  const isImage = IMAGE_TYPES.includes(file.mime_type);
-  const isAudio = AUDIO_TYPES.includes(file.mime_type);
-  const isVideo = VIDEO_TYPES.includes(file.mime_type);
+function MediaPreviewModal({ file, onClose }) {
+  if (!file) return null;
+  const kind = mediaKind(file);
   const url = fileUrl(file);
-  const absoluteUrl = url?.startsWith("http") ? url : window.location.origin + url;
+  const name = displayName(file);
+  return (
+    <div className="fixed inset-0 z-[9999] grid place-items-center bg-black/88 p-4" onClick={onClose}>
+      <div className="relative max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-[#08080d] shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-white">{name}</p>
+            <p className="text-xs text-white/45">{formatBytes(file.size || file.size_bytes || 0)}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-white/10 px-3 py-1.5 text-sm font-bold text-white/70 hover:text-white">Close</button>
+        </div>
+        <div className="grid max-h-[78vh] place-items-center overflow-auto bg-black p-4">
+          {kind === "image" ? (
+            <img src={url} alt={name} className="max-h-[74vh] max-w-full rounded-lg object-contain" />
+          ) : kind === "video" ? (
+            <video src={url} controls className="max-h-[74vh] max-w-full rounded-lg" />
+          ) : kind === "audio" ? (
+            <audio src={url} controls className="w-full max-w-2xl" />
+          ) : (
+            <a href={url} target="_blank" rel="noreferrer" className="rounded-lg bg-a2-green px-4 py-2 font-black text-black">Open file</a>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FileCard({ file, onDelete, onPreview }) {
+  const [deleting, setDeleting] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const kind = mediaKind(file);
+  const url = fileUrl(file);
+  const name = displayName(file);
+  const absoluteUrl = isAbsoluteUrl(url) ? url : window.location.origin + url;
 
   const handleDelete = async () => {
-    if (!confirm(`Delete "${file.original_name}"?`)) return;
+    if (!confirm(`Delete "${name}"?`)) return;
     setDeleting(true);
     try {
-      const res = await fetch("/api/media/delete", {
+      const res = await fetch(apiUrl("/api/media/delete"), {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id: file.id }),
       });
       if (res.ok) onDelete(file.id);
@@ -56,31 +112,29 @@ function FileCard({ file, onDelete }) {
   };
 
   return (
-    <div className="group relative rounded-xl border border-white/10 bg-white/4 overflow-hidden hover:border-white/20 transition">
-      <div className="aspect-square w-full bg-white/5 flex items-center justify-center overflow-hidden">
-        {isImage ? (
-          <img src={url} alt={file.original_name} className="w-full h-full object-cover" />
-        ) : isVideo ? (
-          <video src={url} className="w-full h-full object-cover" muted preload="metadata" />
-        ) : isAudio ? (
-          <Music size={40} className="text-white/35" />
-        ) : (
-          <File size={40} className="text-white/25" />
-        )}
-      </div>
-      {isAudio && <audio src={url} controls preload="none" className="w-full px-2 py-2" />}
-      <div className="p-2.5">
-        <p className="text-xs font-semibold truncate text-white/80" title={file.original_name}>{file.original_name}</p>
-        <div className="mt-1 flex items-center justify-between gap-1">
-          <span className="text-xs text-white/35">{formatBytes(file.size || file.size_bytes || 0)}</span>
-          <div className="flex items-center gap-0.5">
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#111116] shadow-lg transition hover:border-white/25">
+      <button type="button" onClick={() => onPreview(file)} className="block w-full text-left">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-black/60">
+          {kind === "image" && !failed ? (
+            <img src={url} alt={name} loading="lazy" onError={() => setFailed(true)} className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]" />
+          ) : kind === "video" && !failed ? (
+            <video src={url} muted preload="metadata" onError={() => setFailed(true)} className="h-full w-full object-cover" />
+          ) : kind === "audio" ? (
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-white/45"><Music size={42} /><span className="text-xs font-bold uppercase tracking-widest">Audio</span></div>
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-white/35"><File size={42} /><span className="line-clamp-2 text-xs font-bold">Preview unavailable</span></div>
+          )}
+          <div className="absolute right-2 top-2 rounded-full bg-black/62 p-2 text-white opacity-0 transition group-hover:opacity-100"><Eye size={15} /></div>
+        </div>
+      </button>
+      {kind === "audio" && <audio src={url} controls preload="none" className="w-full px-2 py-2" />}
+      <div className="p-3">
+        <p className="line-clamp-2 min-h-[2.25rem] text-sm font-black leading-tight text-white" title={name}>{name}</p>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-xs text-white/40">{formatBytes(file.size || file.size_bytes || 0)}</span>
+          <div className="flex items-center gap-1">
             <CopyButton text={absoluteUrl} />
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="rounded p-1 text-white/45 hover:text-red-400 transition disabled:opacity-40"
-              title="Delete"
-            >
+            <button onClick={handleDelete} disabled={deleting} className="rounded p-1 text-white/45 transition hover:text-red-400 disabled:opacity-40" title="Delete" type="button">
               {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
             </button>
           </div>
@@ -97,7 +151,7 @@ function UploadZone({ onUploaded }) {
   const inputRef = useRef(null);
 
   const uploadFiles = useCallback(async (fileList) => {
-    const files = Array.from(fileList);
+    const files = Array.from(fileList || []);
     if (!files.length) return;
 
     setUploading(true);
@@ -109,7 +163,7 @@ function UploadZone({ onUploaded }) {
       const formData = new FormData();
       formData.append("file", files[i]);
       try {
-        const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+        const res = await fetch(apiUrl("/api/media/upload"), { method: "POST", body: formData, credentials: "include" });
         if (res.ok) {
           const record = await res.json();
           results.push(record);
@@ -142,7 +196,7 @@ function UploadZone({ onUploaded }) {
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         onClick={() => !uploading && inputRef.current?.click()}
-        className={`cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition ${dragging ? "border-a2-green bg-a2-green/10" : "border-white/15 hover:border-white/30 hover:bg-white/3"}`}
+        className={`cursor-pointer rounded-2xl border-2 border-dashed p-10 text-center transition ${dragging ? "border-a2-green bg-a2-green/10" : "border-white/15 hover:border-white/30 hover:bg-white/3"}`}
       >
         <input
           ref={inputRef}
@@ -181,9 +235,10 @@ export default function MediaLibraryPage() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    fetch("/api/media/list")
+    fetch(apiUrl("/api/media/list"), { credentials: "include" })
       .then((r) => r.json())
       .then((data) => setFiles(Array.isArray(data) ? data : []))
       .finally(() => setLoading(false));
@@ -197,17 +252,10 @@ export default function MediaLibraryPage() {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const filtered = filter === "images"
-    ? files.filter((f) => IMAGE_TYPES.includes(f.mime_type))
-    : filter === "audio"
-      ? files.filter((f) => AUDIO_TYPES.includes(f.mime_type))
-      : filter === "video"
-        ? files.filter((f) => VIDEO_TYPES.includes(f.mime_type))
-        : files;
-
-  const imageCount = files.filter((f) => IMAGE_TYPES.includes(f.mime_type)).length;
-  const audioCount = files.filter((f) => AUDIO_TYPES.includes(f.mime_type)).length;
-  const videoCount = files.filter((f) => VIDEO_TYPES.includes(f.mime_type)).length;
+  const filtered = files.filter((file) => filter === "all" || mediaKind(file) === filter.slice(0, -1));
+  const imageCount = files.filter((f) => mediaKind(f) === "image").length;
+  const audioCount = files.filter((f) => mediaKind(f) === "audio").length;
+  const videoCount = files.filter((f) => mediaKind(f) === "video").length;
 
   return (
     <div className="space-y-6">
@@ -241,12 +289,13 @@ export default function MediaLibraryPage() {
           <p className="text-sm mt-1">Upload files using the area above</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {filtered.map((file) => (
-            <FileCard key={file.id} file={file} onDelete={handleDelete} />
+            <FileCard key={file.id || file.url || file.stored_name} file={file} onDelete={handleDelete} onPreview={setPreview} />
           ))}
         </div>
       )}
+      <MediaPreviewModal file={preview} onClose={() => setPreview(null)} />
     </div>
   );
 }
