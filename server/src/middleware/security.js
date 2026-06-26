@@ -17,8 +17,19 @@ export const authLimiter = rateLimit({
   legacyHeaders: false
 });
 
-const imageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp"]);
-const imageTypes = new Set(["image/png", "image/jpeg", "image/webp"]);
+const fileExtensions = new Set([
+  ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".avif",
+  ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".aac", ".flac",
+  ".mp4", ".m4v", ".webm", ".mov",
+  ".pdf", ".txt", ".json"
+]);
+
+const mimeTypes = new Set([
+  "image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml", "image/avif",
+  "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/flac",
+  "video/mp4", "video/x-m4v", "video/webm", "video/quicktime",
+  "application/pdf", "text/plain", "application/json"
+]);
 
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -30,11 +41,11 @@ const storage = multer.diskStorage({
 
 export const upload = multer({
   storage,
-  limits: { fileSize: Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024) },
+  limits: { fileSize: Number(process.env.MAX_UPLOAD_BYTES || 512 * 1024 * 1024) },
   fileFilter: (_req, file, cb) => {
     const ext = path.extname(file.originalname || "").toLowerCase();
-    if (!imageExtensions.has(ext)) return cb(new Error("Only png, jpg, jpeg, and webp image uploads are allowed"));
-    if (!imageTypes.has(file.mimetype)) return cb(new Error("Only png, jpg, jpeg, and webp image uploads are allowed"));
+    if (!fileExtensions.has(ext)) return cb(new Error("Unsupported file extension."));
+    if (!mimeTypes.has(file.mimetype)) return cb(new Error("Unsupported file MIME type."));
     return cb(null, true);
   }
 });
