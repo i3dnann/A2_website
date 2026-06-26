@@ -17,9 +17,8 @@ if (!$logo) {
 <div class="gotham-shell">
 <header class="gotham-header">
     <div class="gotham-container gotham-header-inner">
-        <a class="gotham-brand" href="<?php echo esc_url(home_url('/')); ?>">
+        <a class="gotham-brand" href="<?php echo esc_url(home_url('/')); ?>" aria-label="<?php echo esc_attr($settings['website_name'] ?? get_bloginfo('name')); ?>">
             <img src="<?php echo esc_url($logo); ?>" alt="">
-            <span><?php echo esc_html($settings['website_name'] ?? get_bloginfo('name')); ?></span>
         </a>
         <nav class="gotham-nav" aria-label="<?php esc_attr_e('Primary navigation', 'gotham-city-theme'); ?>">
             <?php foreach (($settings['header_links'] ?? []) as $link) : if (empty($link['visible'])) continue; ?>
