@@ -14,7 +14,6 @@ const dictionary = {
 const skipTags = new Set(["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "OPTION", "CODE", "PRE", "NOSCRIPT"]);
 const originalText = new WeakMap();
 const originalPlaceholder = new WeakMap();
-let observer;
 
 export function currentLanguage() { return localStorage.getItem("a2_language") || "en"; }
 export function localized(row = {}, field = "title") {
@@ -30,8 +29,7 @@ function walk(node, lang) {
   if (node.nodeType === Node.TEXT_NODE) {
     const base = originalText.get(node) || node.nodeValue;
     if (!originalText.has(node)) originalText.set(node, base);
-    const translated = translateText(base, lang);
-    node.nodeValue = lang === "en" ? base : translated;
+    node.nodeValue = lang === "en" ? base : translateText(base, lang);
     return;
   }
   if (node.nodeType !== Node.ELEMENT_NODE || skipTags.has(node.tagName)) return;
@@ -50,13 +48,10 @@ export function applyLanguage(language = currentLanguage()) {
   document.documentElement.lang = lang;
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   document.body?.setAttribute("data-language", lang);
-  walk(document.body, lang);
+  if (document.body) walk(document.body, lang);
 }
 
 export function startAutoTranslate() {
   applyLanguage(currentLanguage());
   window.addEventListener("a2-language-change", (event) => applyLanguage(event.detail?.language || currentLanguage()));
-  if (observer) observer.disconnect();
-  observer = new MutationObserver(() => applyLanguage(currentLanguage()));
-  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 }
