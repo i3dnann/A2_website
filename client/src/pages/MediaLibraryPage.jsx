@@ -13,8 +13,8 @@ function formatBytes(bytes = 0) {
 
 function fileUrl(file) {
   if (file.url) return file.url;
-  if (file.blob_key) return `/uploads/${encodeURIComponent(file.blob_key)}`;
-  if (file.stored_name) return `/uploads/${encodeURIComponent(file.stored_name)}`;
+  if (file.blob_key) return `/api/media/file?key=${encodeURIComponent(file.blob_key)}`;
+  if (file.stored_name) return `/api/media/file?key=${encodeURIComponent(file.stored_name)}`;
   return "";
 }
 
