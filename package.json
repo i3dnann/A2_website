@@ -9,9 +9,12 @@
     "build": "npm install --prefix client && npm run build --prefix client",
     "build:cloudflare": "npm install --prefix client && npm run build --prefix client",
     "start:server": "npm start --prefix server",
-    "check": "npm run check --prefix server && npm run build --prefix client"
+    "check": "npm run check --prefix server && npm run build --prefix client",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "concurrently": "^9.1.2",
+    "wrangler": "^4.105.0"
   }
 }
