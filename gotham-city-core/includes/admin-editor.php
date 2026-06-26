@@ -88,7 +88,8 @@ function gotham_core_render_admin_editor() {
         } elseif ($key === 'style') {
             gotham_core_render_settings_fields($settings, ['primary_color', 'secondary_color', 'accent_color', 'background_color', 'card_background', 'border_color', 'text_color', 'muted_text_color', 'font_family', 'button_style', 'card_style', 'background_style']);
         } elseif ($key === 'maintenance') {
-            gotham_core_render_settings_fields($settings, ['maintenance_mode', 'maintenance_headline_en', 'maintenance_headline_ar', 'maintenance_message_en', 'maintenance_message_ar', 'maintenance_background_id', 'maintenance_countdown']);
+            echo '<p class="description">Use image/video IDs from the Media Library, or paste direct video/audio links from any external source that allows embedding/hotlinking. External links override uploaded media IDs.</p>';
+            gotham_core_render_settings_fields($settings, ['maintenance_mode', 'maintenance_headline_en', 'maintenance_headline_ar', 'maintenance_message_en', 'maintenance_message_ar', 'maintenance_background_id', 'maintenance_background_video_id', 'maintenance_video_url', 'maintenance_audio_id', 'maintenance_audio_url', 'maintenance_countdown']);
             gotham_core_render_page_sections($sections, 'maintenance');
         } elseif ($key === 'language') {
             echo '<p>Every section has English and Arabic fields. Use the page tabs above for page-specific translation content. The frontend language switcher reads these saved fields and enables RTL for Arabic.</p>';
@@ -111,12 +112,19 @@ function gotham_core_render_settings_fields($settings, $keys) {
         printf('<label><strong>%s</strong>', esc_html($label));
         if (str_ends_with($key, '_id')) {
             printf('<div class="gotham-media-field"><input type="number" name="gotham_settings[%s]" value="%s"><button type="button" class="button gotham-pick-media">Pick media</button></div>', esc_attr($key), esc_attr($value));
+            if (str_contains($key, 'video')) {
+                echo '<small>Choose an uploaded video file such as MP4, WebM, MOV, or M4V.</small>';
+            } elseif (str_contains($key, 'audio')) {
+                echo '<small>Choose an uploaded audio file such as MP3, WAV, OGG, M4A, FLAC, or AAC.</small>';
+            }
         } elseif (str_contains($key, 'color')) {
             printf('<input type="color" name="gotham_settings[%s]" value="%s">', esc_attr($key), esc_attr($value));
         } elseif (str_starts_with($key, 'enable_') || str_ends_with($key, '_mode')) {
             printf('<input type="checkbox" name="gotham_settings[%s]" value="1" %s>', esc_attr($key), checked($value, 1, false));
         } elseif (str_contains($key, 'description') || str_contains($key, 'message') || str_contains($key, 'text')) {
             printf('<textarea name="gotham_settings[%s]" rows="3">%s</textarea>', esc_attr($key), esc_textarea($value));
+        } elseif (str_contains($key, 'url') || str_contains($key, 'link')) {
+            printf('<input type="url" name="gotham_settings[%s]" value="%s" placeholder="https://">', esc_attr($key), esc_attr($value));
         } else {
             printf('<input type="text" name="gotham_settings[%s]" value="%s">', esc_attr($key), esc_attr($value));
         }
