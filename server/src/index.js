@@ -13,7 +13,7 @@ import { csrfProtection } from "./middleware/csrf.js";
 import { corsOrigins, env } from "./config/env.js";
 import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.js";
 import { pingDatabase } from "./config/db.js";
-import { getSettings } from "./services/repository.js";
+import { createResource, deleteResource, getSettings, listResource } from "./services/repository.js";
 import { checkAllStreamers } from "./services/streamerService.js";
 import { publicFileUrl } from "./utils/sanitize.js";
 import authRouter from "./routes/auth.js";
@@ -66,6 +66,39 @@ const photoPath = "/gal" + "lery";
 app.get("/health", async (_req, res) => {
   const dbOk = await pingDatabase();
   res.json({ ok: true, service: "gotham-city-api", time: new Date().toISOString(), database: dbOk ? "online" : "disabled_or_unavailable", frontend: env.FRONTEND_URL });
+});
+
+app.get("/api/media/list", requireAuth, requirePermission("manage_home"), async (req, res) => {
+  const result = await listResource("files", { q: req.query.q || "", limit: req.query.limit || 300 });
+  res.json((result.rows || []).map((file) => ({
+    ...file,
+    size: file.size_bytes || file.size || 0,
+    url: file.url || (file.stored_name ? `/uploads/${file.stored_name}` : ""),
+    blob_key: file.stored_name || file.blob_key || ""
+  })));
+});
+
+app.post("/api/media/upload", requireAuth, requirePermission("manage_home"), upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(422).json({ error: "file_required" });
+  const url = publicFileUrl(req, req.file);
+  const file = await createResource("files", {
+    owner_user_id: req.user.id,
+    original_name: req.file.originalname,
+    stored_name: req.file.filename,
+    mime_type: req.file.mimetype,
+    size_bytes: req.file.size,
+    url,
+    storage_driver: "local"
+  }, req.user);
+  res.status(201).json({ ...file, size: file.size_bytes || req.file.size, url, blob_key: req.file.filename });
+});
+
+app.delete("/api/media/delete", requireAuth, requirePermission("manage_home"), async (req, res) => {
+  const id = req.body?.id;
+  if (!id) return res.status(400).json({ error: "id_required" });
+  const before = await deleteResource("files", id, req.user);
+  if (!before) return res.status(404).json({ error: "file_not_found" });
+  res.json({ ok: true });
 });
 
 app.get(`/api/public${photoPath}`, async (req, res) => {
