@@ -33,7 +33,7 @@ export const publicNav = [
 ];
 
 export const accountNav = [
-  { label: "Account", href: "/account", icon: LayoutDashboard, permission: "view_player_portal" },
+  { label: "Character", href: "/account", icon: UserCircle, permission: "view_player_portal" },
   { label: "Characters", href: "/account/characters", icon: UserCircle, permission: "view_player_portal" },
   { label: "Tickets", href: "/account/tickets", icon: Ticket, permission: "view_player_portal" },
   { label: "Applications", href: "/account/applications", icon: Workflow, permission: "view_player_portal" },
