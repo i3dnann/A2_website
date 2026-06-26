@@ -10,8 +10,10 @@ const router = Router();
 
 router.use(requireAuth, requirePermission("manage_home"));
 
-router.post("/sound", upload.single("file"), asyncHandler(async (req, res) => {
-  if (!req.file) return res.status(422).json({ error: "file_required", message: "Upload an audio file first." });
+async function saveUploadedMaintenanceMedia(req, res, { type, settingKeys, action }) {
+  if (!req.file) return res.status(422).json({ error: "file_required", message: `Upload a ${type} file first.` });
+  const mime = String(req.file.mimetype || "");
+  if (!mime.startsWith(`${type}/`)) return res.status(400).json({ error: `only_${type}_allowed`, message: `Upload a valid ${type} file.` });
 
   const url = publicFileUrl(req, req.file);
   const file = await createResource("files", {
@@ -24,10 +26,27 @@ router.post("/sound", upload.single("file"), asyncHandler(async (req, res) => {
     storage_driver: "local"
   }, req.user);
 
-  const { before, after } = await updateSettings({ maintenanceSoundUrl: url }, req.user);
-  await auditAction({ req, action: "upload_maintenance_sound", targetType: "web_settings", targetId: "maintenanceSoundUrl", before, after, reason: "maintenance sound uploaded", webhookCategory: "admin" });
+  const patch = Object.fromEntries(settingKeys.map((key) => [key, url]));
+  const { before, after } = await updateSettings(patch, req.user);
+  await auditAction({ req, action, targetType: "web_settings", targetId: settingKeys[0], before, after, reason: `maintenance ${type} uploaded`, webhookCategory: "admin" });
 
   res.json({ ok: true, url, file, settings: await getSettings() });
+}
+
+router.post("/sound", upload.single("file"), asyncHandler(async (req, res) => {
+  await saveUploadedMaintenanceMedia(req, res, {
+    type: "audio",
+    settingKeys: ["maintenanceSoundUrl", "maintenanceAudioUrl"],
+    action: "upload_maintenance_sound"
+  });
+}));
+
+router.post("/video", upload.single("file"), asyncHandler(async (req, res) => {
+  await saveUploadedMaintenanceMedia(req, res, {
+    type: "video",
+    settingKeys: ["maintenanceVideoUrl", "maintenanceYoutubeUrl"],
+    action: "upload_maintenance_video"
+  });
 }));
 
 export default router;
