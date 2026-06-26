@@ -33,6 +33,10 @@ function gotham_core_default_settings() {
         'maintenance_message_en' => 'We are preparing the city. Please check Discord for updates.',
         'maintenance_message_ar' => 'نقوم بتجهيز المدينة. تابع الديسكورد لمعرفة التحديثات.',
         'maintenance_background_id' => 0,
+        'maintenance_background_video_id' => 0,
+        'maintenance_video_url' => '',
+        'maintenance_audio_id' => 0,
+        'maintenance_audio_url' => '',
         'maintenance_countdown' => '',
         'default_seo_title_en' => 'Gotham City Roleplay',
         'default_seo_title_ar' => 'جوثام سيتي رول بلاي',
@@ -78,7 +82,7 @@ function gotham_core_default_sections() {
         'gallery' => ['hero', 'gallery-items', 'submission-empty'],
         'tickets' => ['hero', 'ticket-form', 'messages'],
         'auth' => ['login', 'register', 'terms-notice', 'messages'],
-        'dashboard' => ['overview', 'characters', 'tickets', 'empty-state'],
+        'dashboard' => ['overview', 'character', 'tickets', 'empty-state'],
         'profile' => ['hero', 'character-info', 'ban-status'],
         'terms_privacy' => ['terms', 'privacy'],
         'maintenance' => ['maintenance'],
@@ -110,6 +114,8 @@ function gotham_core_default_sections() {
             ];
         }
     }
+    $sections['dashboard_character']['title_en'] = 'Character';
+    $sections['dashboard_character']['title_ar'] = 'الشخصية';
     $sections['home_hero']['title_en'] = 'Gotham City Roleplay';
     $sections['home_hero']['title_ar'] = 'جوثام سيتي رول بلاي';
     $sections['home_hero']['subtitle_en'] = 'Premium FiveM community';
@@ -178,6 +184,14 @@ function gotham_image_url($id, $size = 'large') {
         return '';
     }
     return wp_get_attachment_image_url($id, $size) ?: '';
+}
+
+function gotham_media_url($id) {
+    $id = absint($id);
+    if (!$id) {
+        return '';
+    }
+    return wp_get_attachment_url($id) ?: '';
 }
 
 function gotham_core_sanitize_settings($settings) {
