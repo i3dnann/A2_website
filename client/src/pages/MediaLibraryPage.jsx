@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Trash2, Copy, Check, Image, File, X, Loader2 } from "lucide-react";
+import { Upload, Trash2, Copy, Check, Image, File, X, Loader2, Music, Video } from "lucide-react";
 
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/avif"];
+const AUDIO_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/flac"];
+const VIDEO_TYPES = ["video/mp4", "video/x-m4v", "video/webm", "video/quicktime"];
 
-function formatBytes(bytes) {
+function formatBytes(bytes = 0) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function fileUrl(blobKey) {
-  return `/api/media/file?key=${encodeURIComponent(blobKey)}`;
+function fileUrl(file) {
+  if (file.url) return file.url;
+  if (file.blob_key) return `/uploads/${encodeURIComponent(file.blob_key)}`;
+  if (file.stored_name) return `/uploads/${encodeURIComponent(file.stored_name)}`;
+  return "";
 }
 
 function CopyButton({ text }) {
@@ -30,7 +35,10 @@ function CopyButton({ text }) {
 function FileCard({ file, onDelete }) {
   const [deleting, setDeleting] = useState(false);
   const isImage = IMAGE_TYPES.includes(file.mime_type);
-  const url = fileUrl(file.blob_key);
+  const isAudio = AUDIO_TYPES.includes(file.mime_type);
+  const isVideo = VIDEO_TYPES.includes(file.mime_type);
+  const url = fileUrl(file);
+  const absoluteUrl = url?.startsWith("http") ? url : window.location.origin + url;
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${file.original_name}"?`)) return;
@@ -52,16 +60,21 @@ function FileCard({ file, onDelete }) {
       <div className="aspect-square w-full bg-white/5 flex items-center justify-center overflow-hidden">
         {isImage ? (
           <img src={url} alt={file.original_name} className="w-full h-full object-cover" />
+        ) : isVideo ? (
+          <video src={url} className="w-full h-full object-cover" muted preload="metadata" />
+        ) : isAudio ? (
+          <Music size={40} className="text-white/35" />
         ) : (
           <File size={40} className="text-white/25" />
         )}
       </div>
+      {isAudio && <audio src={url} controls preload="none" className="w-full px-2 py-2" />}
       <div className="p-2.5">
         <p className="text-xs font-semibold truncate text-white/80" title={file.original_name}>{file.original_name}</p>
         <div className="mt-1 flex items-center justify-between gap-1">
-          <span className="text-xs text-white/35">{formatBytes(file.size)}</span>
+          <span className="text-xs text-white/35">{formatBytes(file.size || file.size_bytes || 0)}</span>
           <div className="flex items-center gap-0.5">
-            <CopyButton text={window.location.origin + url} />
+            <CopyButton text={absoluteUrl} />
             <button
               onClick={handleDelete}
               disabled={deleting}
@@ -135,6 +148,7 @@ function UploadZone({ onUploaded }) {
           ref={inputRef}
           type="file"
           multiple
+          accept="image/*,audio/*,video/*,.pdf,.txt,.json,.mp3,.wav,.ogg,.m4a,.aac,.flac,.mp4,.webm,.mov,.m4v"
           className="hidden"
           onChange={(e) => uploadFiles(e.target.files)}
         />
@@ -154,7 +168,7 @@ function UploadZone({ onUploaded }) {
             <Upload size={32} />
             <div>
               <p className="font-semibold text-white/65">Drop files here or click to browse</p>
-              <p className="text-sm mt-0.5">Images, documents, and any other files</p>
+              <p className="text-sm mt-0.5">Images, long audio, videos, PDFs, TXT, and JSON files</p>
             </div>
           </div>
         )}
@@ -185,27 +199,33 @@ export default function MediaLibraryPage() {
 
   const filtered = filter === "images"
     ? files.filter((f) => IMAGE_TYPES.includes(f.mime_type))
-    : files;
+    : filter === "audio"
+      ? files.filter((f) => AUDIO_TYPES.includes(f.mime_type))
+      : filter === "video"
+        ? files.filter((f) => VIDEO_TYPES.includes(f.mime_type))
+        : files;
 
   const imageCount = files.filter((f) => IMAGE_TYPES.includes(f.mime_type)).length;
+  const audioCount = files.filter((f) => AUDIO_TYPES.includes(f.mime_type)).length;
+  const videoCount = files.filter((f) => VIDEO_TYPES.includes(f.mime_type)).length;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-black">Media Library</h1>
-        <p className="text-sm text-white/45 mt-1">{files.length} file{files.length !== 1 ? "s" : ""} stored · {imageCount} image{imageCount !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-white/45 mt-1">{files.length} file{files.length !== 1 ? "s" : ""} stored · {imageCount} image{imageCount !== 1 ? "s" : ""} · {audioCount} audio · {videoCount} video</p>
       </div>
 
       <UploadZone onUploaded={handleUploaded} />
 
-      <div className="flex items-center gap-2">
-        {["all", "images"].map((f) => (
+      <div className="flex flex-wrap items-center gap-2">
+        {["all", "images", "audio", "video"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold capitalize transition ${filter === f ? "bg-a2-green text-black" : "border border-white/15 text-white/55 hover:border-white/30 hover:text-white"}`}
           >
-            {f === "all" ? `All (${files.length})` : `Images (${imageCount})`}
+            {f === "all" ? `All (${files.length})` : f === "images" ? `Images (${imageCount})` : f === "audio" ? `Audio (${audioCount})` : `Video (${videoCount})`}
           </button>
         ))}
       </div>
@@ -216,8 +236,8 @@ export default function MediaLibraryPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-white/10 py-16 text-white/30">
-          <Image size={36} className="mb-3" />
-          <p className="font-semibold">{filter === "images" ? "No images uploaded yet" : "No files uploaded yet"}</p>
+          {filter === "video" ? <Video size={36} className="mb-3" /> : filter === "audio" ? <Music size={36} className="mb-3" /> : <Image size={36} className="mb-3" />}
+          <p className="font-semibold">No {filter === "all" ? "files" : filter} uploaded yet</p>
           <p className="text-sm mt-1">Upload files using the area above</p>
         </div>
       ) : (
