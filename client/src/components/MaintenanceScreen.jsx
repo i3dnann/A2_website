@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LogIn, MapPin, Volume2 } from "lucide-react";
+import { LogIn, Volume2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { fontStack } from "../data/fonts.js";
 import "./MaintenanceScreen.css";
@@ -39,6 +39,10 @@ function youtubeEmbedUrl(value = "") {
   return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1`;
 }
 
+function isDirectVideo(value = "") {
+  return /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(String(value || ""));
+}
+
 export default function MaintenanceScreen({ settings = {}, onExit }) {
   const [now, setNow] = useState(Date.now());
   const [volume, setVolume] = useState(volumeValue(settings.maintenanceVolume));
@@ -50,9 +54,10 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
   const title = settings.maintenanceTitle || "The city is being rebuilt in the shadows";
   const subtitle = settings.maintenanceSubtitle || "Gotham City is under maintenance. The signal will return soon.";
   const fontFamily = fontStack(settings.maintenanceFont || settings.headerFont || "Orbitron");
-  const soundUrl = settings.maintenanceSoundUrl || "";
-  const videoUrl = youtubeEmbedUrl(settings.maintenanceYoutubeUrl || settings.maintenanceVideoUrl);
-  const brand = settings.websiteName || "Gotham City";
+  const soundUrl = settings.maintenanceAudioUrl || settings.maintenanceSoundUrl || "";
+  const rawVideoUrl = settings.maintenanceVideoUrl || settings.maintenanceYoutubeUrl || "";
+  const embedVideoUrl = youtubeEmbedUrl(rawVideoUrl);
+  const directVideoUrl = isDirectVideo(rawVideoUrl) ? rawVideoUrl : "";
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -82,16 +87,13 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
 
   return (
     <main className="maintenance-screen" onPointerDown={() => startSound(volume)}>
-      {videoUrl && <iframe className="maintenance-video" src={videoUrl} title="Maintenance background video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />}
+      {embedVideoUrl && <iframe className="maintenance-video" src={embedVideoUrl} title="Maintenance background video" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />}
+      {directVideoUrl && <video className="maintenance-video maintenance-direct-video" src={directVideoUrl} autoPlay muted loop playsInline preload="auto" />}
       {soundUrl && <audio ref={audioRef} src={soundUrl} loop preload="auto" />}
-      <div className="maintenance-orb one" />
-      <div className="maintenance-orb two" />
+
       <section className="maintenance-card">
         <header className="maintenance-topbar">
-          <div className="maintenance-brand">
-            <span className="maintenance-logo-mark">GC</span>
-            <span>{brand}</span>
-          </div>
+          <div />
           <div className="maintenance-top-actions">
             {soundUrl && (
               <label className="maintenance-volume" onPointerDown={(event) => event.stopPropagation()}>
@@ -120,11 +122,6 @@ export default function MaintenanceScreen({ settings = {}, onExit }) {
             </div>
           )}
         </div>
-
-        <footer className="maintenance-footer">
-          <span>The city is being rebuilt in the shadows</span>
-          <span className="maintenance-location"><MapPin size={18} /> Gotham Signal</span>
-        </footer>
       </section>
     </main>
   );
