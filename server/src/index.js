@@ -7,6 +7,7 @@ import morgan from "morgan";
 import path from "node:path";
 import fs from "node:fs";
 import cron from "node-cron";
+import multer from "multer";
 import { fileURLToPath } from "node:url";
 import { apiLimiter, upload } from "./middleware/security.js";
 import { csrfProtection } from "./middleware/csrf.js";
@@ -159,7 +160,17 @@ if (fs.existsSync(clientDistPath)) {
 }
 
 app.use((_req, res) => { res.status(404).json({ error: "not_found" }); });
-app.use((error, _req, res, _next) => { console.error("[api]", error); if (error?.name === "ZodError") return res.status(400).json({ error: "validation_error", message: error.errors?.[0]?.message || "Please check the form fields.", issues: error.errors || [] }); const status = error.status || 500; res.status(status).json({ error: status === 500 ? "server_error" : error.message || "request_failed", message: status === 500 ? "Something went wrong. Please try again later." : error.message }); });
+app.use((error, _req, res, _next) => {
+  console.error("[api]", error);
+  if (error instanceof multer.MulterError) {
+    const message = error.code === "LIMIT_FILE_SIZE" ? "The uploaded file is too large. Increase MAX_UPLOAD_BYTES on the backend or upload a smaller file." : error.message;
+    return res.status(413).json({ error: error.code || "upload_error", message });
+  }
+  if (error?.message?.includes("Unsupported file")) return res.status(400).json({ error: "unsupported_file", message: error.message });
+  if (error?.name === "ZodError") return res.status(400).json({ error: "validation_error", message: error.errors?.[0]?.message || "Please check the form fields.", issues: error.errors || [] });
+  const status = error.status || 500;
+  res.status(status).json({ error: status === 500 ? "server_error" : error.message || "request_failed", message: status === 500 ? "Something went wrong. Please try again later." : error.message });
+});
 
 cron.schedule("*/2 * * * *", async () => { const settings = await getSettings(); if (settings.livePageEnabled) await checkAllStreamers(); });
 
