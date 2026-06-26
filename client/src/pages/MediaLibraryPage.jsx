@@ -28,7 +28,11 @@ function fileUrl(file = {}) {
   const direct = file.url || file.image_url || file.file_url;
   if (direct) return normalizeMediaUrl(direct);
   const key = file.blob_key || file.stored_name;
-  if (key) return apiUrl(`/api/media/file?key=${encodeURIComponent(key)}`);
+  // The media API is served by this site's own Netlify Functions, so it must
+  // stay same-origin — matching the bare /api/media/* fetches for upload, list,
+  // and delete. Routing it through apiUrl() would point it at the external
+  // backend (VITE_API_BASE_URL), which has no /api/media/file route.
+  if (key) return `/api/media/file?key=${encodeURIComponent(key)}`;
   return "";
 }
 
