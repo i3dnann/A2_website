@@ -13,6 +13,15 @@ function gotham_core_register_admin_editor() {
         'dashicons-admin-customizer',
         3
     );
+
+    add_submenu_page(
+        'gotham-theme-editor',
+        'Theme Editor',
+        'Theme Editor',
+        'manage_options',
+        'gotham-theme-editor',
+        'gotham_core_render_admin_editor'
+    );
 }
 
 function gotham_core_editor_tabs() {
