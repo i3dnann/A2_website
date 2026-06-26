@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Clock, Save, Volume2 } from "lucide-react";
+import { Clock, Save, Upload, Volume2 } from "lucide-react";
 import { api } from "../lib/api.js";
 import { useApi } from "../lib/useApi.js";
 import { useApp } from "../context/AppContext.jsx";
@@ -15,7 +15,9 @@ const defaultDraft = {
   maintenanceEndsAt: "",
   maintenanceCountdownEnabled: true,
   maintenanceYoutubeUrl: "",
+  maintenanceVideoUrl: "",
   maintenanceSoundUrl: "",
+  maintenanceAudioUrl: "",
   maintenanceVolume: 35,
   maintenanceFont: "Orbitron"
 };
@@ -41,7 +43,7 @@ export default function MaintenanceSettingsPage() {
   const [draft, setDraft] = useState(defaultDraft);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState("");
 
   useEffect(() => {
     setDraft((current) => ({ ...current, ...(data?.settings || {}) }));
@@ -49,7 +51,7 @@ export default function MaintenanceSettingsPage() {
 
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volumeValue(draft.maintenanceVolume) / 100;
-  }, [draft.maintenanceVolume, draft.maintenanceSoundUrl]);
+  }, [draft.maintenanceVolume, draft.maintenanceSoundUrl, draft.maintenanceAudioUrl]);
 
   const buildPayload = (overrides = {}) => ({
     maintenanceMode: Boolean(draft.maintenanceMode),
@@ -58,7 +60,9 @@ export default function MaintenanceSettingsPage() {
     maintenanceEndsAt: draft.maintenanceEndsAt || "",
     maintenanceCountdownEnabled: draft.maintenanceCountdownEnabled !== false,
     maintenanceYoutubeUrl: draft.maintenanceYoutubeUrl || "",
-    maintenanceSoundUrl: draft.maintenanceSoundUrl || "",
+    maintenanceVideoUrl: draft.maintenanceVideoUrl || draft.maintenanceYoutubeUrl || "",
+    maintenanceSoundUrl: draft.maintenanceSoundUrl || draft.maintenanceAudioUrl || "",
+    maintenanceAudioUrl: draft.maintenanceAudioUrl || draft.maintenanceSoundUrl || "",
     maintenanceVolume: volumeValue(draft.maintenanceVolume),
     maintenanceFont: draft.maintenanceFont || "Orbitron",
     ...overrides
@@ -76,24 +80,27 @@ export default function MaintenanceSettingsPage() {
     await savePayload(buildPayload());
   };
 
-  const uploadSound = async (event) => {
+  const uploadMedia = async (event, type) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setUploading(true);
+    setUploading(type);
     setStatus("");
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await api.upload("/api/admin/maintenance/sound", formData);
+      const endpoint = type === "video" ? "/api/admin/maintenance/video" : "/api/admin/maintenance/sound";
+      const response = await api.upload(endpoint, formData);
       const url = response.url;
-      const settings = response.settings || buildPayload({ maintenanceSoundUrl: url });
-      setDraft((current) => ({ ...current, maintenanceSoundUrl: url, ...(response.settings || {}) }));
+      const key = type === "video" ? "maintenanceVideoUrl" : "maintenanceSoundUrl";
+      const aliasKey = type === "video" ? "maintenanceYoutubeUrl" : "maintenanceAudioUrl";
+      const settings = response.settings || buildPayload({ [key]: url, [aliasKey]: url });
+      setDraft((current) => ({ ...current, [key]: url, [aliasKey]: url, ...(response.settings || {}) }));
       setSettings((current) => ({ ...current, ...settings }));
-      setStatus("Sound uploaded and saved.");
+      setStatus(type === "video" ? "Video uploaded and saved." : "Audio uploaded and saved.");
     } catch (error) {
       setStatus(error.data?.message || error.data?.error || error.message || "Upload failed.");
     } finally {
-      setUploading(false);
+      setUploading("");
       event.target.value = "";
     }
   };
@@ -107,6 +114,8 @@ export default function MaintenanceSettingsPage() {
     }
   };
 
+  const audioPreviewUrl = draft.maintenanceSoundUrl || draft.maintenanceAudioUrl || "";
+
   if (preview) return <MaintenanceScreen settings={draft} onExit={() => setPreview(false)} />;
 
   return (
@@ -114,7 +123,7 @@ export default function MaintenanceSettingsPage() {
       <header>
         <p className="text-sm font-black uppercase tracking-widest text-a2-green">Website control</p>
         <h1 className="mt-2 text-3xl font-black md:text-4xl">Maintenance mode</h1>
-        <p className="mt-2 max-w-3xl text-sm text-white/55">Control the maintenance page, countdown, YouTube background video, headline, font, audio, and volume.</p>
+        <p className="mt-2 max-w-3xl text-sm text-white/55">Control the maintenance page, countdown, video background, headline, audio, and volume.</p>
       </header>
 
       <Card>
@@ -149,11 +158,19 @@ export default function MaintenanceSettingsPage() {
               <textarea className="form-input min-h-24" value={draft.maintenanceSubtitle || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSubtitle: event.target.value }))} />
             </label>
 
-            <label className="grid gap-2 text-sm font-bold">
-              YouTube background video link
-              <input className="form-input" value={draft.maintenanceYoutubeUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceYoutubeUrl: event.target.value }))} placeholder="https://www.youtube.com/watch?v=VIDEO_ID" />
-              <span className="text-xs text-white/45">The video loops muted in the background. Your maintenance audio still uses the audio file setting below.</span>
-            </label>
+            <div className="grid gap-4 rounded-xl border border-a2-border bg-white/[0.03] p-4">
+              <label className="grid gap-2 text-sm font-bold">
+                Video link from anywhere
+                <input className="form-input" value={draft.maintenanceVideoUrl || draft.maintenanceYoutubeUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceVideoUrl: event.target.value, maintenanceYoutubeUrl: event.target.value }))} placeholder="YouTube link, direct .mp4, .webm, .mov, or .m4v URL" />
+                <span className="text-xs text-white/45">You can paste YouTube links or direct video URLs. Direct video files show cleaner and brighter.</span>
+              </label>
+
+              <label className="grid gap-2 text-sm font-bold">
+                Upload background video
+                <input className="form-input" type="file" accept="video/*,.mp4,.webm,.mov,.m4v" onChange={(event) => uploadMedia(event, "video")} />
+                <span className="text-xs text-white/45">Uploaded video saves automatically. For Netlify-only hosting, use an external video URL or backend/VPS for persistent uploads.</span>
+              </label>
+            </div>
 
             {draft.maintenanceCountdownEnabled !== false && (
               <label className="grid gap-2 text-sm font-bold">
@@ -165,14 +182,15 @@ export default function MaintenanceSettingsPage() {
 
             <div className="grid gap-4 rounded-xl border border-a2-border bg-white/[0.03] p-4">
               <label className="grid gap-2 text-sm font-bold">
-                Upload audio file
-                <input className="form-input" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" onChange={uploadSound} />
-                <span className="text-xs text-white/45">Accepted: mp3, wav, ogg, m4a. Upload saves automatically.</span>
+                Audio link from anywhere
+                <input className="form-input" value={draft.maintenanceAudioUrl || draft.maintenanceSoundUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceAudioUrl: event.target.value, maintenanceSoundUrl: event.target.value }))} placeholder="https://example.com/audio.mp3" />
+                <span className="text-xs text-white/45">Paste a direct MP3/WAV/OGG/M4A link. Browsers require a user click before audio can start.</span>
               </label>
 
               <label className="grid gap-2 text-sm font-bold">
-                Saved audio URL
-                <input className="form-input" value={draft.maintenanceSoundUrl || ""} onChange={(event) => setDraft((current) => ({ ...current, maintenanceSoundUrl: event.target.value }))} placeholder="/audio/maintenance.mp3 or /uploads/sound.mp3" />
+                Upload long audio file
+                <input className="form-input" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac" onChange={(event) => uploadMedia(event, "audio")} />
+                <span className="text-xs text-white/45">Accepted: mp3, wav, ogg, m4a, aac, flac. Upload saves automatically.</span>
               </label>
 
               <label className="grid gap-2 text-sm font-bold">
@@ -180,13 +198,13 @@ export default function MaintenanceSettingsPage() {
                 <input className="w-full accent-a2-green" type="range" min="5" max="100" step="1" value={volumeValue(draft.maintenanceVolume)} onChange={(event) => changeVolume(event.target.value)} />
               </label>
 
-              {draft.maintenanceSoundUrl && <audio ref={audioRef} src={draft.maintenanceSoundUrl} loop preload="auto" />}
+              {audioPreviewUrl && <audio ref={audioRef} src={audioPreviewUrl} loop preload="auto" />}
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <Button type="submit"><Save size={15} /> Save maintenance mode</Button>
               <Button type="button" variant="ghost" onClick={() => setPreview(true)}><Clock size={15} /> Preview full screen</Button>
-              {uploading && <span className="text-sm text-white/55">Uploading sound...</span>}
+              {uploading && <span className="text-sm text-white/55">Uploading {uploading}...</span>}
               {status && <span className="text-sm text-a2-success">{status}</span>}
             </div>
           </form>
