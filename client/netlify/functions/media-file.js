@@ -1,3 +1,4 @@
+import { getDatabase } from "@netlify/database";
 import { getStore } from "@netlify/blobs";
 
 export default async (req) => {
@@ -19,7 +20,10 @@ export default async (req) => {
     return new Response("File not found", { status: 404 });
   }
 
-  const mimeType = blob.type || "application/octet-stream";
+  const db = getDatabase();
+  const rows = await db.sql`SELECT mime_type FROM files WHERE blob_key = ${key}`;
+  const mimeType = rows[0]?.mime_type || blob.type || "application/octet-stream";
+
   return new Response(blob, {
     headers: {
       "Content-Type": mimeType,
