@@ -56,11 +56,11 @@ export default function Home() {
     <main className={`gotham-preview-shell gotham-home-${uiTheme}`}>
       <Hero home={home} heroImage={heroImage} uiTheme={uiTheme} />
       <StatsRow liveCount={liveCount} data={data} />
+      {home.partnersEnabled && <PartnerMarquee partners={data?.partners || []} settings={home} />}
       <AboutServer home={home} />
       <FeatureGrid />
       <JobsSystems />
       <HowToJoin home={home} />
-      {home.partnersEnabled && <PartnerMarquee partners={data?.partners || []} settings={home} />}
       <RulesOverview />
       <TeamSection team={data?.team || []} />
       <GallerySection data={data} />
