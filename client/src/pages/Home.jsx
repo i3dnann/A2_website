@@ -60,12 +60,12 @@ export default function Home() {
       <FeatureGrid />
       <JobsSystems />
       <HowToJoin home={home} />
+      {home.partnersEnabled && <PartnerMarquee partners={data?.partners || []} settings={home} />}
       <RulesOverview />
       <TeamSection team={data?.team || []} />
       <GallerySection data={data} />
       <ChangelogSection journey={data?.journey || []} news={data?.news || []} events={data?.events || []} />
       <FAQContact />
-      {home.partnersEnabled && <PartnerMarquee partners={data?.partners || []} settings={home} />}
     </main>
   );
 }
