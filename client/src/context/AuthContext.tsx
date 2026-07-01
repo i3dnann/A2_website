@@ -1,4 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { api, MOCK } from "../api/client";
+// Toast is not needed here
 
 export type Ticket = {
   id: string;
@@ -63,78 +65,101 @@ function loadUser(): AppUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() => loadUser());
   const [loading, setLoading] = useState(false);
-  const [tickets, setTickets] = useState<Ticket[]>([
-    { id: "TCK-1042", subject: "Vehicle disappeared after restart", category: "Bug Report", status: "Open", createdAt: "Feb 10, 2026", lastReply: "2 hours ago" },
-    { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
-    { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
-  ]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
   useEffect(() => {
     if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
     else localStorage.removeItem(STORAGE_KEY);
   }, [user]);
 
+  // Fetch user profile if we have a session
+  useEffect(() => {
+    if (!user && !MOCK) {
+      api<{ user: AppUser }>("/api/auth/me")
+        .then((r) => setUser(r.user))
+        .catch(() => {});
+    }
+    // Load tickets
+    setTickets([
+      { id: "TCK-1042", subject: "Vehicle disappeared after restart", category: "Bug Report", status: "Open", createdAt: "Feb 10, 2026", lastReply: "2 hours ago" },
+      { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
+      { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
+    ]);
+  }, [user]);
+
   const login: AuthContextType["login"] = async (email, password) => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1100));
-    setLoading(false);
-    if (!email || !password) return { ok: false, error: "Please enter your email and password." };
-
-    // Demo admin login
-    if (email === "admin@a2studio.gg" && password === "admin123") {
-      setUser({
-        username: "MasterAdmin",
-        email: "admin@a2studio.gg",
-        joinDate: "January 1, 2022",
-        discordLinked: true,
-        steamLinked: true,
-        banned: false,
-        role: "Master Admin",
-      });
+    try {
+      if (MOCK) {
+        await new Promise((r) => setTimeout(r, 800));
+        if (!email || !password) return { ok: false, error: "Please enter your email and password." };
+        if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
+        setUser({
+          username: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
+          email,
+          joinDate: "March 14, 2024",
+          discordLinked: true,
+          steamLinked: false,
+          banned: false,
+          role: "Citizen",
+        });
+        return { ok: true };
+      }
+      const r = await api<{ token: string; user: AppUser }>("/api/auth/login", { method: "POST", body: { email, password } });
+      localStorage.setItem("a2_token", r.token);
+      setUser(r.user);
       return { ok: true };
+    } catch (e: any) {
+      return { ok: false, error: e?.message || "Login failed" };
+    } finally {
+      setLoading(false);
     }
-
-    if (password.length < 4) return { ok: false, error: "Incorrect email or password." };
-    const username = email.split("@")[0];
-    setUser({
-      username: username.charAt(0).toUpperCase() + username.slice(1),
-      email,
-      joinDate: "March 14, 2024",
-      discordLinked: true,
-      steamLinked: false,
-      banned: false,
-      role: "Citizen",
-    });
-    return { ok: true };
   };
 
   const register: AuthContextType["register"] = async (username, email, password) => {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1300));
-    setLoading(false);
-    if (!username || !email || !password) return { ok: false, error: "All fields are required." };
-    if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
-    setUser({
-      username,
-      email,
-      joinDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-      discordLinked: false,
-      steamLinked: false,
-      banned: false,
-      role: "Citizen",
-    });
-    return { ok: true };
+    try {
+      if (MOCK) {
+        await new Promise((r) => setTimeout(r, 1000));
+        if (!username || !email || !password) return { ok: false, error: "All fields are required." };
+        if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
+        setUser({
+          username,
+          email,
+          joinDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+          discordLinked: false,
+          steamLinked: false,
+          banned: false,
+          role: "Citizen",
+        });
+        return { ok: true };
+      }
+      const r = await api<{ token: string; user: AppUser }>("/api/auth/register", { method: "POST", body: { username, email, password } });
+      localStorage.setItem("a2_token", r.token);
+      setUser(r.user);
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, error: e?.message || "Registration failed" };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const logout = () => setUser(null);
+  const logout = async () => {
+    if (!MOCK) {
+      try { await api("/api/auth/logout", { method: "POST" }); } catch {}
+    }
+    localStorage.removeItem("a2_token");
+    setUser(null);
+  };
 
   const linkDiscord = async () => {
-    await new Promise((r) => setTimeout(r, 900));
+    if (!MOCK) window.location.href = "/api/auth/discord";
     setUser((u) => (u ? { ...u, discordLinked: true } : u));
   };
 
   const linkSteam = async () => {
-    await new Promise((r) => setTimeout(r, 900));
+    if (!MOCK) window.location.href = "/api/auth/steam";
     setUser((u) => (u ? { ...u, steamLinked: true } : u));
   };
 

@@ -17,7 +17,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     const res = await login(email, password);
-    if (res.ok) navigate(email === "admin@a2studio.gg" ? "/admin" : "/dashboard");
+    if (res.ok) navigate("/dashboard");
     else setError(res.error ?? "Something went wrong.");
   };
 
@@ -79,10 +79,6 @@ export default function Login() {
             {error}
           </motion.p>
         )}
-
-        <p className="text-[11px] text-white/40">
-          Demo mode — Admin: <b>admin@a2studio.gg</b> / <b>admin123</b> · Player: any email + 4+ char password.
-        </p>
 
         <button
           type="submit"
