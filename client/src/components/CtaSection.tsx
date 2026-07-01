@@ -1,0 +1,30 @@
+import { motion } from "framer-motion";
+import { ArrowRight, LifeBuoy, MessageCircle } from "lucide-react";
+import { useSite } from "../context/SiteContext";
+import { Reveal } from "./Reveal";
+
+export default function CtaSection() {
+  const { content } = useSite();
+  return (
+    <section className="relative py-24">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-3xl border border-white/10">
+            <img src="/images/cta-street.jpg" alt="Join A2 Studio" className="absolute inset-0 h-full w-full object-cover opacity-30" />
+            <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/60 via-black/70 to-violet-900/60" />
+            <motion.div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 8, repeat: Infinity }} />
+            <div className="relative flex flex-col items-center gap-8 px-6 py-16 text-center sm:px-16">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-white/80"><LifeBuoy size={14} /> Need Support? Open a Ticket</div>
+              <h2 className="max-w-2xl font-serif text-3xl text-white sm:text-4xl">{content.ctaTitle}</h2>
+              <p className="max-w-xl text-white/70">{content.ctaDesc}</p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <a href="#" className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90">Create Account <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></a>
+                <a href="#" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"><MessageCircle size={16} /> Join Discord</a>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
