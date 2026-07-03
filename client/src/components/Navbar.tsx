@@ -109,7 +109,7 @@ export default function Navbar() {
             )}
             <a
               href="#"
-              className="group relative overflow-hidden rounded-xl bg-[#E8652A] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(232,101,42,0.34)] transition hover:bg-[#ff7a3d] hover:shadow-[0_0_30px_rgba(232,101,42,0.58)]"
+              className="group relative overflow-hidden rounded-xl bg-[#60519b] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)]"
             >
               <span className="relative z-10 whitespace-nowrap">Join Discord</span>
               <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0" />
@@ -158,7 +158,7 @@ export default function Navbar() {
                     Login
                   </Link>
                 )}
-                <a href="#" className="mt-2 rounded-lg bg-[#E8652A] px-4 py-3 text-center text-sm font-semibold text-white">
+                <a href="#" className="mt-2 rounded-lg bg-[#60519b] px-4 py-3 text-center text-sm font-semibold text-white">
                   Join Discord
                 </a>
               </div>

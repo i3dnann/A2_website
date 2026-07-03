@@ -18,7 +18,7 @@ export default function Journey() {
             return (
               <motion.div key={j.year} initial={{ opacity: 0, x: isEven ? -40 : 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className={`relative mb-10 flex items-start gap-6 sm:mb-14 sm:w-1/2 ${isEven ? "sm:pr-10" : "sm:ml-auto sm:pl-10"}`}>
-                <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(232,101,42,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
+                <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(96,81,155,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
                 <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
                   <span className="text-xs font-bold uppercase tracking-widest text-amber-300">{j.year}</span>
                   <h3 className="mt-2 font-serif text-xl text-white">{j.title}</h3>

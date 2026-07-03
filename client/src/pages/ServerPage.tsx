@@ -28,7 +28,7 @@ export default function ServerPage() {
             <motion.div
               key={f.title}
               variants={staggerItem}
-              whileHover={{ y: -8, borderColor: "rgba(232,101,42,0.35)" }}
+              whileHover={{ y: -8, borderColor: "rgba(96,81,155,0.35)" }}
               className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur transition-colors duration-300"
             >
               <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-orange-600/0 blur-2xl transition-all duration-500 group-hover:bg-orange-600/20" />

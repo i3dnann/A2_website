@@ -112,7 +112,7 @@ export default function AdminPanel() {
           </div>
           <div className="flex items-center gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(232,101,42,0.3)] hover:shadow-[0_0_25px_rgba(232,101,42,0.5)] transition disabled:opacity-70">
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(96,81,155,0.3)] hover:shadow-[0_0_25px_rgba(96,81,155,0.5)] transition disabled:opacity-70">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? "Saving..." : "Save All Changes"}
             </button>
@@ -747,7 +747,7 @@ function FaqEditor({ content, update }: any) {
 }
 
 function ThemeEditor({ content, update }: any) {
-  const colors = { "Orange": "#E8652A", "Crimson": "#C0392B", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
+  const colors = { "Gotham Purple": "#60519b", "Crimson": "#C0392B", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
   return <div className="flex flex-col gap-1">
     <EditableSection title="Color Theme">
       <div className="grid gap-4 sm:grid-cols-3">

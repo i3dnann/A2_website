@@ -1,13 +1,24 @@
 @import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Rajdhani:wght@600;700&display=swap");
 @import "tailwindcss";
 
+@theme {
+  --color-orange-200: #dfd9f5;
+  --color-orange-300: #c9c0ea;
+  --color-orange-400: #8a7ac4;
+  --color-orange-500: #60519b;
+  --color-orange-600: #55478a;
+  --color-orange-700: #453975;
+  --color-orange-900: #241d3d;
+  --color-orange-950: #151124;
+}
+
 :root {
   --font-serif: "Rajdhani", "Cairo", sans-serif;
   --font-sans: "Inter", "Cairo", ui-sans-serif, system-ui, sans-serif;
   --bg: #080808;
   --surface: #111111;
   --border: #1f1f1f;
-  --accent: #E8652A;
+  --accent: #60519b;
   --accent-red: #C0392B;
   --muted: #6b6b6b;
 }
@@ -19,7 +30,7 @@ html {
 body {
   font-family: var(--font-sans);
   background:
-    radial-gradient(circle at 18% 8%, rgba(232, 101, 42, 0.12), transparent 30rem),
+    radial-gradient(circle at 18% 8%, rgba(96, 81, 155, 0.12), transparent 30rem),
     radial-gradient(circle at 85% 18%, rgba(192, 57, 43, 0.1), transparent 32rem),
     var(--bg);
   color: #f5f5f5;
@@ -43,7 +54,7 @@ body::before {
 }
 
 ::selection {
-  background: rgba(232, 101, 42, 0.35);
+  background: rgba(96, 81, 155, 0.35);
 }
 
 ::-webkit-scrollbar {
@@ -53,9 +64,9 @@ body::before {
   background: #080808;
 }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #E8652A, #C0392B);
+  background: linear-gradient(180deg, #60519b, #C0392B);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #ff7a3d, #C0392B);
+  background: linear-gradient(180deg, #7868b8, #C0392B);
 }

@@ -282,7 +282,7 @@ function Characters({
         <button
           onClick={onLinkSteam}
           disabled={linking}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(232,101,42,0.4)] disabled:opacity-70"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(96,81,155,0.4)] disabled:opacity-70"
         >
           {linking ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
           {linking ? "Connecting..." : "Connect Steam"}
@@ -355,7 +355,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
         <h3 className="font-serif text-xl text-white">Support Tickets</h3>
         <button
           onClick={onNewTicket}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(232,101,42,0.4)]"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
         >
           <Plus size={16} /> New Ticket
         </button>
@@ -460,7 +460,7 @@ function NewTicketModal({
               </div>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(232,101,42,0.4)]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
               >
                 Submit Ticket
               </button>

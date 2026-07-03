@@ -9,19 +9,19 @@ export default function Preloader({ show }: { show: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.7, ease: "easeInOut" } }}
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(232,101,42,0.15),transparent_60%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(96,81,155,0.15),transparent_60%)]" />
 
           <motion.div
             initial={{ scale: 0.6, opacity: 0, rotate: -10 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/5 shadow-[0_0_60px_rgba(232,101,42,0.35)]"
+            className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/5 shadow-[0_0_60px_rgba(96,81,155,0.35)]"
           >
             <motion.img
               src="/images/gotham-emblem.gif"
               alt="Gotham City"
               className="h-20 w-20 rounded-xl object-cover"
-              animate={{ filter: ["drop-shadow(0 0 6px rgba(232,101,42,0.4))", "drop-shadow(0 0 18px rgba(232,101,42,0.9))", "drop-shadow(0 0 6px rgba(232,101,42,0.4))"] }}
+              animate={{ filter: ["drop-shadow(0 0 6px rgba(96,81,155,0.4))", "drop-shadow(0 0 18px rgba(96,81,155,0.9))", "drop-shadow(0 0 6px rgba(96,81,155,0.4))"] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>

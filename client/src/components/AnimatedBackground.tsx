@@ -8,7 +8,7 @@ export default function AnimatedBackground() {
         className="absolute inset-0 opacity-[0.15]"
         style={{
           backgroundImage:
-            "linear-gradient(to right, rgba(232,101,42,0.25) 1px, transparent 1px), linear-gradient(to bottom, rgba(232,101,42,0.25) 1px, transparent 1px)",
+            "linear-gradient(to right, rgba(96,81,155,0.25) 1px, transparent 1px), linear-gradient(to bottom, rgba(96,81,155,0.25) 1px, transparent 1px)",
           backgroundSize: "56px 56px",
           maskImage: "radial-gradient(ellipse 80% 60% at 50% 20%, black 40%, transparent 100%)",
         }}

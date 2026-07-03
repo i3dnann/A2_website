@@ -34,7 +34,7 @@ export default function Hero() {
     <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 -z-10">
         <img src="/images/gotham-banner.gif" alt="Gotham City animated banner" className="h-full w-full object-cover opacity-70" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(232,101,42,0.12),transparent_34rem)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(96,81,155,0.12),transparent_34rem)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/35 via-[#080808]/72 to-[#080808]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
         <div className="absolute inset-0 opacity-[0.09] mix-blend-screen [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px]" />
@@ -62,7 +62,7 @@ export default function Hero() {
             className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl"
           >
             {content.heroTitle1}
-            <span className="block bg-gradient-to-r from-orange-400 via-orange-200 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(232,101,42,0.35)]">
+            <span className="block bg-gradient-to-r from-orange-400 via-orange-200 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
               {content.heroTitle2}
             </span>
           </motion.h1>
@@ -84,7 +84,7 @@ export default function Hero() {
           >
             <a
               href={content.fivemLink || "#"}
-              className="group inline-flex items-center gap-2 rounded-xl bg-[#E8652A] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(232,101,42,0.35)] transition hover:-translate-y-0.5 hover:bg-[#ff7a3d] hover:shadow-[0_0_42px_rgba(232,101,42,0.65)]"
+              className="group inline-flex items-center gap-2 rounded-xl bg-[#60519b] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(96,81,155,0.35)] transition hover:-translate-y-0.5 hover:bg-[#7868b8] hover:shadow-[0_0_42px_rgba(96,81,155,0.65)]"
             >
               <PlayCircle size={18} /> Connect Now
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
@@ -124,7 +124,7 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -16, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(232,101,42,0.16)] backdrop-blur"
+            className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(96,81,155,0.16)] backdrop-blur"
           >
             <img
               src="/images/gotham-emblem.gif"
