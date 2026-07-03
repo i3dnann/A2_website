@@ -55,7 +55,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               whileHover={{ y: -4, scale: 1.045 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => setActive(it)}
-              className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-fuchsia-400/40"
+              className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-orange-400/40"
             >
               {/* glow backdrop */}
               <div className={`absolute inset-0 bg-gradient-to-br ${glow} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
@@ -78,7 +78,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               </span>
 
               {meta && Object.keys(meta).length > 0 && (
-                <span className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-fuchsia-500/80 text-white">
+                <span className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500/80 text-white">
                   <Info size={9} />
                 </span>
               )}

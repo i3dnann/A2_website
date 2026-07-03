@@ -26,7 +26,7 @@ export default function NewsPage() {
           image: null,
           category: "Announcement",
           tags: "",
-          author: "A2 Studio",
+          author: "Gotham City",
           pinned: i === 0,
           likes: 10 + i,
           dislikes: 0,
@@ -69,7 +69,7 @@ export default function NewsPage() {
                 key={n.id}
                 onClick={() => setSelected(n)}
                 whileHover={{ y: -6 }}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-colors hover:border-fuchsia-400/30"
+                className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-colors hover:border-orange-400/30"
               >
                 {n.image ? (
                   <div className="relative aspect-[16/9] overflow-hidden">
@@ -82,7 +82,7 @@ export default function NewsPage() {
                     )}
                   </div>
                 ) : (
-                  <div className="relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-fuchsia-950/60 via-black to-violet-950/60">
+                  <div className="relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-orange-950/60 via-black to-red-950/60">
                     <Icon size={32} className="text-white/15" />
                     {n.pinned && (
                       <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">

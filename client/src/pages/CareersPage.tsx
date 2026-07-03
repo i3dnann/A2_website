@@ -17,7 +17,7 @@ export default function CareersPage() {
           <p className="max-w-sm text-white/55">{content.careersDesc}</p>
           <a
             href="#"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-fuchsia-400/40 hover:bg-white/10"
+            className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-orange-400/40 hover:bg-white/10"
           >
             View Careers Portal <ArrowRight size={16} />
           </a>
@@ -31,7 +31,7 @@ export default function CareersPage() {
               className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-amber-300/30"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-300">
                   <Briefcase size={20} />
                 </div>
                 <div>

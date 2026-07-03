@@ -57,24 +57,24 @@ export type SiteContent = {
 };
 
 const DEFAULT_CONTENT: SiteContent = {
-  siteName: "A2 Studio",
-  siteTagline: "Gotham City Roleplay",
-  heroTitle1: "Welcome to",
-  heroTitle2: "A2 Studio",
+  siteName: "Gotham City",
+  siteTagline: "Premium FiveM Roleplay",
+  heroTitle1: "Enter",
+  heroTitle2: "Gotham City",
   heroDescription:
-    "A premium Gotham City inspired FiveM roleplay experience. Deep custom economy, gritty crime stories, and a community built for players who take their roleplay seriously.",
-  serverIp: "connect play.a2studio.gg",
+    "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
+  serverIp: "connect play.gothamcityrp.gg",
   discordLink: "#",
   fivemLink: "#",
   storeLink: "#",
   stats: [
-    { label: "Active Citizens", value: 4200, suffix: "+" },
-    { label: "Custom Jobs", value: 32, suffix: "+" },
-    { label: "Server Uptime", value: 99, suffix: "%" },
-    { label: "Discord Members", value: 15000, suffix: "+" },
+    { label: "Players", value: 300000, suffix: "+" },
+    { label: "Creators", value: 100, suffix: "+" },
+    { label: "Monthly Views", value: 20, suffix: "M+" },
+    { label: "Staff Members", value: 50, suffix: "+" },
   ],
   featuresTitle: "Built for Serious Roleplayers",
-  featuresSubtitle: "Why A2 Studio",
+  featuresSubtitle: "Why Gotham",
   featuresDesc:
     "Every system on our server is designed with immersion, balance, and longevity in mind — so your story never runs out of places to go.",
   features: [
@@ -100,15 +100,15 @@ const DEFAULT_CONTENT: SiteContent = {
   streamsSubtitle: "On Screen",
   streamsDesc: "Watch our community bring Gotham City to life in real time.",
   streamers: [
-    { name: "NightWing_TV", platform: "Twitch", viewers: 1284, live: true, game: "A2 Studio Roleplay" },
-    { name: "GothamCityRP", platform: "Kick", viewers: 842, live: true, game: "A2 Studio Roleplay" },
+    { name: "NightWing_TV", platform: "Twitch", viewers: 1284, live: true, game: "Gotham City Roleplay" },
+    { name: "GothamCityRP", platform: "Kick", viewers: 842, live: true, game: "Gotham City Roleplay" },
     { name: "OfficerDown", platform: "Twitch", viewers: 0, live: false, game: "Offline" },
-    { name: "BlackMaskRP", platform: "Twitch", viewers: 511, live: true, game: "A2 Studio Roleplay" },
+    { name: "BlackMaskRP", platform: "Twitch", viewers: 511, live: true, game: "Gotham City Roleplay" },
   ],
   journeyTitle: "The Journey",
   journeySubtitle: "Our Story",
   journey: [
-    { year: "2022", title: "Founded", desc: "A2 Studio launched with a small dedicated community and a vision for premium roleplay." },
+    { year: "2022", title: "Founded", desc: "Gotham City launched with a dedicated community and a vision for premium roleplay." },
     { year: "2023", title: "Gotham City Map", desc: "Released our fully custom Gotham-inspired city map, replacing the base map entirely." },
     { year: "2024", title: "10,000 Members", desc: "Our Discord community crossed 10,000 members with daily active roleplay sessions." },
     { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our QBCore core for stability, launching dozens of exclusive scripts." },
@@ -143,7 +143,7 @@ const DEFAULT_CONTENT: SiteContent = {
   faqTitle: "Frequently Asked Questions",
   faqSubtitle: "Need Help",
   faqs: [
-    { q: "How do I join the A2 Studio server?", a: "Join our Discord, verify your account, link Steam, and use the connect button on our home page or the F8 console with our server IP." },
+    { q: "How do I join the Gotham City server?", a: "Join our Discord, verify your account, link Steam, and use the connect button on our home page or the F8 console with our server IP." },
     { q: "Is whitelisting required to play?", a: "General roleplay is open to all verified members. Specific departments like PD, EMS, and Government require an application and interview." },
     { q: "What framework do you use?", a: "We run a heavily customized QBCore framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts." },
     { q: "How do I report a rule breaker or open a ticket?", a: "Use the Tickets section on our dashboard after logging in, or open a support ticket directly inside our Discord server." },
@@ -151,12 +151,12 @@ const DEFAULT_CONTENT: SiteContent = {
   ],
   ctaTitle: "Your Story in Gotham City Starts Tonight",
   ctaDesc: "Create your account, link Steam & Discord, and step into one of the most immersive FiveM roleplay communities out there.",
-  primaryHex: "#c026d3",
-  accentHex: "#f59e0b",
-  darkBgHex: "#050308",
+  primaryHex: "#E8652A",
+  accentHex: "#C0392B",
+  darkBgHex: "#080808",
 };
 
-const STORAGE_KEY = "a2studio_site_content";
+const STORAGE_KEY = "gotham_city_site_content";
 
 type SiteContextType = {
   content: SiteContent;

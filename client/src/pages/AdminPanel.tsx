@@ -29,7 +29,7 @@ const ADMIN_TABS = [
 ];
 
 const stClass = "mb-1 text-xs font-semibold uppercase tracking-wider text-white/40";
-const inpClass = "w-full rounded-lg border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-fuchsia-400/50 transition";
+const inpClass = "w-full rounded-lg border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50 transition";
 
 type DashboardStats = {
   users: number; characters: number;
@@ -106,13 +106,13 @@ export default function AdminPanel() {
           <div>
             <h1 className="font-serif text-3xl text-white">Admin Panel</h1>
             <p className="mt-1 text-sm text-white/45">
-              Welcome back, <span className="text-fuchsia-300">{user.username}</span> ·{" "}
+              Welcome back, <span className="text-orange-300">{user.username}</span> ·{" "}
               <span className="text-amber-200">{user.role}</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(192,38,211,0.3)] hover:shadow-[0_0_25px_rgba(192,38,211,0.5)] transition disabled:opacity-70">
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(232,101,42,0.3)] hover:shadow-[0_0_25px_rgba(232,101,42,0.5)] transition disabled:opacity-70">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? "Saving..." : "Save All Changes"}
             </button>
@@ -125,7 +125,7 @@ export default function AdminPanel() {
         <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
           {/* Mobile overlay */}
           {sidebarOpen && (
-            <div className="fixed inset-0 z-50 bg-[#050308]/95 backdrop-blur-xl p-6 flex flex-col lg:hidden">
+            <div className="fixed inset-0 z-50 bg-[#080808]/95 backdrop-blur-xl p-6 flex flex-col lg:hidden">
               <button onClick={() => setSidebarOpen(false)} className="mb-4 self-end text-white/60 hover:text-white"><X size={20} /></button>
               <SidebarNav tab={tab} setTab={(id: string) => { setTab(id); setSidebarOpen(false); }} />
               <button onClick={handleLogout} className="mt-4 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-400 hover:bg-red-500/10 transition">
@@ -185,7 +185,7 @@ function SidebarNav({ tab, setTab }: any) {
     {ADMIN_TABS.map((t) => (
       <button key={t.id} onClick={() => setTab(t.id)}
         className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-          tab === t.id ? "bg-fuchsia-500/15 text-fuchsia-200" : "text-white/55 hover:bg-white/5 hover:text-white"
+          tab === t.id ? "bg-orange-500/15 text-orange-200" : "text-white/55 hover:bg-white/5 hover:text-white"
         }`}>
         <t.icon size={16} /> {t.label}
       </button>
@@ -199,14 +199,14 @@ function SidebarNav({ tab, setTab }: any) {
 function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | null; loading: boolean; setTab: (id: string) => void }) {
   const cards = [
     { label: "Registered Users", value: stats?.users ?? 0, icon: Users, color: "text-emerald-300", trend: "+12% this week" },
-    { label: "Total Characters", value: stats?.characters ?? 0, icon: Briefcase, color: "text-fuchsia-300", trend: "+4% this week" },
+    { label: "Total Characters", value: stats?.characters ?? 0, icon: Briefcase, color: "text-orange-300", trend: "+4% this week" },
     { label: "Pending Comments", value: stats?.pendingComments ?? 0, icon: MessageCircle, color: "text-amber-300", trend: "Needs review" },
     { label: "Server Online", value: stats?.live?.status === "online" ? `${stats.live.count}/${stats.live.maxplayers}` : "Offline", icon: Server, color: stats?.live?.status === "online" ? "text-emerald-300" : "text-red-300", trend: stats?.live?.status === "online" ? "Live now" : "Check status" },
   ];
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-fuchsia-600/15 via-transparent to-violet-600/15 p-6">
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-red-600/15 p-6">
         <h2 className="font-serif text-2xl text-white">Welcome to the Command Center</h2>
         <p className="mt-1 text-sm text-white/55">Monitor your FiveM server, review pending content, and manage every part of the website from one place.</p>
       </div>
@@ -236,7 +236,7 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-center justify-between">
             <h3 className="font-serif text-base text-white">Latest News</h3>
-            <button onClick={() => setTab("news")} className="flex items-center gap-1 text-xs text-fuchsia-300 hover:text-fuchsia-200">Manage <ArrowUpRight size={11} /></button>
+            <button onClick={() => setTab("news")} className="flex items-center gap-1 text-xs text-orange-300 hover:text-orange-200">Manage <ArrowUpRight size={11} /></button>
           </div>
           <div className="mt-4 flex flex-col gap-2">
             {(!stats?.news || stats.news.length === 0) && <p className="text-xs text-white/40">No news posts yet.</p>}
@@ -253,14 +253,14 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex items-center justify-between">
             <h3 className="font-serif text-base text-white">Recent Admin Actions</h3>
-            <button onClick={() => setTab("logs")} className="flex items-center gap-1 text-xs text-fuchsia-300 hover:text-fuchsia-200">View all <ArrowUpRight size={11} /></button>
+            <button onClick={() => setTab("logs")} className="flex items-center gap-1 text-xs text-orange-300 hover:text-orange-200">View all <ArrowUpRight size={11} /></button>
           </div>
           <div className="mt-4 flex flex-col gap-2">
             {(!stats?.logs || stats.logs.length === 0) && <p className="text-xs text-white/40">No activity yet.</p>}
             {stats?.logs.slice(0, 6).map((l) => (
               <div key={l.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 p-3">
                 <div className="flex items-center gap-2">
-                  <Shield size={12} className="text-fuchsia-300" />
+                  <Shield size={12} className="text-orange-300" />
                   <p className="text-sm text-white/80">{formatAction(l.action)}</p>
                   {l.target && <span className="text-xs text-white/40">· {l.target.slice(0, 12)}</span>}
                 </div>
@@ -276,7 +276,7 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
         <h3 className="font-serif text-base text-white">Quick Actions</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Edit Homepage", tab: "home", icon: Home, color: "from-fuchsia-600/20 to-violet-600/10" },
+            { label: "Edit Homepage", tab: "home", icon: Home, color: "from-orange-600/20 to-red-600/10" },
             { label: "Post News", tab: "news", icon: FileText, color: "from-amber-500/15 to-orange-500/5" },
             { label: "Review Comments", tab: "comments", icon: MessageCircle, color: "from-emerald-500/15 to-teal-500/5" },
             { label: "Live Streams", tab: "live", icon: Play, color: "from-red-500/15 to-rose-500/5" },
@@ -388,7 +388,7 @@ function CommentsAdmin() {
 
 function FilterPill({ active, onClick, children }: any) {
   return <button onClick={onClick}
-    className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${active ? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-200" : "border-white/10 bg-white/5 text-white/60 hover:text-white"}`}>
+    className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${active ? "border-orange-400/40 bg-orange-500/15 text-orange-200" : "border-white/10 bg-white/5 text-white/60 hover:text-white"}`}>
     {children}
   </button>;
 }
@@ -404,7 +404,7 @@ function LogsAdmin({ stats }: { stats: DashboardStats | null }) {
         {stats?.logs.map((l) => (
           <div key={l.id} className="flex items-center justify-between rounded-lg border border-white/5 bg-black/20 p-3">
             <div className="flex items-center gap-2">
-              <Shield size={12} className="text-fuchsia-300" />
+              <Shield size={12} className="text-orange-300" />
               <p className="text-sm text-white/80">{formatAction(l.action)}</p>
               {l.target && <span className="text-xs text-white/40">· {String(l.target).slice(0, 24)}</span>}
             </div>
@@ -458,7 +458,7 @@ function NewsAdmin() {
     <div className="flex flex-col gap-1">
       <EditableSection title="News Posts">
         <button onClick={() => setEditing({ id: null, title: "", excerpt: "", content: "", category: "Announcement", tags: "", pinned: false, active: true })}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2.5 text-sm font-semibold text-white w-fit">
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white w-fit">
           <Plus size={14} /> New Post
         </button>
         {loading ? <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div> : (
@@ -523,13 +523,13 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
           <div><label className={stClass}>Excerpt</label><textarea className={`${inpClass} resize-none`} rows={2} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} /></div>
           <div><label className={stClass}>Content</label><textarea className={`${inpClass} resize-none`} rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="accent-fuchsia-500" /> Pinned</label>
-            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.active !== 0} onChange={(e) => setForm({ ...form, active: e.target.checked ? 1 : 0 })} className="accent-fuchsia-500" /> Active</label>
+            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="accent-orange-500" /> Pinned</label>
+            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.active !== 0} onChange={(e) => setForm({ ...form, active: e.target.checked ? 1 : 0 })} className="accent-orange-500" /> Active</label>
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/5">Cancel</button>
-          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
             {saving && <Loader2 size={13} className="animate-spin" />} {saving ? "Saving..." : "Save Post"}
           </button>
         </div>
@@ -608,7 +608,7 @@ function ServerEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ features: [...content.features, { icon: "ShieldHalf", title: "New Feature", desc: "Description here" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Feature</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Feature</button>
     </EditableSection>
   </div>;
 }
@@ -633,7 +633,7 @@ function RosterEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ roster: [...content.roster, { name: "New Dept", role: "Role", count: "0 Members", icon: "ShieldHalf" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Department</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Department</button>
     </EditableSection>
   </div>;
 }
@@ -653,13 +653,13 @@ function LiveEditor({ content, update }: any) {
           <div><label className={stClass}>Viewers</label><input className={inpClass} type="number" value={s.viewers} onChange={(e) => { const n = [...content.streamers]; n[i] = { ...n[i], viewers: +e.target.value || 0 }; update({ streamers: n }); }} /></div>
           <div><label className={stClass}>Game</label><input className={inpClass} value={s.game} onChange={(e) => { const n = [...content.streamers]; n[i] = { ...n[i], game: e.target.value }; update({ streamers: n }); }} /></div>
           <div className="flex items-center gap-2">
-            <label className="flex items-center gap-1.5 text-xs text-white/60"><input type="checkbox" checked={s.live} onChange={(e) => { const n = [...content.streamers]; n[i] = { ...n[i], live: e.target.checked }; update({ streamers: n }); }} className="accent-fuchsia-500" /> Live</label>
+            <label className="flex items-center gap-1.5 text-xs text-white/60"><input type="checkbox" checked={s.live} onChange={(e) => { const n = [...content.streamers]; n[i] = { ...n[i], live: e.target.checked }; update({ streamers: n }); }} className="accent-orange-500" /> Live</label>
             <button onClick={() => update({ streamers: content.streamers.filter((_: any, j: number) => j !== i) })} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
           </div>
         </div>
       ))}
       <button onClick={() => update({ streamers: [...content.streamers, { name: "New Streamer", platform: "Twitch", viewers: 0, live: false, game: "Offline" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Streamer</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Streamer</button>
     </EditableSection>
   </div>;
 }
@@ -680,7 +680,7 @@ function JourneyEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ journey: [...content.journey, { year: "2027", title: "New Milestone", desc: "Description" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Milestone</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Milestone</button>
     </EditableSection>
     <EditableSection title="Famous Characters">
       {content.famousCharacters.map((c: any, i: number) => (
@@ -694,7 +694,7 @@ function JourneyEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Character</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Character</button>
     </EditableSection>
   </div>;
 }
@@ -718,7 +718,7 @@ function CareersEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ careers: [...content.careers, { role: "New Position", type: "Application", dept: "Department" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add Position</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Position</button>
     </EditableSection>
   </div>;
 }
@@ -741,13 +741,13 @@ function FaqEditor({ content, update }: any) {
         </div>
       ))}
       <button onClick={() => update({ faqs: [...content.faqs, { q: "New question?", a: "Answer goes here." }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-fuchsia-400/40 hover:text-white transition"><Plus size={14} /> Add FAQ</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add FAQ</button>
     </EditableSection>
   </div>;
 }
 
 function ThemeEditor({ content, update }: any) {
-  const colors = { "Fuchsia": "#c026d3", "Violet": "#7c3aed", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
+  const colors = { "Orange": "#E8652A", "Crimson": "#C0392B", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
   return <div className="flex flex-col gap-1">
     <EditableSection title="Color Theme">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -759,7 +759,7 @@ function ThemeEditor({ content, update }: any) {
     <EditableSection title="Quick Presets">
       <div className="grid gap-3 sm:grid-cols-4">
         {Object.entries(colors).map(([name, hex]) => (
-          <button key={name} onClick={() => update({ primaryHex: hex })} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/80 hover:border-fuchsia-400/40 transition">
+          <button key={name} onClick={() => update({ primaryHex: hex })} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-sm text-white/80 hover:border-orange-400/40 transition">
             <span className="h-6 w-6 rounded-lg border border-white/20" style={{ background: hex }} /> {name}
           </button>
         ))}
@@ -789,7 +789,7 @@ function SettingsEditor({ content, update }: any) {
       <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6">
         <h3 className="font-serif text-lg text-white">Reset All Content</h3>
         <p className="mt-2 text-sm text-white/50">Resetting will restore all website content to defaults.</p>
-        <button onClick={() => { window.localStorage.removeItem("a2studio_site_content"); window.location.reload(); }}
+        <button onClick={() => { window.localStorage.removeItem("gotham_city_site_content"); window.location.reload(); }}
           className="mt-4 rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10 transition">Reset All Content</button>
       </div>
     </EditableSection>

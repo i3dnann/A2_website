@@ -31,13 +31,13 @@ export default function RosterPage() {
               whileHover={{ scale: 1.02 }}
               className="flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6 transition-colors hover:border-amber-300/30"
             >
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-600/30 to-violet-700/30 text-amber-200">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-600/30 to-red-700/30 text-amber-200">
                 <Icon size={24} />
               </div>
               <div>
                 <h3 className="font-serif text-lg text-white">{r.name}</h3>
                 <p className="text-sm text-white/50">{r.role}</p>
-                <p className="mt-1 text-xs uppercase tracking-wider text-fuchsia-300/80">{r.count}</p>
+                <p className="mt-1 text-xs uppercase tracking-wider text-orange-300/80">{r.count}</p>
               </div>
             </motion.div>
           );

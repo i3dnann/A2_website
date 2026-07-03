@@ -43,12 +43,12 @@ export default function Navbar() {
         <div
           className={`flex items-center justify-between rounded-2xl border px-4 py-3 backdrop-blur-xl transition-all duration-500 ${
             scrolled
-              ? "border-fuchsia-500/20 bg-black/60 shadow-[0_0_40px_rgba(0,0,0,0.5)]"
+              ? "border-orange-500/20 bg-black/60 shadow-[0_0_40px_rgba(0,0,0,0.5)]"
               : "border-white/5 bg-black/20"
           }`}
         >
           <Link to="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3">
-            <img src="/images/logo-emblem.png" alt="A2 Studio" className="h-8 w-8 object-contain sm:h-9 sm:w-9" />
+            <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
             <span className="font-serif text-base tracking-[0.2em] text-white sm:text-lg">
               {content.siteName}
             </span>
@@ -66,7 +66,7 @@ export default function Navbar() {
                 {location.pathname === link.path && (
                   <motion.span
                     layoutId="nav-underline"
-                    className="absolute inset-x-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-fuchsia-400 to-amber-300"
+                    className="absolute inset-x-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-orange-400 to-amber-300"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -87,13 +87,13 @@ export default function Navbar() {
               <>
                 <Link
                   to="/characters"
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-fuchsia-400/40 hover:text-white"
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
                 >
                   Characters
                 </Link>
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-fuchsia-400/40 hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
                 >
                   <LayoutDashboard size={15} />
                   Dashboard
@@ -102,14 +102,14 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-fuchsia-400/40 hover:text-white"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-orange-400/40 hover:text-white"
               >
                 Login
               </Link>
             )}
             <a
               href="#"
-              className="group relative overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(192,38,211,0.4)] transition hover:shadow-[0_0_30px_rgba(192,38,211,0.6)]"
+              className="group relative overflow-hidden rounded-xl bg-[#E8652A] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(232,101,42,0.34)] transition hover:bg-[#ff7a3d] hover:shadow-[0_0_30px_rgba(232,101,42,0.58)]"
             >
               <span className="relative z-10 whitespace-nowrap">Join Discord</span>
               <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0" />
@@ -137,7 +137,7 @@ export default function Navbar() {
                     to={link.path}
                     onClick={() => setOpen(false)}
                     className={`rounded-lg px-4 py-3 text-left text-sm font-medium transition ${
-                      location.pathname === link.path ? "bg-fuchsia-500/10 text-fuchsia-300" : "text-white/70 hover:bg-white/5"
+                      location.pathname === link.path ? "bg-orange-500/10 text-orange-300" : "text-white/70 hover:bg-white/5"
                     }`}
                   >
                     {link.label}
@@ -158,7 +158,7 @@ export default function Navbar() {
                     Login
                   </Link>
                 )}
-                <a href="#" className="mt-2 rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-3 text-center text-sm font-semibold text-white">
+                <a href="#" className="mt-2 rounded-lg bg-[#E8652A] px-4 py-3 text-center text-sm font-semibold text-white">
                   Join Discord
                 </a>
               </div>

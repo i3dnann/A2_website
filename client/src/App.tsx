@@ -33,7 +33,7 @@ function AppShell() {
   const showFooter = !["/login", "/register", "/dashboard", "/admin"].includes(location.pathname);
 
   return (
-    <div className="relative min-h-screen text-white selection:bg-fuchsia-500/40">
+    <div className="relative min-h-screen text-white selection:bg-orange-500/40">
       <AnimatedBackground />
       <Navbar />
       <AnimatePresence mode="wait">

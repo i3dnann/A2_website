@@ -73,14 +73,14 @@ export const ROSTER = [
 ];
 
 export const STREAMERS = [
-  { name: "NightWing_TV", platform: "Twitch", viewers: 1284, live: true, game: "A2 Studio Roleplay" },
-  { name: "GothamCityRP", platform: "Kick", viewers: 842, live: true, game: "A2 Studio Roleplay" },
+  { name: "NightWing_TV", platform: "Twitch", viewers: 1284, live: true, game: "Gotham City Roleplay" },
+  { name: "GothamCityRP", platform: "Kick", viewers: 842, live: true, game: "Gotham City Roleplay" },
   { name: "OfficerDown", platform: "Twitch", viewers: 0, live: false, game: "Offline" },
-  { name: "BlackMaskRP", platform: "Twitch", viewers: 511, live: true, game: "A2 Studio Roleplay" },
+  { name: "BlackMaskRP", platform: "Twitch", viewers: 511, live: true, game: "Gotham City Roleplay" },
 ];
 
 export const JOURNEY = [
-  { year: "2022", title: "Founded", desc: "A2 Studio launched with a small dedicated community and a vision for premium roleplay." },
+  { year: "2022", title: "Founded", desc: "Gotham City launched with a small dedicated community and a vision for premium roleplay." },
   { year: "2023", title: "Gotham City Map", desc: "Released our fully custom Gotham-inspired city map, replacing the base map entirely." },
   { year: "2024", title: "10,000 Members", desc: "Our Discord community crossed 10,000 members with daily active roleplay sessions." },
   { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our QBCore core for stability, launching dozens of exclusive scripts." },
@@ -131,7 +131,7 @@ export const CAREERS = [
 
 export const FAQS = [
   {
-    q: "How do I join the A2 Studio server?",
+    q: "How do I join the Gotham City server?",
     a: "Join our Discord, verify your account, link Steam, and use the connect button on our home page or the F8 console with our server IP.",
   },
   {

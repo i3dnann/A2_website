@@ -33,7 +33,7 @@ export default function Register() {
   };
 
   return (
-    <AuthShell title="Create your account" subtitle="Join A2 Studio and step into Gotham City.">
+    <AuthShell title="Create your account" subtitle="Join Gotham City and step into the city.">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
@@ -46,7 +46,7 @@ export default function Register() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="JohnDoe"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
             />
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
             />
           </div>
         </div>
@@ -81,7 +81,7 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-9 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-9 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
               />
               <button
                 type="button"
@@ -104,7 +104,7 @@ export default function Register() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
               />
             </div>
           </div>
@@ -115,12 +115,12 @@ export default function Register() {
             type="button"
             onClick={() => setAgree((a) => !a)}
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
-              agree ? "border-fuchsia-400 bg-fuchsia-500" : "border-white/20 bg-white/5"
+              agree ? "border-orange-400 bg-orange-500" : "border-white/20 bg-white/5"
             }`}
           >
             {agree && <Check size={11} className="text-white" />}
           </button>
-          I agree to the A2 Studio community rules, terms of service, and privacy policy.
+          I agree to the Gotham City community rules, terms of service, and privacy policy.
         </label>
 
         {error && (
@@ -136,7 +136,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="group relative mt-1 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(192,38,211,0.35)] transition hover:shadow-[0_0_35px_rgba(192,38,211,0.55)] disabled:opacity-70"
+          className="group relative mt-1 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(232,101,42,0.35)] transition hover:shadow-[0_0_35px_rgba(232,101,42,0.55)] disabled:opacity-70"
         >
           {loading ? (
             <>
@@ -150,7 +150,7 @@ export default function Register() {
 
       <p className="mt-8 text-center text-sm text-white/50">
         Already have an account?{" "}
-        <Link to="/login" className="font-medium text-fuchsia-300 hover:text-fuchsia-200">
+        <Link to="/login" className="font-medium text-orange-300 hover:text-orange-200">
           Sign in
         </Link>
       </p>

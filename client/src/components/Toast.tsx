@@ -80,7 +80,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {confirmState.message && <p className="mt-2 text-sm text-white/60">{confirmState.message}</p>}
               <div className="mt-6 flex justify-end gap-2">
                 <button onClick={() => dismissConfirm(false)} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/5">Cancel</button>
-                <button onClick={() => dismissConfirm(true)} className="rounded-lg bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white">{confirmState.confirmText}</button>
+                <button onClick={() => dismissConfirm(true)} className="rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white">{confirmState.confirmText}</button>
               </div>
             </motion.div>
           </motion.div>

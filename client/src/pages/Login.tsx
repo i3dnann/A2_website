@@ -22,7 +22,7 @@ export default function Login() {
   };
 
   return (
-    <AuthShell title="Welcome back, Citizen" subtitle="Sign in to access your A2 Studio dashboard.">
+    <AuthShell title="Welcome back, Citizen" subtitle="Sign in to access your Gotham City dashboard.">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
@@ -36,7 +36,7 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
             />
           </div>
         </div>
@@ -46,7 +46,7 @@ export default function Login() {
             <label className="block text-xs font-medium uppercase tracking-wider text-white/50">
               Password
             </label>
-            <a href="#" className="text-xs text-fuchsia-300 hover:text-fuchsia-200">
+            <a href="#" className="text-xs text-orange-300 hover:text-orange-200">
               Forgot password?
             </a>
           </div>
@@ -58,7 +58,7 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-fuchsia-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
             />
             <button
               type="button"
@@ -83,7 +83,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="group relative mt-2 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(192,38,211,0.35)] transition hover:shadow-[0_0_35px_rgba(192,38,211,0.55)] disabled:opacity-70"
+          className="group relative mt-2 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(232,101,42,0.35)] transition hover:shadow-[0_0_35px_rgba(232,101,42,0.55)] disabled:opacity-70"
         >
           {loading ? (
             <>
@@ -112,7 +112,7 @@ export default function Login() {
 
       <p className="mt-8 text-center text-sm text-white/50">
         Don't have an account?{" "}
-        <Link to="/register" className="font-medium text-fuchsia-300 hover:text-fuchsia-200">
+        <Link to="/register" className="font-medium text-orange-300 hover:text-orange-200">
           Create one
         </Link>
       </p>

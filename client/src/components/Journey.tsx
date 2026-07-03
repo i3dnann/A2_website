@@ -8,17 +8,17 @@ export default function Journey() {
     <section id="journey" className="relative py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-fuchsia-400">{content.journeySubtitle}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.journeySubtitle}</p>
           <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.journeyTitle}</h2>
         </Reveal>
         <div className="relative mx-auto mt-16 max-w-3xl">
-          <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-fuchsia-500/60 via-white/10 to-transparent sm:left-1/2" />
+          <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-orange-500/60 via-white/10 to-transparent sm:left-1/2" />
           {content.journey.map((j, i) => {
             const isEven = i % 2 === 0;
             return (
               <motion.div key={j.year} initial={{ opacity: 0, x: isEven ? -40 : 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className={`relative mb-10 flex items-start gap-6 sm:mb-14 sm:w-1/2 ${isEven ? "sm:pr-10" : "sm:ml-auto sm:pl-10"}`}>
-                <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(217,70,239,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
+                <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(232,101,42,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
                 <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
                   <span className="text-xs font-bold uppercase tracking-widest text-amber-300">{j.year}</span>
                   <h3 className="mt-2 font-serif text-xl text-white">{j.title}</h3>
@@ -30,7 +30,7 @@ export default function Journey() {
         </div>
 
         <Reveal className="mx-auto mt-24 max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-fuchsia-400">{content.famousSubtitle}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.famousSubtitle}</p>
           <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.famousTitle}</h2>
         </Reveal>
         <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

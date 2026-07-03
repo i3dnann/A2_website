@@ -25,7 +25,7 @@ export default function FaqPage() {
                     <motion.span
                       animate={{ rotate: isOpen ? 45 : 0 }}
                       transition={{ duration: 0.3 }}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-500/10 text-fuchsia-300"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500/10 text-orange-300"
                     >
                       <Plus size={16} />
                     </motion.span>

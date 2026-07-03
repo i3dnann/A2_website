@@ -61,7 +61,7 @@ export default function LivePage() {
                 {online ? "Server Online" : "Server Offline"}
               </div>
               <h3 className="mt-3 font-serif text-2xl text-white sm:text-3xl">Gotham City</h3>
-              <p className="mt-1 text-sm text-white/55">A2 Studio · QBCore Roleplay</p>
+              <p className="mt-1 text-sm text-white/55">Gotham City - QBCore Roleplay</p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2 justify-end text-xs text-white/40">
@@ -85,7 +85,7 @@ export default function LivePage() {
             <>
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <Stat icon={Users} label="Online" value={String(state?.count ?? 0)} accent="text-emerald-300" />
-                <Stat icon={Activity} label="Max Players" value={String(state?.maxplayers ?? 0)} accent="text-fuchsia-300" />
+                <Stat icon={Activity} label="Max Players" value={String(state?.maxplayers ?? 0)} accent="text-orange-300" />
                 <Stat icon={Cloud} label="Queue" value={String(state?.queue ?? 0)} accent="text-amber-300" />
               </div>
 
@@ -96,7 +96,7 @@ export default function LivePage() {
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-fuchsia-500 to-amber-400"
+                    className="h-full bg-gradient-to-r from-orange-500 to-amber-400"
                     initial={{ width: 0 }}
                     animate={{ width: `${usage}%` }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -109,9 +109,9 @@ export default function LivePage() {
           {state?.announcement && (
             <motion.div
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="mt-5 flex items-start gap-2 rounded-xl border border-fuchsia-400/20 bg-fuchsia-500/10 p-3"
+              className="mt-5 flex items-start gap-2 rounded-xl border border-orange-400/20 bg-orange-500/10 p-3"
             >
-              <MessageCircle size={16} className="mt-0.5 shrink-0 text-fuchsia-300" />
+              <MessageCircle size={16} className="mt-0.5 shrink-0 text-orange-300" />
               <p className="text-sm text-white/80">{state.announcement}</p>
             </motion.div>
           )}
@@ -122,7 +122,7 @@ export default function LivePage() {
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center justify-between">
               <h3 className="font-serif text-base text-white">Live Streamers</h3>
-              <Radio size={16} className="text-fuchsia-300" />
+              <Radio size={16} className="text-orange-300" />
             </div>
             <div className="mt-4 flex flex-col gap-3">
               {content.streamers.filter((s) => s.live).length === 0 && (

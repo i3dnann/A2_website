@@ -33,9 +33,11 @@ export default function Hero() {
   return (
     <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 -z-10">
-        <img src="/images/hero-city.jpg" alt="Gotham City skyline" className="h-full w-full object-cover opacity-45" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#050308]/40 via-[#050308]/70 to-[#050308]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050308] via-transparent to-[#050308]" />
+        <img src="/images/gotham-banner.gif" alt="Gotham City animated banner" className="h-full w-full object-cover opacity-70" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(232,101,42,0.12),transparent_34rem)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/35 via-[#080808]/72 to-[#080808]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
+        <div className="absolute inset-0 opacity-[0.09] mix-blend-screen [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px]" />
       </div>
 
       <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
@@ -44,7 +46,7 @@ export default function Hero() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-fuchsia-200"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-orange-200"
           >
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -60,7 +62,7 @@ export default function Hero() {
             className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl"
           >
             {content.heroTitle1}
-            <span className="block bg-gradient-to-r from-fuchsia-400 via-violet-300 to-amber-300 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-orange-400 via-orange-200 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(232,101,42,0.35)]">
               {content.heroTitle2}
             </span>
           </motion.h1>
@@ -82,7 +84,7 @@ export default function Hero() {
           >
             <a
               href={content.fivemLink || "#"}
-              className="group inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(192,38,211,0.4)] transition hover:shadow-[0_0_40px_rgba(192,38,211,0.65)]"
+              className="group inline-flex items-center gap-2 rounded-xl bg-[#E8652A] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(232,101,42,0.35)] transition hover:-translate-y-0.5 hover:bg-[#ff7a3d] hover:shadow-[0_0_42px_rgba(232,101,42,0.65)]"
             >
               <PlayCircle size={18} /> Connect Now
               <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
@@ -122,20 +124,20 @@ export default function Hero() {
           <motion.div
             animate={{ y: [0, -16, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-2 shadow-2xl backdrop-blur"
+            className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(232,101,42,0.16)] backdrop-blur"
           >
             <img
-              src="/images/cta-street.jpg"
-              alt="A2 Studio streets"
+              src="/images/gotham-emblem.gif"
+              alt="Gotham City emblem"
               className="h-[520px] w-full rounded-2xl object-cover"
             />
             <div className="absolute inset-2 rounded-2xl bg-gradient-to-t from-black/70 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-md">
-              <p className="text-xs uppercase tracking-widest text-fuchsia-300">Now Live</p>
+              <p className="text-xs uppercase tracking-widest text-orange-300">Now Live</p>
               <p className="mt-1 font-serif text-lg text-white">Season 4: Gotham Nights</p>
             </div>
           </motion.div>
-          <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-fuchsia-600/30 blur-3xl" />
+          <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-orange-600/30 blur-3xl" />
           <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-amber-500/20 blur-3xl" />
         </motion.div>
       </div>

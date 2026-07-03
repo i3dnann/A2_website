@@ -7,7 +7,7 @@ export default function JourneyPage() {
   return (
     <PageShell subtitle={content.journeySubtitle} title={content.journeyTitle}>
       <div className="relative mx-auto mt-6 max-w-3xl">
-        <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-fuchsia-500/60 via-white/10 to-transparent sm:left-1/2" />
+        <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-orange-500/60 via-white/10 to-transparent sm:left-1/2" />
         {content.journey.map((j, i) => {
           const isEven = i % 2 === 0;
           return (
@@ -19,7 +19,7 @@ export default function JourneyPage() {
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
               className={`relative mb-10 flex items-start gap-6 sm:mb-14 sm:w-1/2 ${isEven ? "sm:pr-10" : "sm:ml-auto sm:pl-10"}`}
             >
-              <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-fuchsia-400 shadow-[0_0_12px_rgba(217,70,239,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
+              <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(232,101,42,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
               <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
                 <span className="text-xs font-bold uppercase tracking-widest text-amber-300">{j.year}</span>
                 <h3 className="mt-2 font-serif text-xl text-white">{j.title}</h3>
@@ -33,7 +33,7 @@ export default function JourneyPage() {
       {/* Famous Characters section */}
       <div className="mt-20">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-fuchsia-400">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
             {content.famousSubtitle}
           </p>
           <h2 className="mt-3 font-serif text-3xl text-white sm:text-4xl">{content.famousTitle}</h2>

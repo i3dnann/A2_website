@@ -69,10 +69,10 @@ export default function CharactersPage() {
     return (
       <PageShell subtitle="Restricted" title="Characters">
         <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
-          <ShieldAlert size={32} className="mx-auto text-fuchsia-300" />
+          <ShieldAlert size={32} className="mx-auto text-orange-300" />
           <h3 className="mt-4 font-serif text-lg text-white">Login Required</h3>
           <p className="mt-2 text-sm text-white/55">Please log in to view your FiveM characters.</p>
-          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white">Sign in</Link>
+          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-5 py-2.5 text-sm font-semibold text-white">Sign in</Link>
         </div>
       </PageShell>
     );
@@ -85,7 +85,7 @@ export default function CharactersPage() {
           <Link2 size={32} className="mx-auto text-amber-300" />
           <h3 className="mt-4 font-serif text-lg text-white">Connect Your Steam Account</h3>
           <p className="mt-2 text-sm text-white/55">We match your Steam identity to your FiveM characters. Link Steam to see your characters, inventory, vehicles, and more.</p>
-          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white">Go to Dashboard</Link>
+          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-5 py-2.5 text-sm font-semibold text-white">Go to Dashboard</Link>
         </div>
       </PageShell>
     );
@@ -121,7 +121,7 @@ export default function CharactersPage() {
                 whileHover={{ y: -4 }}
                 onClick={() => setSelected(c)}
                 className={`group rounded-2xl border p-6 text-left transition-colors ${
-                  selected?.citizenid === c.citizenid ? "border-fuchsia-400/50 bg-fuchsia-500/[0.06]" : "border-white/10 bg-white/[0.03] hover:border-fuchsia-400/30"
+                  selected?.citizenid === c.citizenid ? "border-orange-400/50 bg-orange-500/[0.06]" : "border-white/10 bg-white/[0.03] hover:border-orange-400/30"
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -136,7 +136,7 @@ export default function CharactersPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/60">
-                  <span className="flex items-center gap-1.5"><Briefcase size={12} className="text-fuchsia-300" /> {c.job} · Grade {c.jobGrade}</span>
+                  <span className="flex items-center gap-1.5"><Briefcase size={12} className="text-orange-300" /> {c.job} · Grade {c.jobGrade}</span>
                   {c.gang && <span className="flex items-center gap-1.5"><Users2 size={12} className="text-red-300" /> {c.gang}</span>}
                   {c.phone && <span className="flex items-center gap-1.5"><Phone size={12} /> {c.phone}</span>}
                   {c.birthdate && <span className="flex items-center gap-1.5"><Calendar size={12} /> {c.birthdate}</span>}
@@ -144,7 +144,7 @@ export default function CharactersPage() {
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <MoneyCell icon={Wallet} label="Cash" value={c.cash} color="text-emerald-300" />
-                  <MoneyCell icon={Wallet} label="Bank" value={c.bank} color="text-violet-300" />
+                  <MoneyCell icon={Wallet} label="Bank" value={c.bank} color="text-red-300" />
                 </div>
               </motion.button>
             ))}
@@ -180,7 +180,7 @@ export default function CharactersPage() {
                         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                         whileHover={{ y: -2 }}
-                        className="rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-fuchsia-400/30"
+                        className="rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-orange-400/30"
                       >
                         <p className="font-serif text-sm text-white">{v.model || v.vehicle || "Unknown"}</p>
                         <p className="text-[11px] text-white/40">Plate: {v.plate || "—"}</p>

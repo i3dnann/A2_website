@@ -21,13 +21,13 @@ export default function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-3">
-              <img src="/images/logo-emblem.png" alt={content.siteName} className="h-9 w-9 object-contain" />
+              <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25" />
               <span className="font-serif text-lg tracking-[0.2em] text-white">{content.siteName}</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-white/50">A Gotham City inspired FiveM QBCore roleplay community built for players who crave immersive, story-driven experiences.</p>
             <div className="mt-5 flex gap-3">
               {[Radio, MessageCircle, Globe, AtSign].map((Icon, i) => (
-                <a key={i} href="#" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-fuchsia-400/40 hover:text-fuchsia-300"><Icon size={16} /></a>
+                <a key={i} href="#" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-orange-400/40 hover:text-orange-300"><Icon size={16} /></a>
               ))}
             </div>
           </div>
@@ -50,10 +50,10 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="text-xs font-semibold uppercase tracking-widest text-white/40">Stay Updated</h4>
-            <p className="mt-4 text-sm text-white/50">Get the latest news and event announcements from A2 Studio.</p>
+            <p className="mt-4 text-sm text-white/50">Get the latest news and event announcements from Gotham City.</p>
             <form className="mt-4 flex overflow-hidden rounded-xl border border-white/10 bg-white/5">
               <input type="email" placeholder="you@email.com" className="w-full bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none" />
-              <button type="submit" className="whitespace-nowrap bg-gradient-to-r from-fuchsia-600 to-violet-600 px-4 text-sm font-semibold text-white">Join</button>
+              <button type="submit" className="whitespace-nowrap bg-gradient-to-r from-orange-600 to-red-600 px-4 text-sm font-semibold text-white">Join</button>
             </form>
           </div>
         </div>
