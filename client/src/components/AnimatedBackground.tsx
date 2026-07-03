@@ -21,12 +21,12 @@ export default function AnimatedBackground() {
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute top-1/3 -right-40 h-[34rem] w-[34rem] rounded-full bg-red-700/25 blur-[120px]"
+        className="absolute top-1/3 -right-40 h-[34rem] w-[34rem] rounded-full bg-orange-700/25 blur-[120px]"
         animate={{ x: [0, -50, 0], y: [0, 60, 0] }}
         transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-0 left-1/4 h-[30rem] w-[30rem] rounded-full bg-amber-500/10 blur-[130px]"
+        className="absolute bottom-0 left-1/4 h-[30rem] w-[30rem] rounded-full bg-orange-500/10 blur-[130px]"
         animate={{ x: [0, 40, 0], y: [0, -30, 0] }}
         transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
       />

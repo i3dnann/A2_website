@@ -42,7 +42,7 @@ export default function Preloader({ show }: { show: boolean }) {
             className="mt-6 h-[2px] overflow-hidden rounded-full bg-white/10"
           >
             <motion.div
-              className="h-full bg-gradient-to-r from-orange-500 via-red-400 to-amber-300"
+              className="h-full bg-gradient-to-r from-orange-600 via-orange-400 to-orange-200"
               initial={{ x: "-100%" }}
               animate={{ x: "100%" }}
               transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}

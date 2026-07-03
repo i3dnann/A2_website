@@ -136,7 +136,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="group relative mt-1 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(96,81,155,0.35)] transition hover:shadow-[0_0_35px_rgba(96,81,155,0.55)] disabled:opacity-70"
+          className="group relative mt-1 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(96,81,155,0.35)] transition hover:shadow-[0_0_35px_rgba(96,81,155,0.55)] disabled:opacity-70"
         >
           {loading ? (
             <>

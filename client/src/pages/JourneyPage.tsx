@@ -21,7 +21,7 @@ export default function JourneyPage() {
             >
               <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(96,81,155,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
               <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
-                <span className="text-xs font-bold uppercase tracking-widest text-amber-300">{j.year}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-orange-300">{j.year}</span>
                 <h3 className="mt-2 font-serif text-xl text-white">{j.title}</h3>
                 <p className="mt-2 text-sm text-white/55">{j.desc}</p>
               </div>
@@ -49,7 +49,7 @@ export default function JourneyPage() {
               whileHover={{ y: -6 }}
               className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6"
             >
-              <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
+              <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
                 {c.tag}
               </span>
               <h3 className="mt-4 font-serif text-lg text-white">{c.name}</h3>

@@ -34,7 +34,7 @@ const TABS = [
 
 const statusColor: Record<string, string> = {
   Open: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
-  Pending: "border-amber-400/30 bg-amber-400/10 text-amber-300",
+  Pending: "border-orange-400/30 bg-orange-400/10 text-orange-300",
   Closed: "border-white/15 bg-white/5 text-white/50",
 };
 
@@ -90,7 +90,7 @@ export default function Dashboard() {
               >
                 <div className="sticky top-28 flex flex-col gap-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-red-600 font-serif text-lg text-white">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-orange-400 font-serif text-lg text-white">
                       {user.username.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
@@ -116,7 +116,7 @@ export default function Dashboard() {
                         {tab === t.id && (
                           <motion.span
                             layoutId="dash-tab"
-                            className="absolute left-0 h-6 w-[3px] rounded-full bg-gradient-to-b from-orange-400 to-amber-300"
+                            className="absolute left-0 h-6 w-[3px] rounded-full bg-gradient-to-b from-orange-400 to-orange-300"
                           />
                         )}
                         <t.icon size={17} />
@@ -213,7 +213,7 @@ function StatCard({
 function Overview({ user, openTickets, characters }: { user: any; openTickets: number; characters: any[] }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-red-600/15 p-7">
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
           Welcome back
         </p>
@@ -229,10 +229,10 @@ function Overview({ user, openTickets, characters }: { user: any; openTickets: n
           icon={user.banned ? ShieldAlert : ShieldCheck}
           label="Account Status"
           value={user.banned ? "Banned" : "Good Standing"}
-          tone={user.banned ? "bg-red-500/10 text-red-300" : "bg-emerald-500/10 text-emerald-300"}
+          tone={user.banned ? "bg-orange-500/10 text-orange-300" : "bg-emerald-500/10 text-emerald-300"}
         />
-        <StatCard icon={Link2} label="Linked Providers" value={`${(user.discordLinked ? 1 : 0) + (user.steamLinked ? 1 : 0)}/2`} tone="bg-red-500/10 text-red-300" />
-        <StatCard icon={TicketIcon} label="Open Tickets" value={String(openTickets)} tone="bg-amber-500/10 text-amber-300" />
+        <StatCard icon={Link2} label="Linked Providers" value={`${(user.discordLinked ? 1 : 0) + (user.steamLinked ? 1 : 0)}/2`} tone="bg-orange-500/10 text-orange-300" />
+        <StatCard icon={TicketIcon} label="Open Tickets" value={String(openTickets)} tone="bg-orange-500/10 text-orange-300" />
         <StatCard icon={Gamepad2} label="Characters" value={String(characters.length)} tone="bg-orange-500/10 text-orange-300" />
       </div>
 
@@ -282,7 +282,7 @@ function Characters({
         <button
           onClick={onLinkSteam}
           disabled={linking}
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(96,81,155,0.4)] disabled:opacity-70"
+          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(96,81,155,0.4)] disabled:opacity-70"
         >
           {linking ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
           {linking ? "Connecting..." : "Connect Steam"}
@@ -326,7 +326,7 @@ function Characters({
                 <p className="text-[10px] uppercase text-white/40">Bank</p>
               </div>
               <div className="rounded-xl bg-white/5 p-3">
-                <Clock size={14} className="mx-auto text-amber-300" />
+                <Clock size={14} className="mx-auto text-orange-300" />
                 <p className="mt-1.5 text-sm font-semibold text-white">{c.playtime}</p>
                 <p className="text-[10px] uppercase text-white/40">Playtime</p>
               </div>
@@ -355,7 +355,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
         <h3 className="font-serif text-xl text-white">Support Tickets</h3>
         <button
           onClick={onNewTicket}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
         >
           <Plus size={16} /> New Ticket
         </button>
@@ -460,7 +460,7 @@ function NewTicketModal({
               </div>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-red-600 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
               >
                 Submit Ticket
               </button>

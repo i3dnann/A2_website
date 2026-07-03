@@ -62,7 +62,7 @@ export default function Hero() {
             className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl"
           >
             {content.heroTitle1}
-            <span className="block bg-gradient-to-r from-orange-400 via-orange-200 to-red-400 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
+            <span className="block bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
               {content.heroTitle2}
             </span>
           </motion.h1>
@@ -138,7 +138,7 @@ export default function Hero() {
             </div>
           </motion.div>
           <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-orange-600/30 blur-3xl" />
-          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-amber-500/20 blur-3xl" />
+          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-orange-500/20 blur-3xl" />
         </motion.div>
       </div>
 

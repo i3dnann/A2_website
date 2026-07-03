@@ -76,16 +76,16 @@ export default function NewsPage() {
                     <img src={n.image} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     {n.pinned && (
-                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
+                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-orange-400/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
                         <Pin size={10} /> Pinned
                       </span>
                     )}
                   </div>
                 ) : (
-                  <div className="relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-orange-950/60 via-black to-red-950/60">
+                  <div className="relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-orange-950/60 via-black to-orange-950/60">
                     <Icon size={32} className="text-white/15" />
                     {n.pinned && (
-                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
+                      <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-orange-400/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
                         <Pin size={10} /> Pinned
                       </span>
                     )}
@@ -97,7 +97,7 @@ export default function NewsPage() {
                   </p>
                   <h3 className="mt-2 font-serif text-lg text-white">{n.title}</h3>
                   <p className="mt-2 flex-1 text-sm text-white/55">{n.excerpt}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-amber-300">
+                  <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-orange-300">
                     Read more <ArrowUpRight size={14} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
                   </span>
                 </div>

@@ -152,7 +152,7 @@ const DEFAULT_CONTENT: SiteContent = {
   ctaTitle: "Your Story in Gotham City Starts Tonight",
   ctaDesc: "Create your account, link Steam & Discord, and step into one of the most immersive FiveM roleplay communities out there.",
   primaryHex: "#60519b",
-  accentHex: "#C0392B",
+  accentHex: "#8a7ac4",
   darkBgHex: "#080808",
 };
 

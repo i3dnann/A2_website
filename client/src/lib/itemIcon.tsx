@@ -7,12 +7,12 @@ import {
 type ItemVisual = { icon: LucideIcon; color: string; glow: string };
 
 const RULES: { test: RegExp; icon: LucideIcon; color: string; glow: string }[] = [
-  { test: /weapon|pistol|rifle|knife|gun/i, icon: Crosshair, color: "text-red-300", glow: "from-red-500/25 to-red-900/5" },
-  { test: /bread|food|burger|apple|sandwich|taco|donut/i, icon: UtensilsCrossed, color: "text-amber-300", glow: "from-amber-500/25 to-amber-900/5" },
+  { test: /weapon|pistol|rifle|knife|gun/i, icon: Crosshair, color: "text-orange-300", glow: "from-orange-500/25 to-orange-900/5" },
+  { test: /bread|food|burger|apple|sandwich|taco|donut/i, icon: UtensilsCrossed, color: "text-orange-300", glow: "from-orange-500/25 to-orange-900/5" },
   { test: /water|juice|soda|cola|coffee|drink/i, icon: GlassWater, color: "text-cyan-300", glow: "from-cyan-500/25 to-cyan-900/5" },
   { test: /radio/i, icon: Radio, color: "text-emerald-300", glow: "from-emerald-500/25 to-emerald-900/5" },
   { test: /lockpick|key/i, icon: KeyRound, color: "text-yellow-300", glow: "from-yellow-500/25 to-yellow-900/5" },
-  { test: /phone/i, icon: Smartphone, color: "text-red-300", glow: "from-red-500/25 to-red-900/5" },
+  { test: /phone/i, icon: Smartphone, color: "text-orange-300", glow: "from-orange-500/25 to-orange-900/5" },
   { test: /license|id_card|identification|passport/i, icon: CreditCard, color: "text-blue-300", glow: "from-blue-500/25 to-blue-900/5" },
   { test: /document|paper|note|contract/i, icon: FileText, color: "text-slate-300", glow: "from-slate-500/25 to-slate-900/5" },
   { test: /bandage|medkit|firstaid|health|pill|painkiller/i, icon: Pill, color: "text-rose-300", glow: "from-rose-500/25 to-rose-900/5" },

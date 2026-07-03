@@ -90,7 +90,7 @@ export default function AdminPanel() {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 pt-28">
         <div className="text-center max-w-md">
-          <AlertTriangle size={40} className="mx-auto text-amber-300" />
+          <AlertTriangle size={40} className="mx-auto text-orange-300" />
           <h1 className="mt-4 font-serif text-2xl text-white">Access Denied</h1>
           <p className="mt-2 text-white/50">You need admin permissions to view this page.</p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-white/80">← Back to site</Link>
@@ -107,12 +107,12 @@ export default function AdminPanel() {
             <h1 className="font-serif text-3xl text-white">Admin Panel</h1>
             <p className="mt-1 text-sm text-white/45">
               Welcome back, <span className="text-orange-300">{user.username}</span> ·{" "}
-              <span className="text-amber-200">{user.role}</span>
+              <span className="text-orange-200">{user.role}</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(96,81,155,0.3)] hover:shadow-[0_0_25px_rgba(96,81,155,0.5)] transition disabled:opacity-70">
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(96,81,155,0.3)] hover:shadow-[0_0_25px_rgba(96,81,155,0.5)] transition disabled:opacity-70">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? "Saving..." : "Save All Changes"}
             </button>
@@ -200,13 +200,13 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
   const cards = [
     { label: "Registered Users", value: stats?.users ?? 0, icon: Users, color: "text-emerald-300", trend: "+12% this week" },
     { label: "Total Characters", value: stats?.characters ?? 0, icon: Briefcase, color: "text-orange-300", trend: "+4% this week" },
-    { label: "Pending Comments", value: stats?.pendingComments ?? 0, icon: MessageCircle, color: "text-amber-300", trend: "Needs review" },
+    { label: "Pending Comments", value: stats?.pendingComments ?? 0, icon: MessageCircle, color: "text-orange-300", trend: "Needs review" },
     { label: "Server Online", value: stats?.live?.status === "online" ? `${stats.live.count}/${stats.live.maxplayers}` : "Offline", icon: Server, color: stats?.live?.status === "online" ? "text-emerald-300" : "text-red-300", trend: stats?.live?.status === "online" ? "Live now" : "Check status" },
   ];
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-red-600/15 p-6">
+      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-6">
         <h2 className="font-serif text-2xl text-white">Welcome to the Command Center</h2>
         <p className="mt-1 text-sm text-white/55">Monitor your FiveM server, review pending content, and manage every part of the website from one place.</p>
       </div>
@@ -276,10 +276,10 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
         <h3 className="font-serif text-base text-white">Quick Actions</h3>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: "Edit Homepage", tab: "home", icon: Home, color: "from-orange-600/20 to-red-600/10" },
-            { label: "Post News", tab: "news", icon: FileText, color: "from-amber-500/15 to-orange-500/5" },
+            { label: "Edit Homepage", tab: "home", icon: Home, color: "from-orange-600/20 to-orange-700/10" },
+            { label: "Post News", tab: "news", icon: FileText, color: "from-orange-500/15 to-orange-700/5" },
             { label: "Review Comments", tab: "comments", icon: MessageCircle, color: "from-emerald-500/15 to-teal-500/5" },
-            { label: "Live Streams", tab: "live", icon: Play, color: "from-red-500/15 to-rose-500/5" },
+            { label: "Live Streams", tab: "live", icon: Play, color: "from-orange-500/15 to-orange-700/5" },
             { label: "Features", tab: "server", icon: Globe, color: "from-cyan-500/15 to-blue-500/5" },
             { label: "Roster", tab: "roster", icon: Users, color: "from-indigo-500/15 to-purple-500/5" },
             { label: "Theme & Brand", tab: "theme", icon: Palette, color: "from-pink-500/15 to-rose-500/5" },
@@ -364,14 +364,14 @@ function CommentsAdmin() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
-                      c.approved === 0 ? "border-amber-400/30 bg-amber-400/10 text-amber-300" : c.approved === 1 ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"
+                      c.approved === 0 ? "border-orange-400/30 bg-orange-400/10 text-orange-300" : c.approved === 1 ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"
                     }`}>{c.approved === 0 ? "Pending" : c.approved === 1 ? "Approved" : "Rejected"}</span>
                     <span className="text-xs font-semibold text-white">{c.author_name}</span>
                     <span className="text-[11px] text-white/35">{new Date(c.created_at).toLocaleString()}</span>
                   </div>
                   <div className="flex gap-1.5">
                     {c.approved !== 1 && <button onClick={() => act(c.id, "approve")} className="flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/5 px-2.5 py-1.5 text-[11px] text-emerald-300 hover:bg-emerald-400/10"><CheckCircle2 size={11} /> Approve</button>}
-                    {c.approved !== -1 && <button onClick={() => act(c.id, "reject")} className="flex items-center gap-1 rounded-lg border border-amber-400/30 bg-amber-400/5 px-2.5 py-1.5 text-[11px] text-amber-300 hover:bg-amber-400/10"><XCircle size={11} /> Reject</button>}
+                    {c.approved !== -1 && <button onClick={() => act(c.id, "reject")} className="flex items-center gap-1 rounded-lg border border-orange-400/30 bg-orange-400/5 px-2.5 py-1.5 text-[11px] text-orange-300 hover:bg-orange-400/10"><XCircle size={11} /> Reject</button>}
                     <button onClick={() => act(c.id, "delete")} className="flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-400/5 px-2.5 py-1.5 text-[11px] text-red-300 hover:bg-red-400/10"><Trash2 size={11} /> Delete</button>
                   </div>
                 </div>
@@ -458,7 +458,7 @@ function NewsAdmin() {
     <div className="flex flex-col gap-1">
       <EditableSection title="News Posts">
         <button onClick={() => setEditing({ id: null, title: "", excerpt: "", content: "", category: "Announcement", tags: "", pinned: false, active: true })}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2.5 text-sm font-semibold text-white w-fit">
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white w-fit">
           <Plus size={14} /> New Post
         </button>
         {loading ? <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14" />)}</div> : (
@@ -468,7 +468,7 @@ function NewsAdmin() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-serif text-base text-white">{r.title}</p>
-                    {r.pinned ? <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-200">Pinned</span> : null}
+                    {r.pinned ? <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-2 py-0.5 text-[10px] font-bold uppercase text-orange-200">Pinned</span> : null}
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase ${r.active !== 0 ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-white/15 bg-white/5 text-white/50"}`}>
                       {r.active !== 0 ? "Active" : "Hidden"}
                     </span>
@@ -529,7 +529,7 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
         </div>
         <div className="mt-6 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/5">Cancel</button>
-          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
             {saving && <Loader2 size={13} className="animate-spin" />} {saving ? "Saving..." : "Save Post"}
           </button>
         </div>
@@ -747,7 +747,7 @@ function FaqEditor({ content, update }: any) {
 }
 
 function ThemeEditor({ content, update }: any) {
-  const colors = { "Gotham Purple": "#60519b", "Crimson": "#C0392B", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
+  const colors = { "Gotham Purple": "#60519b", "Crimson": "#8a7ac4", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
   return <div className="flex flex-col gap-1">
     <EditableSection title="Color Theme">
       <div className="grid gap-4 sm:grid-cols-3">

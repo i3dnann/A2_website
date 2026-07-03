@@ -35,7 +35,7 @@ export default function AuthShell({
             alt={content.siteName}
             className="absolute inset-0 h-full w-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/70 via-black/80 to-red-950/80" />
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-900/70 via-black/80 to-orange-950/80" />
           <motion.div
             className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-orange-600/30 blur-3xl"
             animate={{ scale: [1, 1.3, 1] }}
@@ -52,7 +52,7 @@ export default function AuthShell({
           <div className="relative z-10">
             <h2 className="font-serif text-3xl leading-snug text-white">
               Your story in
-              <span className="block bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
                 Gotham City awaits.
               </span>
             </h2>

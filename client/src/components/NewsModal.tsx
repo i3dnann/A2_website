@@ -124,7 +124,7 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
               <>
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-3 py-1 font-medium text-orange-200">{full.category}</span>
-                  {full.pinned && <span className="flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-amber-200"><Pin size={11} /> Pinned</span>}
+                  {full.pinned && <span className="flex items-center gap-1 rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-orange-200"><Pin size={11} /> Pinned</span>}
                   <span className="flex items-center gap-1 text-white/50"><Calendar size={12} /> {new Date(full.published_at).toLocaleDateString()}</span>
                   <span className="flex items-center gap-1 text-white/50"><User size={12} /> {full.author}</span>
                 </div>
@@ -170,7 +170,7 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
                         className="resize-none rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-orange-400/50" />
                       <div className="flex justify-end">
                         <button type="submit" disabled={submitting}
-                          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+                          className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                           {submitting && <Loader2 size={13} className="animate-spin" />} Post Comment
                         </button>
                       </div>

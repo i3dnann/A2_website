@@ -28,10 +28,10 @@ export default function CareersPage() {
               key={c.role}
               variants={staggerItem}
               whileHover={{ x: 6 }}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-amber-300/30"
+              className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30"
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-300">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
                   <Briefcase size={20} />
                 </div>
                 <div>
@@ -39,7 +39,7 @@ export default function CareersPage() {
                   <p className="text-xs uppercase tracking-wider text-white/40">{c.dept}</p>
                 </div>
               </div>
-              <span className="whitespace-nowrap rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-200">
+              <span className="whitespace-nowrap rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
                 {c.type}
               </span>
             </motion.div>

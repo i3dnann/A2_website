@@ -72,7 +72,7 @@ export default function CharactersPage() {
           <ShieldAlert size={32} className="mx-auto text-orange-300" />
           <h3 className="mt-4 font-serif text-lg text-white">Login Required</h3>
           <p className="mt-2 text-sm text-white/55">Please log in to view your FiveM characters.</p>
-          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-5 py-2.5 text-sm font-semibold text-white">Sign in</Link>
+          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">Sign in</Link>
         </div>
       </PageShell>
     );
@@ -82,10 +82,10 @@ export default function CharactersPage() {
     return (
       <PageShell subtitle="Link Steam" title="Characters">
         <div className="mx-auto max-w-md rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
-          <Link2 size={32} className="mx-auto text-amber-300" />
+          <Link2 size={32} className="mx-auto text-orange-300" />
           <h3 className="mt-4 font-serif text-lg text-white">Connect Your Steam Account</h3>
           <p className="mt-2 text-sm text-white/55">We match your Steam identity to your FiveM characters. Link Steam to see your characters, inventory, vehicles, and more.</p>
-          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-red-600 px-5 py-2.5 text-sm font-semibold text-white">Go to Dashboard</Link>
+          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">Go to Dashboard</Link>
         </div>
       </PageShell>
     );
@@ -132,19 +132,19 @@ export default function CharactersPage() {
                       <p className="mt-0.5 text-xs font-mono text-white/40">CID: {c.citizenid}</p>
                     </div>
                   </div>
-                  <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-200">{c.gender}</span>
+                  <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">{c.gender}</span>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/60">
                   <span className="flex items-center gap-1.5"><Briefcase size={12} className="text-orange-300" /> {c.job} · Grade {c.jobGrade}</span>
-                  {c.gang && <span className="flex items-center gap-1.5"><Users2 size={12} className="text-red-300" /> {c.gang}</span>}
+                  {c.gang && <span className="flex items-center gap-1.5"><Users2 size={12} className="text-orange-300" /> {c.gang}</span>}
                   {c.phone && <span className="flex items-center gap-1.5"><Phone size={12} /> {c.phone}</span>}
                   {c.birthdate && <span className="flex items-center gap-1.5"><Calendar size={12} /> {c.birthdate}</span>}
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <MoneyCell icon={Wallet} label="Cash" value={c.cash} color="text-emerald-300" />
-                  <MoneyCell icon={Wallet} label="Bank" value={c.bank} color="text-red-300" />
+                  <MoneyCell icon={Wallet} label="Bank" value={c.bank} color="text-orange-300" />
                 </div>
               </motion.button>
             ))}

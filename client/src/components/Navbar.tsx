@@ -66,7 +66,7 @@ export default function Navbar() {
                 {location.pathname === link.path && (
                   <motion.span
                     layoutId="nav-underline"
-                    className="absolute inset-x-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-orange-400 to-amber-300"
+                    className="absolute inset-x-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-orange-400 to-orange-300"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}
@@ -78,7 +78,7 @@ export default function Navbar() {
             {isAdmin && (
               <Link
                 to="/admin"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs font-medium text-amber-200 transition hover:border-amber-400/50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-xs font-medium text-orange-200 transition hover:border-orange-400/50"
               >
                 <ShieldCheck size={14} /> Admin
               </Link>
@@ -145,7 +145,7 @@ export default function Navbar() {
                 ))}
                 <hr className="my-2 border-white/10" />
                 {isAdmin && (
-                  <Link to="/admin" onClick={() => setOpen(false)} className="rounded-lg px-4 py-3 text-left text-sm font-medium text-amber-200 hover:bg-amber-500/5 flex items-center gap-2">
+                  <Link to="/admin" onClick={() => setOpen(false)} className="rounded-lg px-4 py-3 text-left text-sm font-medium text-orange-200 hover:bg-orange-500/5 flex items-center gap-2">
                     <ShieldCheck size={16} /> Admin Panel
                   </Link>
                 )}

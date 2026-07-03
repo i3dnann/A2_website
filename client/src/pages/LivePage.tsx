@@ -86,7 +86,7 @@ export default function LivePage() {
               <div className="mt-6 grid gap-4 sm:grid-cols-3">
                 <Stat icon={Users} label="Online" value={String(state?.count ?? 0)} accent="text-emerald-300" />
                 <Stat icon={Activity} label="Max Players" value={String(state?.maxplayers ?? 0)} accent="text-orange-300" />
-                <Stat icon={Cloud} label="Queue" value={String(state?.queue ?? 0)} accent="text-amber-300" />
+                <Stat icon={Cloud} label="Queue" value={String(state?.queue ?? 0)} accent="text-orange-300" />
               </div>
 
               <div className="mt-5">
@@ -96,7 +96,7 @@ export default function LivePage() {
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-orange-500 to-amber-400"
+                    className="h-full bg-gradient-to-r from-orange-500 to-orange-400"
                     initial={{ width: 0 }}
                     animate={{ width: `${usage}%` }}
                     transition={{ duration: 0.8, ease: "easeOut" }}

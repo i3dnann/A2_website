@@ -53,7 +53,7 @@ export default function Footer() {
             <p className="mt-4 text-sm text-white/50">Get the latest news and event announcements from Gotham City.</p>
             <form className="mt-4 flex overflow-hidden rounded-xl border border-white/10 bg-white/5">
               <input type="email" placeholder="you@email.com" className="w-full bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none" />
-              <button type="submit" className="whitespace-nowrap bg-gradient-to-r from-orange-600 to-red-600 px-4 text-sm font-semibold text-white">Join</button>
+              <button type="submit" className="whitespace-nowrap bg-gradient-to-r from-orange-600 to-orange-400 px-4 text-sm font-semibold text-white">Join</button>
             </form>
           </div>
         </div>
