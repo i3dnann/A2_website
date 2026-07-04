@@ -50,7 +50,7 @@ type AuthContextType = {
   completeOAuth: (token: string) => Promise<void>;
   linkDiscord: () => Promise<void>;
   linkSteam: () => Promise<void>;
-  createTicket: (subject: string, category: string) => void;
+  createTicket: (subject: string, category: string, message?: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -59,6 +59,12 @@ const STORAGE_KEY = "a2studio_session";
 const MOCK_CHARACTERS: Character[] = [
   { id: "c1", name: "Marcus Halloway", job: "Police Officer", grade: "Sergeant", cash: 2450, bank: 48200, playtime: "142h" },
   { id: "c2", name: "Isabella Cruz", job: "Civilian", grade: "Entrepreneur", cash: 890, bank: 12750, playtime: "76h" },
+];
+
+const MOCK_TICKETS: Ticket[] = [
+  { id: "TCK-1042", subject: "Vehicle disappeared after restart", category: "Bug Report", status: "Open", createdAt: "Feb 10, 2026", lastReply: "2 hours ago" },
+  { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
+  { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
 ];
 
 type ProviderRow = {
@@ -109,6 +115,17 @@ function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser
   };
 }
 
+function normalizeTicket(raw: any): Ticket {
+  return {
+    id: raw.ticket_number || raw.id,
+    subject: raw.subject || "Support Ticket",
+    category: raw.category || "General Support",
+    status: raw.status === "Closed" ? "Closed" : raw.status === "Pending" || raw.status === "Waiting for staff" ? "Pending" : "Open",
+    createdAt: raw.created_at ? new Date(raw.created_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "Unknown",
+    lastReply: raw.updated_at ? new Date(raw.updated_at).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }) : "Unknown",
+  };
+}
+
 function loadUser(): AppUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -137,13 +154,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .catch(() => setUser(null))
         .finally(() => setLoading(false));
     }
-    // Load tickets
-    setTickets([
-      { id: "TCK-1042", subject: "Vehicle disappeared after restart", category: "Bug Report", status: "Open", createdAt: "Feb 10, 2026", lastReply: "2 hours ago" },
-      { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
-      { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
-    ]);
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setTickets([]);
+      return;
+    }
+
+    if (MOCK) {
+      setTickets(MOCK_TICKETS);
+      return;
+    }
+
+    api<{ tickets: any[] }>("/api/player/tickets")
+      .then((r) => setTickets((r.tickets || []).map(normalizeTicket)))
+      .catch(() => setTickets([]));
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.steamLinked) {
@@ -271,11 +298,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((u) => (u ? { ...u, steamLinked: true } : u));
   };
 
-  const createTicket = (subject: string, category: string) => {
-    setTickets((t) => [
-      { id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`, subject, category, status: "Open", createdAt: "Just now", lastReply: "Just now" },
-      ...t,
-    ]);
+  const createTicket = async (subject: string, category: string, message = "Created from the player dashboard.") => {
+    if (MOCK) {
+      setTickets((t) => [
+        { id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`, subject, category, status: "Open", createdAt: "Just now", lastReply: "Just now" },
+        ...t,
+      ]);
+      return;
+    }
+
+    const r = await api<{ ticket: any }>("/api/player/tickets", { method: "POST", body: { subject, category, message } });
+    setTickets((t) => [normalizeTicket(r.ticket), ...t]);
   };
 
   const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";

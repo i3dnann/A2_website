@@ -7,6 +7,7 @@ import Preloader from "./components/Preloader";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -40,22 +41,24 @@ function AppShell({ introDelay }: { introDelay: number }) {
       <BatSwingIntro replayKey={location.pathname} delay={introDelay} />
       <Navbar />
       <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Home />} />
-          <Route path="/server" element={<ServerPage />} />
-          <Route path="/roster" element={<RosterPage />} />
-          <Route path="/live" element={<LivePage />} />
-          <Route path="/journey" element={<JourneyPage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/careers" element={<CareersPage />} />
-          <Route path="/faq" element={<FaqPage />} />
-          <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/auth/complete" element={<AuthComplete />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
-        </Routes>
+        <RouteErrorBoundary routeKey={location.pathname}>
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Home />} />
+            <Route path="/server" element={<ServerPage />} />
+            <Route path="/roster" element={<RosterPage />} />
+            <Route path="/live" element={<LivePage />} />
+            <Route path="/journey" element={<JourneyPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/auth/complete" element={<AuthComplete />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+          </Routes>
+        </RouteErrorBoundary>
       </AnimatePresence>
       {showFooter && <Footer />}
     </div>

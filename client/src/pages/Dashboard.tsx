@@ -179,8 +179,8 @@ export default function Dashboard() {
       <NewTicketModal
         open={ticketModalOpen}
         onClose={() => setTicketModalOpen(false)}
-        onCreate={(subject, category) => {
-          createTicket(subject, category);
+        onCreate={async (subject, category, message) => {
+          await createTicket(subject, category, message);
           setTicketModalOpen(false);
         }}
       />
@@ -392,16 +392,22 @@ function NewTicketModal({
 }: {
   open: boolean;
   onClose: () => void;
-  onCreate: (subject: string, category: string) => void;
+  onCreate: (subject: string, category: string, message: string) => Promise<void>;
 }) {
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("General Support");
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!subject.trim()) return;
-    onCreate(subject, category);
-    setSubject("");
+    setSubmitting(true);
+    try {
+      await onCreate(subject, category, subject.trim().length >= 10 ? subject.trim() : `${subject.trim()} - opened from dashboard.`);
+      setSubject("");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -460,9 +466,11 @@ function NewTicketModal({
               </div>
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
+                disabled={submitting}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)] disabled:opacity-70"
               >
-                Submit Ticket
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : null}
+                {submitting ? "Submitting..." : "Submit Ticket"}
               </button>
             </form>
           </motion.div>

@@ -39,6 +39,39 @@ type DashboardStats = {
   live: any;
 };
 
+function normalizeDashboardStats(raw: any): DashboardStats {
+  if (!raw?.cards) {
+    return {
+      users: raw?.users ?? 0,
+      characters: raw?.characters ?? 0,
+      news: raw?.news ?? [],
+      pendingComments: raw?.pendingComments ?? 0,
+      logs: raw?.logs ?? [],
+      live: raw?.live ?? null,
+    };
+  }
+
+  const cardValue = (label: string) => {
+    const card = raw.cards.find((item: any) => String(item.label || "").toLowerCase() === label);
+    return Number(card?.value || 0);
+  };
+
+  return {
+    users: cardValue("roster members"),
+    characters: 0,
+    news: raw.recentNews || [],
+    pendingComments: cardValue("open tickets") + cardValue("career applications"),
+    logs: (raw.recentLogs || []).map((log: any) => ({
+      id: log.id,
+      action: log.action || "admin_action",
+      target: log.target || log.target_id || log.targetType || null,
+      meta: log.meta || log.meta_json || {},
+      created_at: log.created_at || new Date().toISOString(),
+    })),
+    live: raw.live || null,
+  };
+}
+
 export default function AdminPanel() {
   const { user, logout } = useAuth();
   const { content, updateContent } = useSite();
@@ -72,8 +105,8 @@ export default function AdminPanel() {
         return;
       }
       try {
-        const r = await api<DashboardStats>("/api/admin/dashboard");
-        if (!cancel) setStats(r);
+        const r = await api<any>("/api/admin/dashboard");
+        if (!cancel) setStats(normalizeDashboardStats(r));
       } catch (e: any) {
         push({ kind: "error", message: e?.message || "Failed to load dashboard" });
       } finally { if (!cancel) setStatsLoading(false); }
