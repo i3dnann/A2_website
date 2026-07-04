@@ -15,9 +15,9 @@ import { sendWebhook } from "../services/webhook.js";
 import { kickConfigured } from "../services/kickService.js";
 
 const router = Router();
-const oauthStates = new Map();
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const SESSION_EXPIRES_IN = "30d";
+const OAUTH_STATE_EXPIRES_IN = "15m";
 
 const registerSchema = z.object({
   username: z.string().min(2).max(80),
@@ -32,16 +32,19 @@ const loginSchema = z.object({
 });
 
 function createState(payload) {
-  const state = randomUUID();
-  oauthStates.set(state, { ...payload, createdAt: Date.now() });
-  return state;
+  return jwt.sign(
+    { ...payload, nonce: randomUUID() },
+    env.SESSION_SECRET || env.JWT_SECRET,
+    { expiresIn: OAUTH_STATE_EXPIRES_IN }
+  );
 }
 
 function readState(state) {
-  const payload = oauthStates.get(state);
-  oauthStates.delete(state);
-  if (!payload || Date.now() - payload.createdAt > 15 * 60 * 1000) return null;
-  return payload;
+  try {
+    return jwt.verify(String(state || ""), env.SESSION_SECRET || env.JWT_SECRET);
+  } catch {
+    return null;
+  }
 }
 
 function setSession(res, user) {
