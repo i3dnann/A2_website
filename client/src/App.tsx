@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import AnimatedBackground from "./components/AnimatedBackground";
+import BatSwingIntro from "./components/BatSwingIntro";
 import Preloader from "./components/Preloader";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -23,7 +24,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider } from "./context/SiteContext";
 import { ToastProvider } from "./components/Toast";
 
-function AppShell() {
+function AppShell({ introDelay }: { introDelay: number }) {
   const location = useLocation();
 
   useEffect(() => {
@@ -35,6 +36,7 @@ function AppShell() {
   return (
     <div className="relative min-h-screen text-white selection:bg-orange-500/40">
       <AnimatedBackground />
+      <BatSwingIntro replayKey={location.pathname} delay={introDelay} />
       <Navbar />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
@@ -72,7 +74,7 @@ export default function App() {
         <ToastProvider>
           <Preloader show={loading} />
           <BrowserRouter>
-            <AppShell />
+            <AppShell introDelay={loading ? 2.05 : 0} />
           </BrowserRouter>
         </ToastProvider>
       </AuthProvider>
