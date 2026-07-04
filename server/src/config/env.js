@@ -46,6 +46,14 @@ const schema = z.object({
   KICK_CLIENT_ID: z.string().default(""),
   KICK_CLIENT_SECRET: z.string().default(""),
 
+  FIVEM_PLAYERS_URL: z.string().default(""),
+  FIVEM_DYNAMIC_URL: z.string().default(""),
+  FIVEM_INFO_URL: z.string().default(""),
+  FIVEM_SERVER_IP: z.string().default(""),
+  FIVEM_SERVER_PORT: z.string().default("30120"),
+  FIVEM_MAX_PLAYERS: z.coerce.number().default(64),
+  LIVE_ANNOUNCEMENT: z.string().default(""),
+
   WEBHOOK_TICKETS_OPEN: z.string().default(""),
   WEBHOOK_TICKETS_CLOSED: z.string().default(""),
   WEBHOOK_CAREERS: z.string().default(""),

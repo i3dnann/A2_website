@@ -16,6 +16,7 @@ import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.
 import { pingDatabase } from "./config/db.js";
 import { createResource, deleteResource, getSettings, listResource } from "./services/repository.js";
 import { checkAllStreamers } from "./services/streamerService.js";
+import { getFiveMLiveState } from "./services/liveService.js";
 import { publicFileUrl } from "./utils/sanitize.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
@@ -67,6 +68,10 @@ const photoPath = "/gal" + "lery";
 app.get("/health", async (_req, res) => {
   const dbOk = await pingDatabase();
   res.json({ ok: true, service: "gotham-city-api", time: new Date().toISOString(), database: dbOk ? "online" : "disabled_or_unavailable", frontend: env.FRONTEND_URL });
+});
+
+app.get("/api/live", async (_req, res) => {
+  res.json(await getFiveMLiveState());
 });
 
 app.get("/api/media/list", requireAuth, requirePermission("manage_home"), async (req, res) => {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, getResource, listResource, updateResource } from "../services/repository.js";
-import { getBanStatus, getCharactersForAccount, identifiersForAccount } from "../services/qbcoreService.js";
+import { getBanStatus, getCharacterStats, getCharactersForAccount, getPlayerInventory, getPlayerVehicles, identifiersForAccount } from "../services/qbcoreService.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
 import { saveTermsAgreement } from "../services/users.js";
@@ -79,6 +79,21 @@ router.get(
 );
 
 router.get(
+  "/characters/:citizenid",
+  asyncHandler(async (req, res) => {
+    const characterResult = await getCharactersForAccount(req.user);
+    const owned = characterResult.characters.find((character) => String(character.citizenid) === String(req.params.citizenid));
+    if (!owned) return res.status(404).json({ error: "character_not_found" });
+    const [character, inventory, vehicles] = await Promise.all([
+      getCharacterStats(req.params.citizenid),
+      getPlayerInventory(req.params.citizenid),
+      getPlayerVehicles(req.params.citizenid)
+    ]);
+    res.json({ character: character || owned, inventory, vehicles });
+  })
+);
+
+router.get(
   "/tickets",
   asyncHandler(async (req, res) => {
     const tickets = await listOwnedTickets(req.user, req.query.q || "");
@@ -129,7 +144,7 @@ router.get(
     const ticket = await getResource("tickets", req.params.id);
     if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
     const { rows } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
-    res.json({ ticket, messages: rows.filter((message) => message.ticket_id === ticket.id && Number(message.internal_only || 0) !== 1) });
+    res.json({ ticket, messages: rows.filter((message) => String(message.ticket_id) === String(ticket.id) && Number(message.internal_only || 0) !== 1) });
   })
 );
 
@@ -163,7 +178,7 @@ router.post(
       Closed: result.after.closed_at,
       FinalStatus: "Closed",
       Transcript: messages
-        .filter((message) => message.ticket_id === ticket.id && Number(message.internal_only || 0) !== 1)
+        .filter((message) => String(message.ticket_id) === String(ticket.id) && Number(message.internal_only || 0) !== 1)
         .map((message) => `${message.author_type}: ${message.message}`)
         .join("\n")
         .slice(0, 3000)

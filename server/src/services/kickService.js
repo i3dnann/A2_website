@@ -33,6 +33,7 @@ export function cleanKickSlug(value = "") {
   input = input
     .replace(/^www\./i, "")
     .replace(/^kick\.com\//i, "")
+    .replace(/^kick\.tv\//i, "")
     .replace(/^@/, "")
     .split(/[/?#]/)[0]
     .trim()

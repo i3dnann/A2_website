@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Wifi, WifiOff, Users, Activity, Radio, RefreshCw, MessageCircle, Cloud } from "lucide-react";
 import { useSite } from "../context/SiteContext";
-import { createLiveSubscriber, type LiveState, MOCK } from "../api/client";
+import { api, createLiveSubscriber, type LiveState, MOCK } from "../api/client";
 import PageShell from "../components/PageShell";
 import { Skeleton } from "../components/Toast";
 
@@ -23,6 +23,7 @@ const DEMO: LiveState = {
 export default function LivePage() {
   const { content } = useSite();
   const [state, setState] = useState<LiveState | null>(MOCK ? DEMO : null);
+  const [streamers, setStreamers] = useState<any[]>(content.streamers);
   const [connecting, setConnecting] = useState(true);
 
   useEffect(() => {
@@ -33,6 +34,27 @@ export default function LivePage() {
     // Give the WS a brief moment; if no response in 2s, still show connecting state
     const t = setTimeout(() => setConnecting(false), 2000);
     return () => { sub.stop(); clearTimeout(t); };
+  }, []);
+
+  useEffect(() => {
+    if (MOCK) return;
+    let cancel = false;
+    const loadStreamers = async () => {
+      try {
+        const r = await api<{ streamers: any[] }>("/api/public/live");
+        if (!cancel) setStreamers((r.streamers || []).map((s) => ({
+          name: s.display_name || s.name || s.kick_username || s.twitch_username,
+          platform: s.kick_username ? "Kick" : "Twitch",
+          viewers: Number(s.viewer_count || 0),
+          live: Boolean(s.is_live),
+          game: s.stream_title || s.category || "Gotham City Roleplay",
+          url: s.stream_url || (s.kick_username ? `https://kick.com/${s.kick_username}` : s.twitch_username ? `https://twitch.tv/${s.twitch_username}` : "")
+        })));
+      } catch {}
+    };
+    loadStreamers();
+    const timer = window.setInterval(loadStreamers, 30_000);
+    return () => { cancel = true; window.clearInterval(timer); };
   }, []);
 
   const online = state?.status === "online";
@@ -125,17 +147,17 @@ export default function LivePage() {
               <Radio size={16} className="text-orange-300" />
             </div>
             <div className="mt-4 flex flex-col gap-3">
-              {content.streamers.filter((s) => s.live).length === 0 && (
+              {streamers.filter((s) => s.live).length === 0 && (
                 <p className="text-sm text-white/40">No streamers are live right now.</p>
               )}
-              {content.streamers.filter((s) => s.live).map((s) => (
-                <div key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
+              {streamers.filter((s) => s.live).map((s) => (
+                <a href={s.url || undefined} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
                   <div>
                     <p className="font-serif text-sm text-white">{s.name}</p>
                     <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.game}</p>
                   </div>
                   <span className="rounded-full bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">● Live</span>
-                </div>
+                </a>
               ))}
             </div>
           </div>

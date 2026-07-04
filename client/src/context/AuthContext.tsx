@@ -193,7 +193,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           grade: String(character.jobGrade || "Unknown"),
           cash: Number(character.cash || 0),
           bank: Number(character.bank || 0),
-          health: Number(character.raw?.metadata?.health || character.raw?.metadata?.hp || 100),
+          health: Number(character.health ?? character.raw?.metadata?.health ?? character.raw?.metadata?.hp ?? 100),
+          armor: Number(character.armor ?? character.raw?.metadata?.armor ?? character.raw?.metadata?.armour ?? 0),
           playtime: character.raw?.metadata?.playtime ? `${character.raw.metadata.playtime}h` : "N/A",
         })));
       })

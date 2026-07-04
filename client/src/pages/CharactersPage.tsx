@@ -42,8 +42,16 @@ function mapCharacter(character: any): Character {
     gang: character.gang === "None" ? null : character.gang || null,
     cash: Number(character.cash || 0),
     bank: Number(character.bank || 0),
-    health: Number(character.raw?.metadata?.health || character.raw?.metadata?.hp || 100),
-    armor: Number(character.raw?.metadata?.armor || 0),
+    health: Number(character.health ?? character.raw?.metadata?.health ?? character.raw?.metadata?.hp ?? 100),
+    armor: Number(character.armor ?? character.raw?.metadata?.armor ?? character.raw?.metadata?.armour ?? 0),
+  };
+}
+
+function mapInventory(item: any) {
+  return {
+    name: item.label || item.name || "Unknown item",
+    amount: Number(item.amount ?? item.count ?? 1),
+    info: item.info || item.metadata || {}
   };
 }
 
@@ -80,8 +88,26 @@ export default function CharactersPage() {
   useEffect(() => {
     if (!selected) return;
     if (MOCK) { setInventory(DEMO_INV); setVehicles(DEMO_VEH); return; }
-    setInventory([]);
-    setVehicles([]);
+    let cancel = false;
+    const loadDetails = async () => {
+      setInventory([]);
+      setVehicles([]);
+      try {
+        const r = await api<{ character: any; inventory: any[]; vehicles: any[] }>(`/api/player/characters/${selected.citizenid}`);
+        if (cancel) return;
+        setInventory((r.inventory || []).map(mapInventory));
+        setVehicles(r.vehicles || []);
+        if (r.character) {
+          const fresh = mapCharacter(r.character);
+          setChars((current) => current.map((character) => character.citizenid === fresh.citizenid ? fresh : character));
+          setSelected(fresh);
+        }
+      } catch (e: any) {
+        if (!cancel) push({ kind: "error", message: e?.message || "Failed to load character details" });
+      }
+    };
+    loadDetails();
+    return () => { cancel = true; };
   }, [selected?.citizenid]);
 
   if (!user) {

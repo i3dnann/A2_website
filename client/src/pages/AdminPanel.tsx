@@ -5,7 +5,7 @@ import {
   Settings, Globe, Users, Play, Clock, FileText, Briefcase, HelpCircle, Palette,
   Home, Menu, X, LogOut, Save, Trash2, Plus, Loader2, LayoutDashboard,
   CheckCircle2, XCircle, MessageCircle, Shield, AlertTriangle, TrendingUp,
-  Server, Eye, ArrowUpRight,
+  Server, Eye, ArrowUpRight, Ticket as TicketIcon,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
@@ -22,6 +22,7 @@ const ADMIN_TABS = [
   { id: "news", label: "News", icon: FileText },
   { id: "careers", label: "Careers", icon: Briefcase },
   { id: "faq", label: "FAQ", icon: HelpCircle },
+  { id: "tickets", label: "Tickets", icon: TicketIcon },
   { id: "comments", label: "Comments", icon: MessageCircle },
   { id: "theme", label: "Theme & Brand", icon: Palette },
   { id: "settings", label: "Settings", icon: Settings },
@@ -200,6 +201,7 @@ export default function AdminPanel() {
                 {tab === "news" && <NewsAdmin />}
                 {tab === "careers" && <CareersEditor content={content} update={updateContent} />}
                 {tab === "faq" && <FaqEditor content={content} update={updateContent} />}
+                {tab === "tickets" && <TicketsAdmin />}
                 {tab === "comments" && <CommentsAdmin />}
                 {tab === "theme" && <ThemeEditor content={content} update={updateContent} />}
                 {tab === "settings" && <SettingsEditor content={content} update={updateContent} />}
@@ -340,6 +342,144 @@ function formatAction(a: string) {
 /* ─────────────────────────────────────────────────────────────── */
 /* COMMENTS ADMIN */
 /* ─────────────────────────────────────────────────────────────── */
+function TicketsAdmin() {
+  const { push } = useToast();
+  const [rows, setRows] = useState<any[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [detail, setDetail] = useState<any>(null);
+  const [reply, setReply] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+
+  const loadRows = async () => {
+    setLoading(true);
+    try {
+      const r = await api<{ rows: any[] }>("/api/admin/tickets", { params: { status: "all" } });
+      setRows(r.rows || []);
+      if (!selectedId && r.rows?.[0]?.id) setSelectedId(r.rows[0].id);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to load tickets" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadRows(); }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancel = false;
+    const loadDetail = async () => {
+      try {
+        const r = await api<any>(`/api/admin/tickets/${selectedId}`);
+        if (!cancel) setDetail(r);
+      } catch (e: any) {
+        if (!cancel) push({ kind: "error", message: e?.message || "Failed to load ticket" });
+      }
+    };
+    loadDetail();
+    return () => { cancel = true; };
+  }, [selectedId]);
+
+  const refreshDetail = async () => {
+    if (!selectedId) return;
+    const r = await api<any>(`/api/admin/tickets/${selectedId}`);
+    setDetail(r);
+    await loadRows();
+  };
+
+  const sendReply = async () => {
+    if (!selectedId || !reply.trim()) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/reply`, { method: "POST", body: { message: reply.trim(), internal_only: false } });
+      setReply("");
+      await refreshDetail();
+      push({ kind: "success", message: "Reply sent" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to reply" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const closeTicket = async () => {
+    if (!selectedId) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/close`, { method: "POST", body: {} });
+      await refreshDetail();
+      push({ kind: "success", message: "Ticket closed" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to close ticket" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <EditableSection title="Support Tickets">
+      {loading ? (
+        <div className="flex flex-col gap-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
+      ) : rows.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No tickets found.</p>
+      ) : (
+        <div className="grid gap-4 xl:grid-cols-[360px_1fr]">
+          <div className="flex max-h-[650px] flex-col gap-2 overflow-auto pr-1">
+            {rows.map((ticket) => (
+              <button
+                key={ticket.id}
+                onClick={() => setSelectedId(ticket.id)}
+                className={`rounded-xl border p-4 text-left transition ${selectedId === ticket.id ? "border-orange-400/40 bg-orange-500/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono text-white/35">{ticket.ticket_number || ticket.id}</span>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/55">{ticket.status || "Open"}</span>
+                </div>
+                <p className="mt-2 line-clamp-1 text-sm font-semibold text-white">{ticket.subject}</p>
+                <p className="mt-1 line-clamp-1 text-xs text-white/40">{ticket.category} · {ticket.message_preview || "No preview"}</p>
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+            {detail?.ticket ? (
+              <div className="flex min-h-[580px] flex-col">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-4">
+                  <div>
+                    <p className="text-[11px] font-mono text-white/35">{detail.ticket.ticket_number || detail.ticket.id}</p>
+                    <h3 className="mt-1 font-serif text-xl text-white">{detail.ticket.subject}</h3>
+                    <p className="mt-1 text-xs text-white/45">{detail.ticket.category} · {detail.ticket.status}</p>
+                  </div>
+                  {String(detail.ticket.status).toLowerCase() !== "closed" && (
+                    <button onClick={closeTicket} disabled={sending} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs font-semibold text-red-300 disabled:opacity-60">Close</button>
+                  )}
+                </div>
+                <div className="mt-4 flex flex-1 flex-col gap-3 overflow-auto">
+                  {(detail.messages || []).map((message: any) => (
+                    <div key={message.id} className={`max-w-[88%] rounded-2xl border p-3 ${message.author_type === "admin" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-white/[0.03]"}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "admin" ? "Admin" : "Player"}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder="Reply to player..." className="min-w-0 flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-orange-400/50" />
+                  <button onClick={sendReply} disabled={sending || !reply.trim()} className="self-stretch rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 text-sm font-semibold text-white disabled:opacity-60">
+                    {sending ? "Sending..." : "Reply"}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-white/40">Select a ticket to read and reply.</p>
+            )}
+          </div>
+        </div>
+      )}
+    </EditableSection>
+  );
+}
+
 function CommentsAdmin() {
   const { push, confirm } = useToast();
   const [filter, setFilter] = useState<"pending" | "all">("pending");

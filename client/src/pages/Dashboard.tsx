@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -22,6 +22,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 
 const TABS = [
@@ -349,6 +350,48 @@ function Characters({
 }
 
 function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => void }) {
+  const [selectedId, setSelectedId] = useState(tickets[0]?.id || "");
+  const [detail, setDetail] = useState<any>(null);
+  const [reply, setReply] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    if (!selectedId && tickets[0]?.id) setSelectedId(tickets[0].id);
+  }, [tickets, selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancel = false;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const r = await api<any>(`/api/player/tickets/${selectedId}`);
+        if (!cancel) setDetail(r);
+      } catch {
+        if (!cancel) setDetail(null);
+      } finally {
+        if (!cancel) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancel = true; };
+  }, [selectedId]);
+
+  const submitReply = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!selectedId || !reply.trim()) return;
+    setSending(true);
+    try {
+      await api(`/api/player/tickets/${selectedId}/messages`, { method: "POST", body: { message: reply.trim() } });
+      setReply("");
+      const r = await api<any>(`/api/player/tickets/${selectedId}`);
+      setDetail(r);
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between">
@@ -361,16 +404,23 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
         </button>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {tickets.map((t) => (
-          <div
+      {tickets.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
+          No tickets yet. Open one and staff can reply here.
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[330px_1fr]">
+          <div className="flex flex-col gap-3">
+            {tickets.map((t) => (
+          <button
             key={t.id}
-            className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:flex-row sm:items-center sm:justify-between"
+            onClick={() => setSelectedId(t.id)}
+            className={`flex flex-col gap-3 rounded-2xl border p-5 text-left transition sm:flex-row sm:items-center sm:justify-between ${selectedId === t.id ? "border-orange-400/40 bg-orange-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/20"}`}
           >
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono text-white/40">{t.id}</span>
-                <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusColor[t.status]}`}>
+                <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusColor[t.status] || statusColor.Pending}`}>
                   {t.status}
                 </span>
               </div>
@@ -378,9 +428,41 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
               <p className="mt-0.5 text-xs text-white/40">{t.category} · Opened {t.createdAt}</p>
             </div>
             <p className="text-xs text-white/40">Last reply {t.lastReply}</p>
+          </button>
+            ))}
           </div>
-        ))}
-      </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            {loading ? (
+              <div className="flex items-center gap-2 text-sm text-white/50"><Loader2 size={16} className="animate-spin" /> Loading ticket...</div>
+            ) : detail?.ticket ? (
+              <div className="flex min-h-[420px] flex-col">
+                <div>
+                  <p className="text-xs font-mono text-white/35">{detail.ticket.ticket_number || detail.ticket.id}</p>
+                  <h4 className="mt-1 font-serif text-lg text-white">{detail.ticket.subject}</h4>
+                  <p className="mt-1 text-xs text-white/40">{detail.ticket.category} · {detail.ticket.status}</p>
+                </div>
+                <div className="mt-5 flex flex-1 flex-col gap-3">
+                  {(detail.messages || []).map((message: any) => (
+                    <div key={message.id} className={`max-w-[85%] rounded-2xl border p-3 ${message.author_type === "player" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-black/25"}`}>
+                      <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "player" ? "You" : "Staff"}</p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={submitReply} className="mt-5 flex gap-2">
+                  <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Message staff..." className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-orange-400/50" />
+                  <button disabled={sending || !reply.trim()} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                    {sending ? <Loader2 size={15} className="animate-spin" /> : null}
+                    Send
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <p className="text-sm text-white/40">Select a ticket to view the conversation.</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -395,16 +477,18 @@ function NewTicketModal({
   onCreate: (subject: string, category: string, message: string) => Promise<void>;
 }) {
   const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
   const [category, setCategory] = useState("General Support");
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!subject.trim()) return;
+    if (!subject.trim() || !message.trim()) return;
     setSubmitting(true);
     try {
-      await onCreate(subject, category, subject.trim().length >= 10 ? subject.trim() : `${subject.trim()} - opened from dashboard.`);
+      await onCreate(subject.trim(), category, message.trim());
       setSubject("");
+      setMessage("");
     } finally {
       setSubmitting(false);
     }
@@ -455,11 +539,23 @@ function NewTicketModal({
                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
                   Subject
                 </label>
-                <textarea
+                <input
                   required
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  rows={4}
+                  placeholder="Short title..."
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+                  Message
+                </label>
+                <textarea
+                  required
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows={5}
                   placeholder="Describe your issue..."
                   className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50"
                 />

@@ -77,6 +77,9 @@ export function parseQbcoreCharacter(row = {}) {
   const firstname = charinfo.firstname || "";
   const lastname = charinfo.lastname || "";
   const dirtyMoney = money.dirty || money.crypto || money.black_money || metadata.dirty_money || 0;
+  const inventory = safeJson(row.inventory, []);
+  const health = Number(metadata.health ?? metadata.hp ?? metadata.hunger_health ?? 100);
+  const armor = Number(metadata.armor ?? metadata.armour ?? 0);
 
   return {
     citizenid: valueOrUnknown(row.citizenid),
@@ -95,9 +98,11 @@ export function parseQbcoreCharacter(row = {}) {
     cash: Number(money.cash || 0),
     bank: Number(money.bank || 0),
     dirtyMoney: Number(dirtyMoney || 0),
+    health: Number.isFinite(health) ? health : 100,
+    armor: Number.isFinite(armor) ? armor : 0,
     warnings: metadata.warnings || metadata.warns || [],
     lastUpdated: row.last_updated || row.updated_at || row.last_login || null,
-    raw: { charinfo, money, job, gang, metadata }
+    raw: { charinfo, money, job, gang, metadata, inventory }
   };
 }
 
@@ -149,7 +154,7 @@ async function findPlayersByIdentifiers(identifiers = []) {
 
   if (!identifiers.length) return [];
   const columns = await getTableColumns("players");
-  const selectFields = ["citizenid", "cid", "license", "name", "money", "charinfo", "job", "gang", "metadata", "last_updated", "updated_at", "last_login"]
+  const selectFields = ["citizenid", "cid", "license", "name", "money", "charinfo", "job", "gang", "metadata", "inventory", "last_updated", "updated_at", "last_login"]
     .filter((field) => !columns || columns.has(field));
   const searchable = ["license", "license2", "name", "metadata", "citizenid", "steam", "steam_id", "discord", "discord_id", "fivem"]
     .filter((field) => !columns || columns.has(field));
@@ -230,9 +235,12 @@ export async function getCharactersForAccount(account) {
 
 export async function getCharacterStats(citizenid) {
   if (!citizenid) return null;
+  const columns = databaseEnabled ? await getTableColumns("players") : null;
+  const selectFields = ["citizenid", "cid", "license", "name", "money", "charinfo", "job", "gang", "metadata", "inventory", "last_updated", "updated_at", "last_login"]
+    .filter((field) => !columns || columns.has(field));
   const rows = databaseEnabled
     ? await query(
-        `SELECT citizenid, cid, license, name, money, charinfo, job, gang, metadata, last_updated, updated_at, last_login
+        `SELECT ${selectFields.join(", ")}
          FROM players WHERE citizenid = :citizenid LIMIT 1`,
         { citizenid }
       )
@@ -242,8 +250,55 @@ export async function getCharacterStats(citizenid) {
 
 export async function getPlayerVehicles(citizenid) {
   if (!citizenid || !databaseEnabled) return [];
-  const rows = await query("SELECT plate, vehicle, garage, state, mods FROM player_vehicles WHERE citizenid = :citizenid LIMIT 100", { citizenid });
-  return rows || [];
+  try {
+    const columns = await getTableColumns("player_vehicles");
+    const selectFields = ["plate", "vehicle", "hash", "garage", "state", "mods", "fuel", "engine", "body"].filter((field) => !columns || columns.has(field));
+    if (!selectFields.length) return [];
+    const rows = await query(`SELECT ${selectFields.join(", ")} FROM player_vehicles WHERE citizenid = :citizenid LIMIT 100`, { citizenid });
+    return rows || [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeInventoryItems(raw) {
+  const value = safeJson(raw, raw || []);
+  const items = Array.isArray(value) ? value : Object.values(value || {});
+  return items
+    .filter(Boolean)
+    .map((item) => ({
+      name: item.name || item.label || item.item || "Unknown item",
+      label: item.label || item.name || item.item || "Unknown item",
+      amount: Number(item.amount ?? item.count ?? item.quantity ?? 1),
+      slot: item.slot ?? null,
+      info: item.info || item.metadata || {}
+    }))
+    .filter((item) => item.name && item.amount > 0);
+}
+
+export async function getPlayerInventory(citizenid) {
+  if (!citizenid || !databaseEnabled) return [];
+  const player = await getCharacterStats(citizenid);
+  const embedded = normalizeInventoryItems(player?.raw?.inventory || []);
+  if (embedded.length) return embedded;
+
+  try {
+    const columns = await getTableColumns("player_inventory");
+    if (columns?.has("citizenid")) {
+      const rows = await query("SELECT * FROM player_inventory WHERE citizenid = :citizenid ORDER BY slot ASC LIMIT 250", { citizenid });
+      return normalizeInventoryItems(rows || []);
+    }
+  } catch {}
+
+  try {
+    const columns = await getTableColumns("ox_inventory");
+    if (columns?.has("name") && columns?.has("data")) {
+      const rows = await query("SELECT data FROM ox_inventory WHERE name = :citizenid LIMIT 1", { citizenid });
+      return normalizeInventoryItems(rows?.[0]?.data || []);
+    }
+  } catch {}
+
+  return [];
 }
 
 async function checkWebsiteBanTables(identifiers = []) {
