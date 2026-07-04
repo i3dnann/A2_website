@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { api, apiUrl, MOCK } from "../api/client";
 // Toast is not needed here
 
@@ -19,6 +19,8 @@ export type Character = {
   cash: number;
   bank: number;
   playtime: string;
+  health?: number;
+  citizenid?: string;
 };
 
 export type AppUser = {
@@ -120,6 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() => loadUser());
   const [loading, setLoading] = useState(!MOCK);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
 
   useEffect(() => {
     if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
@@ -141,6 +144,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
     ]);
   }, []);
+
+  useEffect(() => {
+    if (!user?.steamLinked) {
+      setCharacters([]);
+      return;
+    }
+
+    if (MOCK) {
+      setCharacters(MOCK_CHARACTERS);
+      return;
+    }
+
+    api<{ characters: any[] }>("/api/player/characters")
+      .then((r) => {
+        setCharacters((r.characters || []).map((character) => ({
+          id: character.citizenid,
+          citizenid: character.citizenid,
+          name: character.fullName || character.name || character.citizenid || "Unknown Character",
+          job: character.jobName || "Unknown",
+          grade: String(character.jobGrade || "Unknown"),
+          cash: Number(character.cash || 0),
+          bank: Number(character.bank || 0),
+          health: Number(character.raw?.metadata?.health || character.raw?.metadata?.hp || 100),
+          playtime: character.raw?.metadata?.playtime ? `${character.raw.metadata.playtime}h` : "N/A",
+        })));
+      })
+      .catch(() => setCharacters([]));
+  }, [user?.steamLinked]);
 
   const login: AuthContextType["login"] = async (email, password) => {
     setLoading(true);
@@ -247,7 +278,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
   };
 
-  const characters = useMemo(() => (user?.steamLinked ? MOCK_CHARACTERS : []), [user?.steamLinked]);
   const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";
 
   const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, createTicket };

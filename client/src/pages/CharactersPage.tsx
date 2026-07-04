@@ -27,6 +27,26 @@ type Character = {
   armor: number;
 };
 
+function mapCharacter(character: any): Character {
+  return {
+    citizenid: character.citizenid,
+    name: character.fullName || character.name || character.citizenid || "Unknown Character",
+    firstName: character.firstName || null,
+    lastName: character.lastName || null,
+    gender: character.gender || "Unknown",
+    birthdate: character.birthdate || null,
+    phone: character.phone || null,
+    job: character.jobName || "Unknown",
+    jobGrade: Number(character.raw?.job?.grade?.level || character.jobGrade || 0),
+    jobName: character.raw?.job?.name || character.jobName || null,
+    gang: character.gang === "None" ? null : character.gang || null,
+    cash: Number(character.cash || 0),
+    bank: Number(character.bank || 0),
+    health: Number(character.raw?.metadata?.health || character.raw?.metadata?.hp || 100),
+    armor: Number(character.raw?.metadata?.armor || 0),
+  };
+}
+
 export default function CharactersPage() {
   const { user } = useAuth();
   const { push } = useToast();
@@ -45,10 +65,10 @@ export default function CharactersPage() {
         return;
       }
       try {
-        const r = await api<{ data: Character[]; error?: string }>("/api/characters");
+        const r = await api<{ characters: any[]; message?: string }>("/api/player/characters");
         if (cancel) return;
-        if (r.error) push({ kind: "info", message: r.error });
-        setChars(r.data || []);
+        if (r.message) push({ kind: "info", message: r.message });
+        setChars((r.characters || []).map(mapCharacter));
       } catch (e: any) {
         push({ kind: "error", message: e?.message || "Failed" });
       } finally { if (!cancel) setLoading(false); }
@@ -60,9 +80,8 @@ export default function CharactersPage() {
   useEffect(() => {
     if (!selected) return;
     if (MOCK) { setInventory(DEMO_INV); setVehicles(DEMO_VEH); return; }
-    api<{ character: Character; inventory: any[]; vehicles: any[] }>(`/api/characters/${selected.citizenid}`)
-      .then((r) => { setInventory(r.inventory || []); setVehicles(r.vehicles || []); })
-      .catch((e: any) => push({ kind: "error", message: e?.message || "Failed" }));
+    setInventory([]);
+    setVehicles([]);
   }, [selected?.citizenid]);
 
   if (!user) {
