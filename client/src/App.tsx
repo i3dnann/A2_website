@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import AuthComplete from "./pages/AuthComplete";
 import Dashboard from "./pages/Dashboard";
 import AdminPanel from "./pages/AdminPanel";
 import ServerPage from "./pages/ServerPage";
@@ -31,7 +32,7 @@ function AppShell({ introDelay }: { introDelay: number }) {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [location.pathname]);
 
-  const showFooter = !["/login", "/register", "/dashboard", "/admin"].includes(location.pathname);
+  const showFooter = !["/login", "/register", "/auth/complete", "/dashboard", "/admin"].includes(location.pathname);
 
   return (
     <div className="relative min-h-screen text-white selection:bg-orange-500/40">
@@ -51,6 +52,7 @@ function AppShell({ introDelay }: { introDelay: number }) {
           <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/complete" element={<AuthComplete />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
         </Routes>

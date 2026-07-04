@@ -1,12 +1,37 @@
 /**
  * Central API client. Talks to the secure backend.
- * Set VITE_API_URL to your deployed backend (e.g. https://api.a2studio.gg).
+ * Set VITE_API_BASE_URL to your deployed backend (e.g. http://YOUR-VPS-IP:3001).
  * In mock mode (backend unreachable) we fall back to local context data.
  */
 import axios, { AxiosError } from "axios";
 
-export const API_URL = (import.meta.env.VITE_API_URL as string) || "";
-export const MOCK = !API_URL; // no backend configured → offline demo mode
+declare global {
+  interface Window {
+    __GOTHAM_API_BASE_URL__?: string;
+    __A2_API_BASE_URL__?: string;
+  }
+}
+
+function cleanBaseUrl(value?: string) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+const runtimeApiUrl =
+  typeof window !== "undefined"
+    ? cleanBaseUrl(window.__GOTHAM_API_BASE_URL__ || window.__A2_API_BASE_URL__)
+    : "";
+
+export const API_URL = cleanBaseUrl(
+  runtimeApiUrl ||
+    (import.meta.env.VITE_API_BASE_URL as string) ||
+    (import.meta.env.VITE_API_URL as string)
+);
+export const MOCK = !API_URL;
+
+export function apiUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+}
 
 const http = axios.create({
   baseURL: API_URL || undefined,

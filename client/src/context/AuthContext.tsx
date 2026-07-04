@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { api, MOCK } from "../api/client";
+import { api, apiUrl, MOCK } from "../api/client";
 // Toast is not needed here
 
 export type Ticket = {
@@ -22,6 +22,7 @@ export type Character = {
 };
 
 export type AppUser = {
+  id?: string;
   username: string;
   email: string;
   joinDate: string;
@@ -29,6 +30,8 @@ export type AppUser = {
   steamLinked: boolean;
   banned: boolean;
   role: "Citizen" | "Support" | "Moderator" | "Admin" | "Master Admin";
+  roles?: string[];
+  avatarUrl?: string;
 };
 
 type AuthContextType = {
@@ -40,6 +43,9 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (username: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
+  loginDiscord: () => void;
+  loginSteam: () => void;
+  completeOAuth: (token: string) => Promise<void>;
   linkDiscord: () => Promise<void>;
   linkSteam: () => Promise<void>;
   createTicket: (subject: string, category: string) => void;
@@ -53,6 +59,54 @@ const MOCK_CHARACTERS: Character[] = [
   { id: "c2", name: "Isabella Cruz", job: "Civilian", grade: "Entrepreneur", cash: 890, bank: 12750, playtime: "76h" },
 ];
 
+type ProviderRow = {
+  provider: string;
+  provider_user_id?: string;
+};
+
+type BackendUser = Partial<AppUser> & {
+  id?: string;
+  roles?: string[];
+  created_at?: string | null;
+  account_status?: string;
+  discord_id?: string;
+  steam_id?: string;
+  avatar_url?: string;
+};
+
+function roleFromBackend(raw: BackendUser): AppUser["role"] {
+  const roles = raw.roles || [];
+  if (roles.includes("Master Admin")) return "Master Admin";
+  if (roles.includes("Admin")) return "Admin";
+  if (roles.includes("Moderator")) return "Moderator";
+  if (roles.includes("Support")) return "Support";
+  if (raw.role) return raw.role;
+  return "Citizen";
+}
+
+function formatJoinDate(value?: string | null) {
+  if (!value) return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser {
+  const providerNames = new Set(providers.map((provider) => provider.provider));
+  return {
+    id: raw.id,
+    username: raw.username || raw.email || "Gotham Player",
+    email: raw.email || "",
+    joinDate: raw.joinDate || formatJoinDate(raw.created_at),
+    discordLinked: Boolean(raw.discordLinked || raw.discord_id || providerNames.has("discord")),
+    steamLinked: Boolean(raw.steamLinked || raw.steam_id || providerNames.has("steam")),
+    banned: Boolean(raw.banned || (raw.account_status && raw.account_status !== "active")),
+    role: roleFromBackend(raw),
+    roles: raw.roles || [roleFromBackend(raw)],
+    avatarUrl: raw.avatarUrl || raw.avatar_url || "",
+  };
+}
+
 function loadUser(): AppUser | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -64,7 +118,7 @@ function loadUser(): AppUser | null {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(() => loadUser());
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!MOCK);
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
   useEffect(() => {
@@ -72,12 +126,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem(STORAGE_KEY);
   }, [user]);
 
-  // Fetch user profile if we have a session
   useEffect(() => {
-    if (!user && !MOCK) {
-      api<{ user: AppUser }>("/api/auth/me")
-        .then((r) => setUser(r.user))
-        .catch(() => {});
+    if (!MOCK) {
+      setLoading(true);
+      api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me")
+        .then((r) => setUser(r.user ? normalizeUser(r.user, r.providers) : null))
+        .catch(() => setUser(null))
+        .finally(() => setLoading(false));
     }
     // Load tickets
     setTickets([
@@ -85,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
       { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
     ]);
-  }, [user]);
+  }, []);
 
   const login: AuthContextType["login"] = async (email, password) => {
     setLoading(true);
@@ -105,9 +160,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return { ok: true };
       }
-      const r = await api<{ token: string; user: AppUser }>("/api/auth/login", { method: "POST", body: { email, password } });
+      const r = await api<{ token: string; user: BackendUser }>("/api/auth/login", { method: "POST", body: { email, password } });
       localStorage.setItem("a2_token", r.token);
-      setUser(r.user);
+      setUser(normalizeUser(r.user));
       return { ok: true };
     } catch (e: any) {
       return { ok: false, error: e?.message || "Login failed" };
@@ -134,9 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return { ok: true };
       }
-      const r = await api<{ token: string; user: AppUser }>("/api/auth/register", { method: "POST", body: { username, email, password } });
+      const r = await api<{ token: string; user: BackendUser }>("/api/auth/register", { method: "POST", body: { username, email, password } });
       localStorage.setItem("a2_token", r.token);
-      setUser(r.user);
+      setUser(normalizeUser(r.user));
       return { ok: true };
     } catch (e: any) {
       return { ok: false, error: e?.message || "Registration failed" };
@@ -153,13 +208,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const completeOAuth = async (token: string) => {
+    localStorage.setItem("a2_token", token);
+    const r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me");
+    setUser(r.user ? normalizeUser(r.user, r.providers) : null);
+  };
+
+  const loginDiscord = () => {
+    window.location.href = MOCK ? "/login" : apiUrl("/api/auth/discord");
+  };
+
+  const loginSteam = () => {
+    window.location.href = MOCK ? "/login" : apiUrl("/api/auth/steam");
+  };
+
   const linkDiscord = async () => {
-    if (!MOCK) window.location.href = "/api/auth/discord";
+    if (!MOCK) {
+      const r = await api<{ url: string }>("/api/auth/discord/link-url");
+      window.location.href = r.url;
+      return;
+    }
     setUser((u) => (u ? { ...u, discordLinked: true } : u));
   };
 
   const linkSteam = async () => {
-    if (!MOCK) window.location.href = "/api/auth/steam";
+    if (!MOCK) {
+      const r = await api<{ url: string }>("/api/auth/steam/link-url");
+      window.location.href = r.url;
+      return;
+    }
     setUser((u) => (u ? { ...u, steamLinked: true } : u));
   };
 
@@ -173,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const characters = useMemo(() => (user?.steamLinked ? MOCK_CHARACTERS : []), [user?.steamLinked]);
   const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";
 
-  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, linkDiscord, linkSteam, createTicket };
+  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, createTicket };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

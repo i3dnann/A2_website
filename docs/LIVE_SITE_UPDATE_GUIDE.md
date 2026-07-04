@@ -1,6 +1,6 @@
 # Live Site Update Guide
 
-This guide updates the Netlify frontend, Windows VPS backend, MySQL tables, and the optional FiveM character-link bridge.
+This guide updates the frontend, Windows VPS backend, MySQL tables, Discord/Steam auth, and the optional FiveM character-link bridge.
 
 ## 1. Update the code on the Windows VPS
 
@@ -38,13 +38,13 @@ cd C:\A2_website
 notepad .env
 ```
 
-Make sure these values are correct:
+Make sure these values are correct. Replace `YOUR-VPS-IP` with your Windows VPS public IP or, preferably, your API domain:
 
 ```env
 PORT=3001
 NODE_ENV=production
-FRONTEND_URL=https://gmcity.netlify.app
-CORS_ALLOWED_ORIGINS=https://gmcity.netlify.app
+FRONTEND_URL=https://your-website-domain.com
+CORS_ALLOWED_ORIGINS=https://your-website-domain.com
 USE_DATABASE=true
 
 MYSQL_HOST=127.0.0.1
@@ -53,14 +53,40 @@ MYSQL_USER=root
 MYSQL_PASSWORD=YOUR_XAMPP_MYSQL_PASSWORD
 MYSQL_DATABASE=qbcore
 
-DISCORD_REDIRECT_URI=https://ancient-liver-drool.ngrok-free.dev/api/auth/discord/callback
-STEAM_REALM=https://ancient-liver-drool.ngrok-free.dev
-STEAM_RETURN_URL=https://ancient-liver-drool.ngrok-free.dev/api/auth/steam/callback
+DISCORD_CLIENT_ID=YOUR_DISCORD_CLIENT_ID
+DISCORD_CLIENT_SECRET=YOUR_DISCORD_CLIENT_SECRET
+DISCORD_REDIRECT_URI=http://YOUR-VPS-IP:3001/api/auth/discord/callback
+STEAM_REALM=http://YOUR-VPS-IP:3001
+STEAM_RETURN_URL=http://YOUR-VPS-IP:3001/api/auth/steam/callback
+COOKIE_SECURE=false
+COOKIE_SAME_SITE=lax
+```
+
+If you use plain `http://YOUR-VPS-IP:3001` instead of HTTPS, use:
+
+```env
+COOKIE_SECURE=false
+COOKIE_SAME_SITE=lax
+```
+
+If you put the API behind HTTPS, use:
+
+```env
 COOKIE_SECURE=true
 COOKIE_SAME_SITE=none
 ```
 
-## 4. Restart the backend
+## 4. Open the backend port on the Windows VPS
+
+Run PowerShell as Administrator on the VPS:
+
+```powershell
+New-NetFirewallRule -DisplayName "A2 Website API 3001" -Direction Inbound -Protocol TCP -LocalPort 3001 -Action Allow
+```
+
+If your VPS provider has a cloud firewall/security group, also allow inbound TCP `3001` there.
+
+## 5. Restart the backend
 
 If using PM2:
 
@@ -84,9 +110,16 @@ Invoke-RestMethod http://127.0.0.1:3001/health
 Invoke-RestMethod http://127.0.0.1:3001/api/auth/providers
 ```
 
-## 5. Start ngrok
+From your own PC, test the public VPS port:
 
-Open a second PowerShell window:
+```powershell
+Invoke-RestMethod http://YOUR-VPS-IP:3001/health
+Invoke-RestMethod http://YOUR-VPS-IP:3001/api/auth/providers
+```
+
+## 6. Optional: use ngrok instead of opening the VPS port
+
+Open a second PowerShell window on the VPS:
 
 ```powershell
 ngrok http 3001
@@ -105,17 +138,40 @@ https://ancient-liver-drool.ngrok-free.dev/health
 https://ancient-liver-drool.ngrok-free.dev/api/auth/providers
 ```
 
-## 6. Update Netlify
+## 7. Point the frontend to the VPS backend
 
-In Netlify site settings, set:
+If deploying with Netlify or another build host, set:
 
 ```env
-VITE_API_BASE_URL=https://ancient-liver-drool.ngrok-free.dev
+VITE_API_BASE_URL=http://YOUR-VPS-IP:3001
 ```
 
-Then go to **Deploys > Trigger deploy > Clear cache and deploy site**.
+Then rebuild/redeploy the frontend.
 
-## 7. Install the FiveM character-link resource
+If the frontend is already deployed, edit `client/public/a2-config.js` before building/deploying or on the hosted static files:
+
+```js
+window.__GOTHAM_API_BASE_URL__ = "http://YOUR-VPS-IP:3001";
+```
+
+## 8. Discord and Steam callback setup
+
+Discord Developer Portal:
+
+```text
+http://YOUR-VPS-IP:3001/api/auth/discord/callback
+```
+
+Steam OpenID uses:
+
+```text
+Realm: http://YOUR-VPS-IP:3001
+Return URL: http://YOUR-VPS-IP:3001/api/auth/steam/callback
+```
+
+Use the same HTTPS domain in all values if you put the API behind a domain/reverse proxy.
+
+## 9. Install the FiveM character-link resource
 
 Only do this if your account page says it cannot find your character.
 
@@ -141,7 +197,7 @@ ensure gmcity_website_bridge
 
 Restart the FiveM server, then join the server with your character once. The bridge writes your Steam/Discord/license/citizenid into `player_links`, and the website can show your own characters safely.
 
-## 8. Final checks
+## 10. Final checks
 
 Open:
 
