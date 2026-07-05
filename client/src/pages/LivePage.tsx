@@ -165,8 +165,10 @@ export default function LivePage() {
               {streamers.length === 0 && (
                 <p className="text-sm text-white/40">No streamers have been added yet.</p>
               )}
-              {streamers.map((s) => (
-                <a href={s.url || undefined} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
+              {streamers.map((s) => {
+                const streamUrl = s.url || (String(s.platform).toLowerCase() === "kick" ? `https://kick.com/${s.name}` : `https://twitch.tv/${s.name}`);
+                return (
+                <a href={streamUrl} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
                   <div>
                     <p className="font-serif text-sm text-white">{s.name}</p>
                     <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.live ? s.title : "Offline"}</p>
@@ -174,7 +176,7 @@ export default function LivePage() {
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.live ? "bg-red-600/90 text-white" : "bg-white/10 text-white/45"}`}>{s.live ? "Live" : "Offline"}</span>
                 </a>
-              ))}
+              )})}
             </div>
           </div>
         </div>

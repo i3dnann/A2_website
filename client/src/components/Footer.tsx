@@ -13,6 +13,13 @@ const FOOTER_LINKS = [
   { path: "/faq", label: "FAQ" },
 ];
 
+const SOCIAL_LINKS = [
+  { icon: Radio, label: "Live page" },
+  { icon: MessageCircle, label: "Discord" },
+  { icon: Globe, label: "Website" },
+  { icon: AtSign, label: "Contact" },
+];
+
 export default function Footer() {
   const { content } = useSite();
   return (
@@ -21,18 +28,18 @@ export default function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-3">
-              <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25" />
+              <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} loading="lazy" className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25" />
               <span className="font-serif text-lg tracking-[0.2em] text-white">{content.siteName}</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-white/50">An immersive CFW Roleplay community built for deep stories, serious roleplay, and a cinematic city experience.</p>
             <div className="mt-5 flex gap-3">
-              {[Radio, MessageCircle, Globe, AtSign].map((Icon, i) => (
-                <a key={i} href={content.discordLink || "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-orange-400/40 hover:text-orange-300"><Icon size={16} /></a>
+              {SOCIAL_LINKS.map(({ icon: Icon, label }) => (
+                <a key={label} aria-label={label} href={content.discordLink && content.discordLink !== "#" ? content.discordLink : "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-white/60 transition hover:border-orange-400/40 hover:text-orange-300"><Icon size={16} /></a>
               ))}
             </div>
           </div>
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-white/40">Navigate</h4>
+            <div className="text-xs font-semibold uppercase tracking-widest text-white/40">Navigate</div>
             <ul className="mt-4 flex flex-col gap-2.5">
               {FOOTER_LINKS.map((l) => (
                 <li key={l.path}><Link to={l.path} className="text-sm text-white/60 transition hover:text-white">{l.label}</Link></li>
@@ -40,7 +47,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-white/40">Resources</h4>
+            <div className="text-xs font-semibold uppercase tracking-widest text-white/40">Resources</div>
             <ul className="mt-4 flex flex-col gap-2.5 text-sm text-white/60">
               <li><Link to="/faq" className="transition hover:text-white">Rules</Link></li>
               <li><Link to="/dashboard" className="transition hover:text-white">Tickets</Link></li>
@@ -49,7 +56,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h4 className="text-xs font-semibold uppercase tracking-widest text-white/40">Stay Updated</h4>
+            <div className="text-xs font-semibold uppercase tracking-widest text-white/40">Stay Updated</div>
             <p className="mt-4 text-sm text-white/50">Get the latest news and event announcements from Gotham City.</p>
             <form className="mt-4 flex overflow-hidden rounded-xl border border-white/10 bg-white/5">
               <input type="email" placeholder="you@email.com" className="w-full bg-transparent px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:outline-none" />

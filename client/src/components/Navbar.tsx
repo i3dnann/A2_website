@@ -48,7 +48,7 @@ export default function Navbar() {
           }`}
         >
           <Link to="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3">
-            <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
+            <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
             <span className="font-serif text-base tracking-[0.2em] text-white sm:text-lg">
               {content.siteName}
             </span>
@@ -118,7 +118,7 @@ export default function Navbar() {
             </a>
           </div>
 
-          <button className="text-white xl:hidden" onClick={() => setOpen((o) => !o)}>
+          <button className="text-white xl:hidden" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>

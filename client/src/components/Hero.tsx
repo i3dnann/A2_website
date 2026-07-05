@@ -1,11 +1,16 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Copy, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSite } from "../context/SiteContext";
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
   const [display, setDisplay] = useState(0);
+  const reducedMotion = useReducedMotion();
   useEffect(() => {
+    if (reducedMotion || window.innerWidth < 768) {
+      setDisplay(value);
+      return;
+    }
     let raf: number;
     const duration = 1600;
     const start = performance.now();
@@ -17,7 +22,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [value]);
+  }, [reducedMotion, value]);
   return <span>{display.toLocaleString()}{suffix}</span>;
 }
 
@@ -33,7 +38,7 @@ export default function Hero() {
   return (
     <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 -z-10">
-        <img src="/images/gotham-banner.gif" alt="Gotham City animated banner" className="h-full w-full object-cover opacity-70" />
+        <img src="/images/gotham-banner-static.jpg" alt="Gotham City" className="h-full w-full object-cover opacity-70" fetchPriority="high" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(96,81,155,0.12),transparent_34rem)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/35 via-[#080808]/72 to-[#080808]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
@@ -42,48 +47,28 @@ export default function Hero() {
 
       <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
         <div>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-orange-200"
-          >
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-orange-200">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
             Server Online · CFW Roleplay
-          </motion.div>
+          </div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl"
-          >
+          <h1 className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
             {content.heroTitle1}
             <span className="block bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
               {content.heroTitle2}
             </span>
-          </motion.h1>
+          </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.35 }}
-            className="mt-6 max-w-xl text-base text-white/60 sm:text-lg"
-          >
+          <p className="mt-6 max-w-xl text-base text-white/60 sm:text-lg">
             {content.heroDescription}
-          </motion.p>
+          </p>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-9 flex flex-wrap items-center gap-4"
-          >
+          <div className="mt-9 flex flex-wrap items-center gap-4">
             <a
-              href={content.fivemLink || "#"}
+              href={content.fivemLink && content.fivemLink !== "#" ? content.fivemLink : "/server"}
               className="group inline-flex items-center gap-2 rounded-xl bg-[#60519b] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(96,81,155,0.35)] transition hover:-translate-y-0.5 hover:bg-[#7868b8] hover:shadow-[0_0_42px_rgba(96,81,155,0.65)]"
             >
               <PlayCircle size={18} /> Connect Now
@@ -96,14 +81,9 @@ export default function Hero() {
               <Copy size={16} />
               {copied ? "Copied!" : content.serverIp}
             </button>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.65 }}
-            className="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-4"
-          >
+          <div className="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-4">
             {content.stats.map((s) => (
               <div key={s.label}>
                 <div className="font-serif text-2xl text-white sm:text-3xl">
@@ -112,7 +92,7 @@ export default function Hero() {
                 <div className="mt-1 text-xs uppercase tracking-wider text-white/40">{s.label}</div>
               </div>
             ))}
-          </motion.div>
+          </div>
         </div>
 
         <motion.div
@@ -127,8 +107,9 @@ export default function Hero() {
             className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(96,81,155,0.16)] backdrop-blur"
           >
             <img
-              src="/images/gotham-emblem.gif"
+              src="/images/gotham-emblem-static.jpg"
               alt="Gotham City emblem"
+              loading="lazy"
               className="h-[520px] w-full rounded-2xl object-cover"
             />
             <div className="absolute inset-2 rounded-2xl bg-gradient-to-t from-black/70 via-transparent to-transparent" />

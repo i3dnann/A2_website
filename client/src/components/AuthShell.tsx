@@ -31,7 +31,7 @@ export default function AuthShell({
           className="relative hidden flex-col justify-between overflow-hidden p-10 lg:flex"
         >
           <img
-            src="/images/gotham-banner.gif"
+            src="/images/gotham-banner-static.jpg"
             alt={content.siteName}
             className="absolute inset-0 h-full w-full object-cover opacity-40"
           />
@@ -43,7 +43,7 @@ export default function AuthShell({
           />
 
           <Link to="/" className="relative z-10 flex items-center gap-3">
-            <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-10 w-10 rounded-full object-cover ring-1 ring-orange-400/30" />
+            <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-10 w-10 rounded-full object-cover ring-1 ring-orange-400/30" />
             <span className="font-serif text-lg tracking-[0.25em] text-white">
               {content.siteName}
             </span>
@@ -77,7 +77,7 @@ export default function AuthShell({
           className="flex flex-col justify-center bg-[#0a0a0a]/85 p-8 sm:p-12"
         >
           <Link to="/" className="mb-8 flex items-center gap-3 lg:hidden">
-            <img src="/images/gotham-emblem.gif" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/30" />
+            <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/30" />
             <span className="font-serif text-lg tracking-[0.25em] text-white">
                 {content.siteName}
             </span>

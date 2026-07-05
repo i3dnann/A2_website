@@ -51,8 +51,10 @@ export default function LiveStreams() {
           </div>
         </Reveal>
         <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {streamers.map((s) => (
-            <motion.a href={s.url || undefined} target="_blank" rel="noreferrer" key={s.name} variants={staggerItem} whileHover={{ y: -6 }} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          {streamers.map((s) => {
+            const streamUrl = s.url || (String(s.platform).toLowerCase() === "kick" ? `https://kick.com/${s.name}` : `https://twitch.tv/${s.name}`);
+            return (
+            <motion.a href={streamUrl} target="_blank" rel="noreferrer" key={s.name} variants={staggerItem} whileHover={{ y: -6 }} className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5">
               <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-orange-950 via-black to-orange-950">
                 <Radio className="text-white/20" size={36} />
                 <motion.span animate={s.live ? { opacity: [1, 0.5, 1] } : { opacity: 1 }} transition={{ duration: 1.6, repeat: s.live ? Infinity : 0 }} className={`absolute left-3 top-3 flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.live ? "bg-red-600 text-white" : "bg-black/60 text-white/50"}`}>
@@ -62,7 +64,7 @@ export default function LiveStreams() {
               </div>
               <div className="mt-4"><p className="font-serif text-base text-white">{s.name}</p><p className="mt-0.5 text-xs uppercase tracking-wider text-white/40">{s.platform} · {s.game}</p></div>
             </motion.a>
-          ))}
+          )})}
         </motion.div>
       </div>
     </section>

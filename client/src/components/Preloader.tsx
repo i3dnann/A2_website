@@ -18,7 +18,7 @@ export default function Preloader({ show }: { show: boolean }) {
             className="relative flex h-24 w-24 items-center justify-center rounded-2xl border border-orange-500/30 bg-orange-500/5 shadow-[0_0_60px_rgba(96,81,155,0.35)]"
           >
             <motion.img
-              src="/images/gotham-emblem.gif"
+              src="/images/gotham-emblem-static.jpg"
               alt="Gotham City"
               className="h-20 w-20 rounded-xl object-cover"
               animate={{ filter: ["drop-shadow(0 0 6px rgba(96,81,155,0.4))", "drop-shadow(0 0 18px rgba(96,81,155,0.9))", "drop-shadow(0 0 6px rgba(96,81,155,0.4))"] }}

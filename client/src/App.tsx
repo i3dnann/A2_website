@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import AnimatedBackground from "./components/AnimatedBackground";
 import BatSwingIntro from "./components/BatSwingIntro";
-import Preloader from "./components/Preloader";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -27,7 +26,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider } from "./context/SiteContext";
 import { ToastProvider } from "./components/Toast";
 
-function AppShell({ introDelay }: { introDelay: number }) {
+function AppShell() {
   const location = useLocation();
 
   useEffect(() => {
@@ -39,7 +38,7 @@ function AppShell({ introDelay }: { introDelay: number }) {
   return (
     <div className="relative min-h-screen text-white selection:bg-orange-500/40">
       <AnimatedBackground />
-      <BatSwingIntro replayKey={location.pathname} delay={introDelay} />
+      <BatSwingIntro replayKey={location.pathname} />
       <Navbar />
       <AnimatePresence mode="wait">
         <RouteErrorBoundary routeKey={location.pathname}>
@@ -68,20 +67,12 @@ function AppShell({ introDelay }: { introDelay: number }) {
 }
 
 export default function App() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(t);
-  }, []);
-
   return (
     <SiteProvider>
       <AuthProvider>
         <ToastProvider>
-          <Preloader show={loading} />
           <BrowserRouter>
-            <AppShell introDelay={loading ? 2.05 : 0} />
+            <AppShell />
           </BrowserRouter>
         </ToastProvider>
       </AuthProvider>

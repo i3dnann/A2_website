@@ -64,9 +64,9 @@ const DEFAULT_CONTENT: SiteContent = {
   heroDescription:
     "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
   serverIp: "connect play.gothamcityrp.gg",
-  discordLink: "#",
-  fivemLink: "#",
-  storeLink: "#",
+  discordLink: "/",
+  fivemLink: "/server",
+  storeLink: "/",
   stats: [
     { label: "Players", value: 300000, suffix: "+" },
     { label: "Creators", value: 100, suffix: "+" },
