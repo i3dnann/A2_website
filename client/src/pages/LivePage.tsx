@@ -146,17 +146,17 @@ export default function LivePage() {
               <Radio size={16} className="text-orange-300" />
             </div>
             <div className="mt-4 flex flex-col gap-3">
-              {streamers.filter((s) => s.live).length === 0 && (
-                <p className="text-sm text-white/40">No streamers are live right now.</p>
+              {streamers.length === 0 && (
+                <p className="text-sm text-white/40">No streamers have been added yet.</p>
               )}
-              {streamers.filter((s) => s.live).map((s) => (
+              {streamers.map((s) => (
                 <a href={s.url || undefined} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
                   <div>
                     <p className="font-serif text-sm text-white">{s.name}</p>
                     <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.game}</p>
                     <p className="mt-1 text-[11px] text-white/45">{Number(s.viewers || 0).toLocaleString()} viewers</p>
                   </div>
-                  <span className="rounded-full bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">● Live</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.live ? "bg-red-600/90 text-white" : "bg-white/10 text-white/45"}`}>{s.live ? "Live" : "Offline"}</span>
                 </a>
               ))}
             </div>
