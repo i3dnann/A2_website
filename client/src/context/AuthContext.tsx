@@ -269,7 +269,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const completeOAuth = async (token: string) => {
     localStorage.setItem("a2_token", token);
-    const r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me");
+    let r: { user: BackendUser | null; providers: ProviderRow[] };
+    try {
+      r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me");
+    } catch (error) {
+      localStorage.removeItem("a2_token");
+      throw error;
+    }
+    if (!r.user) {
+      localStorage.removeItem("a2_token");
+      throw new Error("The backend returned a login token but could not load your account. Check JWT_SECRET and restart PM2 with --update-env.");
+    }
     setUser(r.user ? normalizeUser(r.user, r.providers) : null);
   };
 

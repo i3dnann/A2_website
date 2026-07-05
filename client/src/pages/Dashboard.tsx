@@ -82,13 +82,23 @@ export default function Dashboard() {
 
   const onLinkDiscord = async () => {
     setLinkingDiscord(true);
-    await linkDiscord();
-    setLinkingDiscord(false);
+    try {
+      await linkDiscord();
+    } catch (error: any) {
+      window.alert(error?.message || "Could not start Discord link. Please try again.");
+    } finally {
+      setLinkingDiscord(false);
+    }
   };
   const onLinkSteam = async () => {
     setLinkingSteam(true);
-    await linkSteam();
-    setLinkingSteam(false);
+    try {
+      await linkSteam();
+    } catch (error: any) {
+      window.alert(error?.message || "Could not start Steam link. Please try again.");
+    } finally {
+      setLinkingSteam(false);
+    }
   };
 
   const openTickets = tickets.filter((t) => t.status !== "Closed").length;

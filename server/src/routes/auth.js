@@ -148,7 +148,10 @@ router.get(
   asyncHandler(async (req, res) => {
     const { code, state } = req.query;
     const oauthState = readState(state);
-    if (!code || !oauthState || oauthState.provider !== "discord") return oauthError(res, "invalid_oauth_state");
+    if (!code || !oauthState || oauthState.provider !== "discord") {
+      console.warn("[oauth] Invalid Discord state", { hasCode: Boolean(code), hasState: Boolean(state), provider: oauthState?.provider || null });
+      return oauthError(res, "invalid_oauth_state");
+    }
 
     const token = await exchangeDiscordCode(code);
     const [discordUser, roles] = await Promise.all([getDiscordUser(token.access_token), getDiscordMemberRoles(token.access_token)]);
@@ -215,9 +218,12 @@ router.get(
   authLimiter,
   asyncHandler(async (req, res) => {
     const oauthState = readState(req.query.state);
-    if (!oauthState || oauthState.provider !== "steam") return oauthError(res, "invalid_steam_state");
+    if (!oauthState || oauthState.provider !== "steam") {
+      console.warn("[oauth] Invalid Steam state", { hasState: Boolean(req.query.state), provider: oauthState?.provider || null });
+      return oauthError(res, "invalid_steam_state");
+    }
     const steamId = await verifySteamOpenId(req.query);
-    if (!steamId) return res.status(400).send("Steam OpenID verification failed.");
+    if (!steamId) return oauthError(res, "steam_verification_failed");
     const profile = { username: `Steam ${steamId}`, steam_id: steamId };
     await assertAccountNotBlocked({ provider: "steam", providerUserId: steamId, ipAddress: req.ip });
 

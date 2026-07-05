@@ -18,7 +18,8 @@ export default function AuthComplete() {
     if (oauthError) {
       const messages: Record<string, string> = {
         invalid_oauth_state: "Login session expired or was opened from an old link. Please start Discord login again.",
-        invalid_steam_state: "Steam login session expired or was opened from an old link. Please start Steam login again."
+        invalid_steam_state: "Steam login session expired or was opened from an old link. Please start Steam login again.",
+        steam_verification_failed: "Steam could not verify the login response. Please try again from the website."
       };
       setError(messages[oauthError] || "Could not finish login. Please try again.");
       return;
@@ -31,16 +32,22 @@ export default function AuthComplete() {
 
     completeOAuth(token)
       .then(() => navigate("/dashboard", { replace: true }))
-      .catch(() => setError("Could not finish login. Please try again."));
+      .catch((e) => setError(e?.message || "Could not finish login. Please try again."));
   }, [completeOAuth, navigate, params]);
 
   return (
     <AuthShell title="Finishing login" subtitle="Connecting your account to Gotham City.">
       <div className="flex min-h-40 flex-col items-center justify-center gap-4 text-center">
         {error ? (
-          <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {error}
-          </p>
+          <div className="flex flex-col items-center gap-3">
+            <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {error}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button onClick={() => navigate("/login")} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/75 hover:bg-white/5">Back to login</button>
+              <button onClick={() => navigate("/dashboard")} className="rounded-lg bg-[#60519b] px-4 py-2 text-sm font-semibold text-white">Back to dashboard</button>
+            </div>
+          </div>
         ) : (
           <>
             <Loader2 size={26} className="animate-spin text-orange-300" />
