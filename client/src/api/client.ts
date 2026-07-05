@@ -46,7 +46,7 @@ http.interceptors.request.use((config) => {
   return config;
 });
 
-export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PUT" | "DELETE"; body?: any; params?: Record<string, any> } = {}): Promise<T> {
+export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: any; params?: Record<string, any> } = {}): Promise<T> {
   try {
     const res = await http.request({ url: path, method: opts.method || "GET", data: opts.body, params: opts.params });
     return res.data as T;

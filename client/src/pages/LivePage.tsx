@@ -24,6 +24,8 @@ export default function LivePage() {
   const { content } = useSite();
   const [state, setState] = useState<LiveState | null>(MOCK ? DEMO : null);
   const [streamers, setStreamers] = useState<any[]>(content.streamers);
+  const [totalLiveViewers, setTotalLiveViewers] = useState(0);
+  const [totalLiveChannels, setTotalLiveChannels] = useState(0);
   const [connecting, setConnecting] = useState(true);
 
   useEffect(() => {
@@ -41,8 +43,11 @@ export default function LivePage() {
     let cancel = false;
     const loadStreamers = async () => {
       try {
-        const r = await api<{ streamers: any[] }>("/api/public/live");
-        if (!cancel) setStreamers((r.streamers || []).map((s) => ({
+        const r = await api<{ streamers: any[]; totalLiveViewers: number; totalLiveChannels: number }>("/api/public/live", { params: { refresh: 1 } });
+        if (cancel) return;
+        setTotalLiveViewers(Number(r.totalLiveViewers || 0));
+        setTotalLiveChannels(Number(r.totalLiveChannels || 0));
+        setStreamers((r.streamers || []).map((s) => ({
           name: s.display_name || s.name || s.kick_username || s.twitch_username,
           platform: s.kick_username ? "Kick" : "Twitch",
           viewers: Number(s.viewer_count || 0),
@@ -134,7 +139,10 @@ export default function LivePage() {
         <div className="flex flex-col gap-5">
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-base text-white">Live Streamers</h3>
+              <div>
+                <h3 className="font-serif text-base text-white">Live Streamers</h3>
+                <p className="mt-1 text-xs text-white/40">{totalLiveViewers.toLocaleString()} total viewers · {totalLiveChannels} live</p>
+              </div>
               <Radio size={16} className="text-orange-300" />
             </div>
             <div className="mt-4 flex flex-col gap-3">
@@ -146,6 +154,7 @@ export default function LivePage() {
                   <div>
                     <p className="font-serif text-sm text-white">{s.name}</p>
                     <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.game}</p>
+                    <p className="mt-1 text-[11px] text-white/45">{Number(s.viewers || 0).toLocaleString()} viewers</p>
                   </div>
                   <span className="rounded-full bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">● Live</span>
                 </a>

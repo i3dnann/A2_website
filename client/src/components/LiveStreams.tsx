@@ -8,14 +8,19 @@ import { Reveal, staggerContainer, staggerItem } from "./Reveal";
 export default function LiveStreams() {
   const { content } = useSite();
   const [streamers, setStreamers] = useState<any[]>(content.streamers);
+  const [totalLiveViewers, setTotalLiveViewers] = useState(0);
+  const [totalLiveChannels, setTotalLiveChannels] = useState(0);
 
   useEffect(() => {
     if (MOCK) return;
     let cancel = false;
     const load = async () => {
       try {
-        const r = await api<{ streamers: any[] }>("/api/public/live");
-        if (!cancel) setStreamers((r.streamers || []).map((s) => ({
+        const r = await api<{ streamers: any[]; totalLiveViewers: number; totalLiveChannels: number }>("/api/public/live", { params: { refresh: 1 } });
+        if (cancel) return;
+        setTotalLiveViewers(Number(r.totalLiveViewers || 0));
+        setTotalLiveChannels(Number(r.totalLiveChannels || 0));
+        setStreamers((r.streamers || []).map((s) => ({
           name: s.display_name || s.name || s.kick_username || s.twitch_username,
           platform: s.kick_username ? "Kick" : "Twitch",
           viewers: Number(s.viewer_count || 0),
@@ -37,6 +42,13 @@ export default function LiveStreams() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.streamsSubtitle}</p>
           <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.streamsTitle}</h2>
           <p className="mt-4 text-white/55">{content.streamsDesc}</p>
+          <div className="mt-5 inline-flex flex-wrap items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white/60">
+            <span className="text-orange-200">{totalLiveViewers.toLocaleString()}</span>
+            Total Live Viewers
+            <span className="h-1 w-1 rounded-full bg-white/25" />
+            <span className="text-orange-200">{totalLiveChannels}</span>
+            Live Channels
+          </div>
         </Reveal>
         <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {streamers.map((s) => (

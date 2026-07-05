@@ -3,7 +3,7 @@ import { PUBLIC_COLLECTIONS, RESOURCE_MAP } from "../data/catalog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { getResource, getSettings, listResource } from "../services/repository.js";
 import { listGalleryPhotos } from "../services/galleryService.js";
-import { withLiveStatus } from "../services/streamerService.js";
+import { checkAllStreamers, withLiveStatus } from "../services/streamerService.js";
 
 const router = Router();
 
@@ -58,6 +58,7 @@ router.get("/home", asyncHandler(async (_req, res) => {
 router.get("/live", asyncHandler(async (req, res) => {
   const settings = await getSettings();
   if (!settings.livePageEnabled) return res.status(404).json({ error: "live_page_disabled" });
+  if (req.query.refresh === "1") await checkAllStreamers();
   const { q = "", platform = "" } = req.query;
   const { rows } = await listResource("streamers", { q, limit: 100, publicOnly: true });
   let streamers = await withLiveStatus(rows);
