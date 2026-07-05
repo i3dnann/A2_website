@@ -974,6 +974,11 @@ function PartnersAdmin() {
       setRows((current) => current.filter((item) => item !== row));
       push({ kind: "success", message: "Partner removed" });
     } catch (e: any) {
+      if (String(e?.message || "").toLowerCase().includes("not found")) {
+        setRows((current) => current.filter((item) => item !== row));
+        push({ kind: "success", message: "Stale partner removed from the list" });
+        return;
+      }
       push({ kind: "error", message: e?.message || "Failed to remove partner" });
     }
   };

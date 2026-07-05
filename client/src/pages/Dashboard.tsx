@@ -458,9 +458,11 @@ function Characters({
 }
 
 function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => void }) {
+  const { push } = useToast();
   const [selectedId, setSelectedId] = useState(tickets[0]?.id || "");
   const [detail, setDetail] = useState<any>(null);
   const [reply, setReply] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -473,11 +475,15 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
     let cancel = false;
     const load = async () => {
       setLoading(true);
+      setError("");
       try {
         const r = await api<any>(`/api/player/tickets/${selectedId}`);
         if (!cancel) setDetail(r);
-      } catch {
-        if (!cancel) setDetail(null);
+      } catch (e: any) {
+        if (!cancel) {
+          setDetail(null);
+          setError(e?.message || "Could not load ticket.");
+        }
       } finally {
         if (!cancel) setLoading(false);
       }
@@ -495,6 +501,10 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
       setReply("");
       const r = await api<any>(`/api/player/tickets/${selectedId}`);
       setDetail(r);
+      push({ kind: "success", message: "Reply sent" });
+    } catch (e: any) {
+      setError(e?.message || "Could not send reply.");
+      push({ kind: "error", message: e?.message || "Could not send reply." });
     } finally {
       setSending(false);
     }
@@ -566,7 +576,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
                 </form>
               </div>
             ) : (
-              <p className="text-sm text-white/40">Select a ticket to view the conversation.</p>
+              <p className="text-sm text-white/40">{error || "Select a ticket to view the conversation."}</p>
             )}
           </div>
         </div>

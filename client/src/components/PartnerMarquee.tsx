@@ -62,7 +62,9 @@ export default function PartnerMarquee() {
   }, []);
 
   const rows = useMemo(() => {
-    const source = partners;
+    const source = partners.length >= 4
+      ? partners
+      : Array.from({ length: Math.max(8, partners.length * 8) }, (_, index) => partners[index % partners.length]).filter(Boolean);
     return [source, [...source].reverse()];
   }, [partners]);
 
@@ -79,7 +81,7 @@ export default function PartnerMarquee() {
         {rows.map((row, index) => (
           <div key={index} className="partner-marquee-track overflow-hidden">
             <div className={`partner-marquee-row ${index === 1 ? "partner-marquee-row-reverse" : ""}`}>
-              {[...row, ...row, ...row].map((partner, itemIndex) => (
+              {[...row, ...row, ...row, ...row].map((partner, itemIndex) => (
                 <PartnerCard key={`${partner.id}-${index}-${itemIndex}`} partner={partner} />
               ))}
             </div>

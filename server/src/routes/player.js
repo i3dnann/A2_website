@@ -22,9 +22,21 @@ const ticketReplySchema = z.object({
   message: z.string().min(1).max(5000)
 });
 
-async function ownedApplications(userId) {
-  const { rows } = await listResource("careerApplications", { q: userId, limit: 100 });
-  const applications = rows.filter((application) => String(application.user_id) === String(userId));
+async function ownedApplications(user) {
+  const searches = [user?.id, user?.discord_id, user?.steam_id, ""].filter((value, index, list) => value !== undefined && list.indexOf(value) === index);
+  const bucket = new Map();
+  for (const value of searches) {
+    const { rows } = await listResource("careerApplications", { q: String(value || ""), limit: 100 });
+    rows
+      .filter((application) => (
+        String(application.user_id || "") === String(user?.id || "") ||
+        String(application.created_by || "") === String(user?.id || "") ||
+        (user?.discord_id && String(application.discord_id || "") === String(user.discord_id)) ||
+        (user?.steam_id && String(application.steam_id || "") === String(user.steam_id))
+      ))
+      .forEach((application) => bucket.set(String(application.id), application));
+  }
+  const applications = [...bucket.values()];
   const enriched = [];
   for (const application of applications) {
     const [job, notes] = await Promise.all([
@@ -44,7 +56,7 @@ async function accountPayload(req) {
   const characterResult = await getCharactersForAccount(req.user);
   const banStatus = await getBanStatus(characterResult.identifiers || identifiersForAccount(req.user));
   const tickets = await listOwnedTickets(req.user);
-  const applications = await ownedApplications(req.user.id);
+  const applications = await ownedApplications(req.user);
   return {
     user: req.user,
     providers: {
@@ -190,7 +202,7 @@ router.post(
 router.get(
   "/career-applications",
   asyncHandler(async (req, res) => {
-    res.json({ applications: await ownedApplications(req.user.id) });
+    res.json({ applications: await ownedApplications(req.user) });
   })
 );
 

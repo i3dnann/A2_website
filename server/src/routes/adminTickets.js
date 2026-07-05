@@ -43,7 +43,7 @@ router.get("/tickets/:id", requirePermission("manage_tickets"), asyncHandler(asy
   const ticket = await getResource("tickets", req.params.id);
   if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
   const player = await playerFor(ticket);
-  const [messages, notes] = await Promise.all([
+  const [messages, notes, participants] = await Promise.all([
     listResource("ticketMessages", { q: ticket.id, limit: 100 }),
     listResource("ticketNotes", { q: ticket.id, limit: 100 }),
     listResource("ticketParticipants", { q: ticket.id, limit: 100 }).catch(() => ({ rows: [] }))
