@@ -672,7 +672,7 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
     setSaving(true);
     try {
       if (MOCK) { await new Promise((r) => setTimeout(r, 500)); push({ kind: "success", message: "Saved (demo)" }); onSaved(); return; }
-      if (post.id) await api(`/api/admin/news/${post.id}`, { method: "PUT", body: form });
+      if (post.id) await api(`/api/admin/news/${post.id}`, { method: "PATCH", body: form });
       else await api("/api/admin/news", { method: "POST", body: form });
       push({ kind: "success", message: "Post saved" });
       onSaved();

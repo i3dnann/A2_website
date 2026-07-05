@@ -104,7 +104,7 @@ export default function LivePage() {
                 {online ? "Server Online" : "Server Offline"}
               </div>
               <h3 className="mt-3 font-serif text-2xl text-white sm:text-3xl">Gotham City</h3>
-              <p className="mt-1 text-sm text-white/55">Gotham City - QBCore Roleplay</p>
+              <p className="mt-1 text-sm text-white/55">Gotham City - CFW Roleplay</p>
             </div>
             <div className="text-right">
               <div className="flex items-center gap-2 justify-end text-xs text-white/40">

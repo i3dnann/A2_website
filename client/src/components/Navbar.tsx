@@ -108,7 +108,9 @@ export default function Navbar() {
               </Link>
             )}
             <a
-              href="#"
+              href={content.discordLink || "/"}
+              target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
+              rel="noreferrer"
               className="group relative overflow-hidden rounded-xl bg-[#60519b] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)]"
             >
               <span className="relative z-10 whitespace-nowrap">Join Discord</span>
@@ -158,7 +160,7 @@ export default function Navbar() {
                     Login
                   </Link>
                 )}
-                <a href="#" className="mt-2 rounded-lg bg-[#60519b] px-4 py-3 text-center text-sm font-semibold text-white">
+                <a href={content.discordLink || "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="mt-2 rounded-lg bg-[#60519b] px-4 py-3 text-center text-sm font-semibold text-white">
                   Join Discord
                 </a>
               </div>

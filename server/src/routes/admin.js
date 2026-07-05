@@ -254,6 +254,43 @@ router.post("/streamers/:id/check", requirePermission("manage_live"), asyncHandl
   res.json({ statuses });
 }));
 
+function commentStatus(row) {
+  return String(row?.status || (Number(row?.approved || 0) === 1 ? "approved" : "pending")).toLowerCase();
+}
+
+router.get("/comments", requirePermission("manage_news"), asyncHandler(async (req, res) => {
+  const status = String(req.query.status || "pending").toLowerCase();
+  const { rows } = await listResource("newsComments", { q: req.query.q || "", limit: 200 });
+  const filtered = rows
+    .filter((comment) => status === "all" || commentStatus(comment) === status)
+    .map((comment) => ({
+      ...comment,
+      approved: commentStatus(comment) === "approved" ? 1 : commentStatus(comment) === "rejected" ? -1 : 0
+    }));
+  res.json({ data: filtered });
+}));
+
+router.post("/comments/:id/approve", requirePermission("manage_news"), asyncHandler(async (req, res) => {
+  const result = await updateResource("newsComments", req.params.id, { status: "approved", approved: 1, is_hidden: 0 }, req.user);
+  if (!result) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
+  await auditAction({ req, action: "approve_comment", targetType: "news_comments", targetId: req.params.id, before: result.before, after: result.after, reason: "comment approved", webhookCategory: "admin" });
+  res.json({ comment: result.after });
+}));
+
+router.post("/comments/:id/reject", requirePermission("manage_news"), asyncHandler(async (req, res) => {
+  const result = await updateResource("newsComments", req.params.id, { status: "rejected", approved: -1, is_hidden: 1 }, req.user);
+  if (!result) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
+  await auditAction({ req, action: "reject_comment", targetType: "news_comments", targetId: req.params.id, before: result.before, after: result.after, reason: "comment rejected", webhookCategory: "admin" });
+  res.json({ comment: result.after });
+}));
+
+router.delete("/comments/:id", requirePermission("manage_news"), asyncHandler(async (req, res) => {
+  const before = await deleteResource("newsComments", req.params.id, req.user);
+  if (!before) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
+  await auditAction({ req, action: "delete_comment", targetType: "news_comments", targetId: req.params.id, before, reason: "comment deleted", webhookCategory: "admin" });
+  res.json({ ok: true });
+}));
+
 router.post(
   "/tickets/:id/reply",
   requirePermission("manage_tickets"),

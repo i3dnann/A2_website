@@ -33,8 +33,8 @@ export const STATS = [
 export const FEATURES = [
   {
     icon: ShieldHalf,
-    title: "Deep QBCore Framework",
-    desc: "A heavily customized QBCore core with balanced economy, whitelisted jobs, and stable performance built for long-term roleplay.",
+    title: "Deep CFW Framework",
+    desc: "A heavily customized CFW core with balanced economy, whitelisted jobs, and stable performance built for long-term roleplay.",
   },
   {
     icon: Car,
@@ -83,7 +83,7 @@ export const JOURNEY = [
   { year: "2022", title: "Founded", desc: "Gotham City launched with a small dedicated community and a vision for premium roleplay." },
   { year: "2023", title: "Gotham City Map", desc: "Released our fully custom Gotham-inspired city map, replacing the base map entirely." },
   { year: "2024", title: "10,000 Members", desc: "Our Discord community crossed 10,000 members with daily active roleplay sessions." },
-  { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our QBCore core for stability, launching dozens of exclusive scripts." },
+  { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our CFW core for stability, launching dozens of exclusive scripts." },
   { year: "2026", title: "New Horizons", desc: "Expanding departments, new districts, and a brand new player experience." },
 ];
 
@@ -140,7 +140,7 @@ export const FAQS = [
   },
   {
     q: "What framework do you use?",
-    a: "We run a heavily customized QBCore framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts.",
+    a: "We run a heavily customized CFW framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts.",
   },
   {
     q: "How do I report a rule breaker or open a ticket?",

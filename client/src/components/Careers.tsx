@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Briefcase } from "lucide-react";
 import { useSite } from "../context/SiteContext";
@@ -13,7 +14,7 @@ export default function Careers() {
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.careersSubtitle}</p>
             <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.careersTitle}</h2>
             <p className="mt-4 max-w-sm text-white/55">{content.careersDesc}</p>
-            <a href="#" className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-orange-400/40 hover:bg-white/10">View Careers Portal <ArrowRight size={16} /></a>
+            <Link to="/careers" className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-orange-400/40 hover:bg-white/10">View Careers Portal <ArrowRight size={16} /></Link>
           </Reveal>
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="flex flex-col gap-4">
             {content.careers.map((c) => (

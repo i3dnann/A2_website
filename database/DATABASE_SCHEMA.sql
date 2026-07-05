@@ -740,6 +740,27 @@ CREATE TABLE IF NOT EXISTS news_articles (
   INDEX idx_news_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS news_comments (
+  id VARCHAR(64) PRIMARY KEY,
+  news_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64),
+  author_name VARCHAR(120),
+  body TEXT,
+  status VARCHAR(40) DEFAULT 'pending',
+  approved TINYINT DEFAULT 0,
+  is_hidden TINYINT(1) DEFAULT 0,
+  sort_order INT DEFAULT 9999,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_news_comments_news (news_id),
+  INDEX idx_news_comments_status (status),
+  INDEX idx_news_comments_user (user_id),
+  INDEX idx_news_comments_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS map_zones (
   id VARCHAR(64) PRIMARY KEY,
   zone_name VARCHAR(160),

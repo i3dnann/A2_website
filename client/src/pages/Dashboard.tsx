@@ -277,7 +277,7 @@ function Characters({
         <Gamepad2 className="text-white/20" size={40} />
         <h3 className="mt-4 font-serif text-xl text-white">Link Steam to view characters</h3>
         <p className="mt-2 max-w-sm text-sm text-white/50">
-          Connect your Steam account to sync your in-game QBCore characters, job,
+          Connect your Steam account to sync your in-game CFW characters, job,
           and balances directly to your dashboard.
         </p>
         <button
@@ -604,7 +604,7 @@ function LinkedAccounts({
       />
       <ProviderCard
         name="Steam"
-        desc="Required to sync your in-game QBCore characters and playtime."
+        desc="Required to sync your in-game CFW characters and playtime."
         linked={steamLinked}
         onLink={onLinkSteam}
         linking={linkingSteam}

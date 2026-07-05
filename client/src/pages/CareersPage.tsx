@@ -16,13 +16,13 @@ export default function CareersPage() {
         >
           <p className="max-w-sm text-white/55">{content.careersDesc}</p>
           <a
-            href="#"
+            href="#positions"
             className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-orange-400/40 hover:bg-white/10"
           >
             View Careers Portal <ArrowRight size={16} />
           </a>
         </motion.div>
-        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="flex flex-col gap-4">
+        <motion.div id="positions" variants={staggerContainer} initial="hidden" animate="show" className="flex flex-col gap-4">
           {content.careers.map((c) => (
             <motion.div
               key={c.role}

@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS = {
   heroTitle: "A2 Studio Roleplay",
   heroSubtitle: "Premium FiveM community",
   heroDescription:
-    "A serious, story-driven QBCore roleplay community with creator rosters, live streams, events, support, careers, and player account tools.",
+    "A serious, story-driven CFW roleplay community with creator rosters, live streams, events, support, careers, and player account tools.",
   heroBackgroundImage: "/assets/gotham-banner.gif",
   heroBackgroundVideo: "",
   heroOverlayOpacity: 78,
@@ -235,6 +235,15 @@ export const RESOURCE_DEFINITIONS = [
     fields: ["name", "slug", "description", "sort_order", "is_visible"]
   },
   {
+    key: "newsComments",
+    table: "news_comments",
+    label: "News Comments",
+    public: false,
+    permission: "manage_news",
+    searchFields: ["news_id", "author_name", "body", "status", "user_id"],
+    fields: ["news_id", "user_id", "author_name", "body", "status", "approved", "is_hidden", "sort_order"]
+  },
+  {
     key: "mapZones",
     table: "map_zones",
     label: "Map Zones",
@@ -407,6 +416,7 @@ export const SEED_DATA = {
   newsCategories: [
     { id: "news-cat-community", name: "Community", slug: "community", description: "Community updates.", sort_order: 1, is_visible: true }
   ],
+  newsComments: [],
   mapZones: [
     { id: "zone-safe-legion", zone_name: "Legion Square", zone_type: "Safe zone", description: "Public meet-up and safe roleplay space.", image_url: "", position_x: 48, position_y: 52, fivem_x: 215.8, fivem_y: -810.1, fivem_z: 30.7, radius: 80, color: "#35ff6b", icon: "shield", sort_order: 1, is_visible: true },
     { id: "zone-danger-docks", zone_name: "Docks", zone_type: "Dangerous zone", description: "High-risk industrial area.", image_url: "", position_x: 74, position_y: 68, fivem_x: 915.5, fivem_y: -2910.1, fivem_z: 5.9, radius: 140, color: "#ff3333", icon: "alert-triangle", sort_order: 2, is_visible: true }

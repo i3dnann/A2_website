@@ -22,6 +22,7 @@ import NewsPage from "./pages/NewsPage";
 import CareersPage from "./pages/CareersPage";
 import FaqPage from "./pages/FaqPage";
 import CharactersPage from "./pages/CharactersPage";
+import TermsPage from "./pages/TermsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider } from "./context/SiteContext";
 import { ToastProvider } from "./components/Toast";
@@ -51,6 +52,7 @@ function AppShell({ introDelay }: { introDelay: number }) {
             <Route path="/news" element={<NewsPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/faq" element={<FaqPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, LifeBuoy, MessageCircle } from "lucide-react";
 import { useSite } from "../context/SiteContext";
@@ -18,8 +19,8 @@ export default function CtaSection() {
               <h2 className="max-w-2xl font-serif text-3xl text-white sm:text-4xl">{content.ctaTitle}</h2>
               <p className="max-w-xl text-white/70">{content.ctaDesc}</p>
               <div className="flex flex-wrap items-center justify-center gap-4">
-                <a href="#" className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90">Create Account <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></a>
-                <a href="#" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"><MessageCircle size={16} /> Join Discord</a>
+                <Link to="/register" className="group inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-white/90">Create Account <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" /></Link>
+                <a href={content.discordLink || "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/10"><MessageCircle size={16} /> Join Discord</a>
               </div>
             </div>
           </div>

@@ -78,7 +78,7 @@ const DEFAULT_CONTENT: SiteContent = {
   featuresDesc:
     "Every system on our server is designed with immersion, balance, and longevity in mind — so your story never runs out of places to go.",
   features: [
-    { icon: "ShieldHalf", title: "Deep QBCore Framework", desc: "A heavily customized QBCore core with balanced economy, whitelisted jobs, and stable performance built for long-term roleplay." },
+    { icon: "ShieldHalf", title: "Deep CFW Framework", desc: "A heavily customized CFW core with balanced economy, whitelisted jobs, and stable performance built for long-term roleplay." },
     { icon: "Car", title: "Custom Vehicles & Handling", desc: "Hundreds of hand-tuned vehicles with realistic handling, dealerships, and a full import/export underground scene." },
     { icon: "Landmark", title: "Gotham City Map", desc: "A fully reworked Gotham-inspired cityscape — gothic districts, docks, back alleys, and a living, breathing metropolis." },
     { icon: "Gavel", title: "Realistic Law & Order", desc: "Structured PD, EMS, and judicial systems with trained staff running immersive, fair, and consistent scenarios." },
@@ -111,7 +111,7 @@ const DEFAULT_CONTENT: SiteContent = {
     { year: "2022", title: "Founded", desc: "Gotham City launched with a dedicated community and a vision for premium roleplay." },
     { year: "2023", title: "Gotham City Map", desc: "Released our fully custom Gotham-inspired city map, replacing the base map entirely." },
     { year: "2024", title: "10,000 Members", desc: "Our Discord community crossed 10,000 members with daily active roleplay sessions." },
-    { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our QBCore core for stability, launching dozens of exclusive scripts." },
+    { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our CFW core for stability, launching dozens of exclusive scripts." },
     { year: "2026", title: "New Horizons", desc: "Expanding departments, new districts, and a brand new player experience." },
   ],
   famousTitle: "Famous Characters",
@@ -145,7 +145,7 @@ const DEFAULT_CONTENT: SiteContent = {
   faqs: [
     { q: "How do I join the Gotham City server?", a: "Join our Discord, verify your account, link Steam, and use the connect button on our home page or the F8 console with our server IP." },
     { q: "Is whitelisting required to play?", a: "General roleplay is open to all verified members. Specific departments like PD, EMS, and Government require an application and interview." },
-    { q: "What framework do you use?", a: "We run a heavily customized QBCore framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts." },
+    { q: "What framework do you use?", a: "We run a heavily customized CFW framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts." },
     { q: "How do I report a rule breaker or open a ticket?", a: "Use the Tickets section on our dashboard after logging in, or open a support ticket directly inside our Discord server." },
     { q: "Can I apply for staff or a whitelisted job?", a: "Yes — check the Careers section for open positions and submit an application through our careers portal." },
   ],
