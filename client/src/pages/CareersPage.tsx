@@ -1,11 +1,68 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Briefcase } from "lucide-react";
+import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { api, MOCK } from "../api/client";
 import { useSite } from "../context/SiteContext";
 import PageShell from "../components/PageShell";
 import { staggerContainer, staggerItem } from "../components/Reveal";
 
+type CareerRow = {
+  id: string;
+  title?: string;
+  role?: string;
+  department?: string;
+  dept?: string;
+  description?: string;
+  requirements?: string;
+  is_open?: boolean | number;
+  is_visible?: boolean | number;
+};
+
+function normalizeLocalCareers(rows: any[]): CareerRow[] {
+  return rows.map((row, index) => ({
+    id: row.id || `local-${index}`,
+    title: row.title || row.role,
+    department: row.department || row.dept,
+    description: row.description || row.desc || "",
+    requirements: row.requirements || row.type || "Application",
+    is_open: true,
+    is_visible: true,
+  }));
+}
+
+function isOpen(row: CareerRow) {
+  return row.is_open !== false && row.is_open !== 0 && row.is_visible !== false && row.is_visible !== 0;
+}
+
 export default function CareersPage() {
   const { content } = useSite();
+  const [careers, setCareers] = useState<CareerRow[]>(() => normalizeLocalCareers(content.careers || []));
+  const [loading, setLoading] = useState(!MOCK);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (MOCK) return;
+    let cancel = false;
+    const load = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const result = await api<{ rows: CareerRow[] }>("/api/public/careers", { params: { limit: 100 } });
+        if (!cancel) setCareers(result.rows || []);
+      } catch (e: any) {
+        if (!cancel) {
+          setError(e?.message || "Could not load careers.");
+          setCareers(normalizeLocalCareers(content.careers || []));
+        }
+      } finally {
+        if (!cancel) setLoading(false);
+      }
+    };
+    load();
+    return () => { cancel = true; };
+  }, [content.careers]);
+
   return (
     <PageShell subtitle={content.careersSubtitle} title={content.careersTitle}>
       <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
@@ -21,27 +78,48 @@ export default function CareersPage() {
           >
             View Careers Portal <ArrowRight size={16} />
           </a>
+          {error && <p className="mt-4 text-sm text-orange-200">{error}</p>}
         </motion.div>
         <motion.div id="positions" variants={staggerContainer} initial="hidden" animate="show" className="flex flex-col gap-4">
-          {content.careers.map((c) => (
+          {loading ? (
+            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 text-sm text-white/55">
+              <Loader2 size={16} className="animate-spin" /> Loading open positions...
+            </div>
+          ) : careers.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center text-sm text-white/45">
+              No open positions are posted right now.
+            </div>
+          ) : careers.map((career) => (
             <motion.div
-              key={c.role}
+              key={career.id}
               variants={staggerItem}
-              whileHover={{ x: 6 }}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30"
+              whileHover={{ x: isOpen(career) ? 6 : 0 }}
+              className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30"
             >
-              <div className="flex items-center gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
-                  <Briefcase size={20} />
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
+                    <Briefcase size={20} />
+                  </div>
+                  <div>
+                    <p className="font-serif text-base text-white">{career.title || career.role || "Open Position"}</p>
+                    <p className="text-xs uppercase tracking-wider text-white/40">{career.department || career.dept || "Department"}</p>
+                    {career.description && <p className="mt-1 line-clamp-2 max-w-lg text-xs text-white/45">{career.description}</p>}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-serif text-base text-white">{c.role}</p>
-                  <p className="text-xs uppercase tracking-wider text-white/40">{c.dept}</p>
-                </div>
+                {isOpen(career) ? (
+                  <Link
+                    to={`/careers/${career.id}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-orange-300/30 bg-orange-300/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-orange-200 transition hover:bg-orange-300/15"
+                  >
+                    Apply <ArrowRight size={13} />
+                  </Link>
+                ) : (
+                  <span className="whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-white/45">
+                    Closed
+                  </span>
+                )}
               </div>
-              <span className="whitespace-nowrap rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
-                {c.type}
-              </span>
             </motion.div>
           ))}
         </motion.div>

@@ -329,6 +329,7 @@ export const PUBLIC_COLLECTIONS = {
   journey: "journey",
   famous: "famous",
   team: "team",
+  partners: "partners",
   careers: "careerJobs",
   map: "mapZones"
 };

@@ -51,8 +51,8 @@ export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PU
     const res = await http.request({ url: path, method: opts.method || "GET", data: opts.body, params: opts.params });
     return res.data as T;
   } catch (err) {
-    const e = err as AxiosError<{ error?: string }>;
-    throw new Error(e.response?.data?.error || e.message || "Request failed");
+    const e = err as AxiosError<{ error?: string; message?: string }>;
+    throw new Error(e.response?.data?.message || e.response?.data?.error || e.message || "Request failed");
   }
 }
 

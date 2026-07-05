@@ -208,7 +208,7 @@ router.post(
         discord_id: req.user.discord_id,
         steam_id: req.user.steam_id,
         citizenid: req.user.linked_identifiers?.find((id) => String(id).startsWith("citizenid:"))?.replace("citizenid:", "") || "",
-        status: "Submitted"
+        status: "Pending"
       },
       req.user
     );
@@ -236,7 +236,7 @@ router.post(
       Discord: req.user.discord_id || "Not linked",
       Steam: req.user.steam_id || "Not linked",
       Job: job.title,
-      Status: "Submitted",
+      Status: "Pending",
       Answers: savedAnswers.map((answer) => `${answer.question_snapshot}: ${answer.answer_text}`).join("\n").slice(0, 2500)
     });
     res.status(201).json({ application, answers: savedAnswers });

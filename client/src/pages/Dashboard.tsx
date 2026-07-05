@@ -20,6 +20,7 @@ import {
   Heart,
   Package,
   ArrowUpRight,
+  Briefcase,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
@@ -28,6 +29,7 @@ import { VitalRing } from "../components/VitalBar";
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "characters", label: "Characters", icon: Gamepad2 },
+  { id: "applications", label: "Applications", icon: Briefcase },
   { id: "tickets", label: "Tickets", icon: TicketIcon },
   { id: "linked", label: "Linked Accounts", icon: Link2 },
   { id: "account", label: "Account", icon: UserCircle },
@@ -47,6 +49,29 @@ export default function Dashboard() {
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
   const [linkingDiscord, setLinkingDiscord] = useState(false);
   const [linkingSteam, setLinkingSteam] = useState(false);
+  const [applications, setApplications] = useState<any[]>([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setApplications([]);
+      return;
+    }
+    let cancel = false;
+    const loadApplications = async () => {
+      setApplicationsLoading(true);
+      try {
+        const result = await api<{ applications: any[] }>("/api/player/career-applications");
+        if (!cancel) setApplications(result.applications || []);
+      } catch {
+        if (!cancel) setApplications([]);
+      } finally {
+        if (!cancel) setApplicationsLoading(false);
+      }
+    };
+    loadApplications();
+    return () => { cancel = true; };
+  }, [user?.id]);
 
   if (!user) return null;
 
@@ -155,8 +180,9 @@ export default function Dashboard() {
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               >
-                {tab === "overview" && <Overview user={user} openTickets={openTickets} characters={characters} />}
+                {tab === "overview" && <Overview user={user} openTickets={openTickets} characters={characters} applications={applications} />}
                 {tab === "characters" && <Characters characters={characters} steamLinked={user.steamLinked} onLinkSteam={onLinkSteam} linking={linkingSteam} />}
+                {tab === "applications" && <Applications applications={applications} loading={applicationsLoading} />}
                 {tab === "tickets" && (
                   <Tickets tickets={tickets} onNewTicket={() => setTicketModalOpen(true)} />
                 )}
@@ -211,7 +237,7 @@ function StatCard({
   );
 }
 
-function Overview({ user, openTickets, characters }: { user: any; openTickets: number; characters: any[] }) {
+function Overview({ user, openTickets, characters, applications }: { user: any; openTickets: number; characters: any[]; applications: any[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-7">
@@ -235,6 +261,7 @@ function Overview({ user, openTickets, characters }: { user: any; openTickets: n
         <StatCard icon={Link2} label="Linked Providers" value={`${(user.discordLinked ? 1 : 0) + (user.steamLinked ? 1 : 0)}/2`} tone="bg-orange-500/10 text-orange-300" />
         <StatCard icon={TicketIcon} label="Open Tickets" value={String(openTickets)} tone="bg-orange-500/10 text-orange-300" />
         <StatCard icon={Gamepad2} label="Characters" value={String(characters.length)} tone="bg-orange-500/10 text-orange-300" />
+        <StatCard icon={Briefcase} label="Applications" value={String(applications.length)} tone="bg-orange-500/10 text-orange-300" />
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
@@ -245,6 +272,69 @@ function Overview({ user, openTickets, characters }: { user: any; openTickets: n
           <TimelineRow label="Steam linked" value={user.steamLinked ? "Connected" : "Not connected"} good={user.steamLinked} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function applicationStatusLabel(status: string) {
+  return status === "Denied without notify" ? "Under review" : status || "Pending";
+}
+
+function applicationStatusClass(status: string) {
+  const label = applicationStatusLabel(status).toLowerCase();
+  if (label === "approved") return "border-emerald-400/30 bg-emerald-400/10 text-emerald-300";
+  if (label === "denied" || label === "rejected") return "border-red-400/30 bg-red-400/10 text-red-300";
+  if (label.includes("review")) return "border-orange-400/30 bg-orange-400/10 text-orange-300";
+  return "border-white/15 bg-white/5 text-white/55";
+}
+
+function Applications({ applications, loading }: { applications: any[]; loading: boolean }) {
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="font-serif text-xl text-white">My Applications</h3>
+        <Link
+          to="/careers"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
+        >
+          <Plus size={16} /> Apply for a Role
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
+          <Loader2 size={16} className="animate-spin" /> Loading applications...
+        </div>
+      ) : applications.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
+          No applications submitted yet. Open the careers portal to apply for a position.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {applications.map((application) => (
+            <div key={application.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-white/35">{application.department || "Career Application"}</p>
+                  <h4 className="mt-1 font-serif text-lg text-white">{application.job_title || application.job_id || "Position"}</h4>
+                  <p className="mt-1 text-xs text-white/40">
+                    Submitted {application.created_at ? new Date(application.created_at).toLocaleDateString() : "recently"}
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${applicationStatusClass(application.status)}`}>
+                  {applicationStatusLabel(application.status)}
+                </span>
+              </div>
+              {application.public_notes?.length > 0 && (
+                <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/35">Staff Reply</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-white/65">{application.public_notes[application.public_notes.length - 1].note}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
