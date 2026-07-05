@@ -21,15 +21,23 @@ const runtimeApiUrl =
     ? cleanBaseUrl(window.__GOTHAM_API_BASE_URL__ || window.__A2_API_BASE_URL__)
     : "";
 
-export const API_URL = cleanBaseUrl(
+const configuredApiUrl = cleanBaseUrl(
   runtimeApiUrl ||
     (import.meta.env.VITE_API_BASE_URL as string) ||
     (import.meta.env.VITE_API_URL as string)
 );
-export const MOCK = !API_URL;
+const unsafeHttpOnHttps =
+  typeof window !== "undefined" &&
+  window.location.protocol === "https:" &&
+  /^http:\/\//i.test(configuredApiUrl);
+
+export const API_URL = unsafeHttpOnHttps ? "" : configuredApiUrl;
+export const USING_RELATIVE_API = unsafeHttpOnHttps || (!API_URL && Boolean(import.meta.env.PROD));
+export const MOCK = !API_URL && !USING_RELATIVE_API;
 
 export function apiUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path;
+  if (!API_URL) return path.startsWith("/") ? path : `/${path}`;
   return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
@@ -58,7 +66,10 @@ export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PU
       not_found: "That item could not be found. Refresh the page and try again.",
       cors_origin_not_allowed: "The backend rejected this website URL. Add it to CORS_ALLOWED_ORIGINS or CORS_ORIGINS in the VPS .env."
     };
-    throw new Error(e.response?.data?.message || (code ? friendly[code] || code : "") || e.message || "Request failed");
+    const networkHint = e.message === "Network Error"
+      ? "Network Error: the website could not reach the backend. On Netlify, use the built-in /api proxy or an HTTPS backend URL."
+      : e.message;
+    throw new Error(e.response?.data?.message || (code ? friendly[code] || code : "") || networkHint || "Request failed");
   }
 }
 
@@ -86,7 +97,11 @@ export function createLiveSubscriber(onUpdate: (s: LiveState) => void) {
   let stopped = false;
 
   const connect = () => {
-    if (stopped || !API_URL) return;
+    if (stopped || !API_URL) {
+      usePolling = true;
+      startPolling();
+      return;
+    }
     try {
       const proto = window.location.protocol === "https:" ? "wss" : "ws";
       const host = new URL(API_URL).host;

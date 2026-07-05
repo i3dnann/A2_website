@@ -6,8 +6,8 @@ export type RosterItem = { name: string; role: string; count: string; icon: stri
 export type StreamerItem = { name: string; platform: string; viewers: number; live: boolean; game: string };
 export type JourneyItem = { year: string; title: string; desc: string };
 export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string };
-export type NewsItem = { icon: string; date: string; title: string; excerpt: string };
-export type CareerItem = { role: string; type: string; dept: string };
+export type NewsItem = { icon: string; date: string; title: string; excerpt: string; id?: string };
+export type CareerItem = { role: string; type: string; dept: string; id?: string };
 export type FaqItem = { q: string; a: string };
 export type StatItem = { label: string; value: number; suffix: string };
 
@@ -64,8 +64,7 @@ const DEFAULT_CONTENT: SiteContent = {
   siteTagline: "Premium FiveM Roleplay",
   heroTitle1: "Enter",
   heroTitle2: "Gotham City",
-  heroDescription:
-    "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
+  heroDescription: "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
   heroBackgroundImage: "/images/gotham-banner-static.jpg",
   logoUrl: "/images/gotham-emblem-static.jpg",
   serverIp: "connect play.gothamcityrp.gg",
@@ -73,95 +72,51 @@ const DEFAULT_CONTENT: SiteContent = {
   fivemLink: "/server",
   storeLink: "/",
   stats: [
-    { label: "Players", value: 300000, suffix: "+" },
-    { label: "Creators", value: 100, suffix: "+" },
-    { label: "Monthly Views", value: 20, suffix: "M+" },
-    { label: "Staff Members", value: 50, suffix: "+" },
+    { label: "Players", value: 0, suffix: "" },
+    { label: "Creators", value: 0, suffix: "" },
+    { label: "Monthly Views", value: 0, suffix: "" },
+    { label: "Staff Members", value: 0, suffix: "" },
   ],
   featuresTitle: "Built for Serious Roleplayers",
   featuresSubtitle: "Why Gotham",
-  featuresDesc:
-    "Every system on our server is designed with immersion, balance, and longevity in mind — so your story never runs out of places to go.",
+  featuresDesc: "Edit these homepage panels from the admin panel to match your server.",
   features: [
-    { icon: "ShieldHalf", title: "Deep CFW Framework", desc: "A heavily customized CFW core with balanced economy, whitelisted jobs, and stable performance built for long-term roleplay." },
-    { icon: "Car", title: "Custom Vehicles & Handling", desc: "Hundreds of hand-tuned vehicles with realistic handling, dealerships, and a full import/export underground scene." },
-    { icon: "Landmark", title: "Gotham City Map", desc: "A fully reworked Gotham-inspired cityscape — gothic districts, docks, back alleys, and a living, breathing metropolis." },
-    { icon: "Gavel", title: "Realistic Law & Order", desc: "Structured PD, EMS, and judicial systems with trained staff running immersive, fair, and consistent scenarios." },
-    { icon: "Siren", title: "Organized Crime", desc: "Deep gang & criminal enterprise systems — heists, territory wars, and black market economies with real consequences." },
-    { icon: "Sparkles", title: "Custom Scripts & MLOs", desc: "Exclusive custom interiors, animations, and scripts you won't find anywhere else, polished for a premium feel." },
+    { icon: "ShieldHalf", title: "Server Identity", desc: "Describe what makes your community different." },
+    { icon: "Users", title: "Community", desc: "Describe your player culture, staff approach, and roleplay standards." },
+    { icon: "Sparkles", title: "Custom Systems", desc: "Describe your scripts, jobs, vehicles, interiors, or city features." },
   ],
   rosterTitle: "Our Roster",
   rosterSubtitle: "Community",
-  rosterDesc: "Meet the departments keeping Gotham City running — from command staff to the officers walking the beat every night.",
-  roster: [
-    { name: "Command Team", role: "Server Directors", count: "6 Members", icon: "ShieldHalf" },
-    { name: "Police Department", role: "Law Enforcement", count: "48 Members", icon: "Gavel" },
-    { name: "Fire & EMS", role: "Emergency Services", count: "26 Members", icon: "Siren" },
-    { name: "Government", role: "City Officials", count: "12 Members", icon: "Landmark" },
-    { name: "Support Team", role: "Ticket & Player Support", count: "20 Members", icon: "Users" },
-    { name: "Development", role: "Scripting & Design", count: "9 Members", icon: "Sparkles" },
-  ],
+  rosterDesc: "Meet the people keeping Gotham City running.",
+  roster: [],
   streamsTitle: "Live Streams",
   streamsSubtitle: "On Screen",
   streamsDesc: "Watch our community bring Gotham City to life in real time.",
-  streamers: [
-    { name: "NightWing_TV", platform: "Twitch", viewers: 1284, live: true, game: "Gotham City Roleplay" },
-    { name: "GothamCityRP", platform: "Kick", viewers: 842, live: true, game: "Gotham City Roleplay" },
-    { name: "OfficerDown", platform: "Twitch", viewers: 0, live: false, game: "Offline" },
-    { name: "BlackMaskRP", platform: "Twitch", viewers: 511, live: true, game: "Gotham City Roleplay" },
-  ],
+  streamers: [],
   journeyTitle: "The Journey",
   journeySubtitle: "Our Story",
-  journey: [
-    { year: "2022", title: "Founded", desc: "Gotham City launched with a dedicated community and a vision for premium roleplay." },
-    { year: "2023", title: "Gotham City Map", desc: "Released our fully custom Gotham-inspired city map, replacing the base map entirely." },
-    { year: "2024", title: "10,000 Members", desc: "Our Discord community crossed 10,000 members with daily active roleplay sessions." },
-    { year: "2025", title: "Custom Framework 2.0", desc: "Rebuilt our CFW core for stability, launching dozens of exclusive scripts." },
-    { year: "2026", title: "New Horizons", desc: "Expanding departments, new districts, and a brand new player experience." },
-  ],
+  journey: [],
   famousTitle: "Famous Characters",
   famousSubtitle: "Legends of the City",
-  famousCharacters: [
-    { name: "Victor Kane", title: "Crime Lord of Old Gotham", tag: "Legendary" },
-    { name: "Renée Cross", title: "GCPD Commissioner", tag: "Iconic" },
-    { name: 'Marcus "Wraith" Doyle', title: "Underground Fixer", tag: "Fan Favorite" },
-    { name: "Dr. Elena Voss", title: "Chief Trauma Surgeon", tag: "Legendary" },
-  ],
+  famousCharacters: [],
   newsTitle: "Latest News",
   newsSubtitle: "Bulletin",
-  news: [
-    { icon: "Newspaper", date: "Feb 12, 2026", title: "Season 4: Gotham Nights Begins", excerpt: "New district unlocked, seasonal events, and a reworked criminal economy go live this weekend." },
-    { icon: "Trophy", date: "Jan 28, 2026", title: "Community Awards Results", excerpt: "Congratulations to every winner of our 2025 roleplay community awards ceremony." },
-    { icon: "Map", date: "Jan 09, 2026", title: "Docklands Expansion Live", excerpt: "Explore the newly released Docklands district with new jobs, MLOs, and hidden storylines." },
-    { icon: "Radio", date: "Dec 20, 2025", title: "Livestream Partner Program", excerpt: "We're partnering with content creators — apply now for perks, in-game rewards and more." },
-  ],
+  news: [],
   careersTitle: "Careers",
   careersSubtitle: "Join the Team",
-  careersDesc: "Whether you want to serve the city or build it, we're always looking for dedicated, mature members to join our staff and departments.",
-  careers: [
-    { role: "Police Department Cadet", type: "Whitelisted", dept: "Law Enforcement" },
-    { role: "EMS Trainee", type: "Whitelisted", dept: "Emergency Services" },
-    { role: "Support Agent", type: "Staff Team", dept: "Community Support" },
-    { role: "Script Developer", type: "Staff Team", dept: "Development" },
-    { role: "Content Creator Partner", type: "Application", dept: "Media" },
-  ],
+  careersDesc: "Open positions posted by staff appear here.",
+  careers: [],
   faqTitle: "Frequently Asked Questions",
   faqSubtitle: "Need Help",
-  faqs: [
-    { q: "How do I join the Gotham City server?", a: "Join our Discord, verify your account, link Steam, and use the connect button on our home page or the F8 console with our server IP." },
-    { q: "Is whitelisting required to play?", a: "General roleplay is open to all verified members. Specific departments like PD, EMS, and Government require an application and interview." },
-    { q: "What framework do you use?", a: "We run a heavily customized CFW framework with a fully rebuilt Gotham City inspired map and hundreds of exclusive scripts." },
-    { q: "How do I report a rule breaker or open a ticket?", a: "Use the Tickets section on our dashboard after logging in, or open a support ticket directly inside our Discord server." },
-    { q: "Can I apply for staff or a whitelisted job?", a: "Yes — check the Careers section for open positions and submit an application through our careers portal." },
-  ],
+  faqs: [],
   ctaTitle: "Your Story in Gotham City Starts Tonight",
-  ctaDesc: "Create your account, link Steam & Discord, and step into one of the most immersive FiveM roleplay communities out there.",
+  ctaDesc: "Create your account, link Steam and Discord, and step into the city.",
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",
 };
 
-const STORAGE_KEY = "gotham_city_site_content";
+const STORAGE_KEY = "gotham_city_site_content_v2";
 
 type SiteContextType = {
   content: SiteContent;
@@ -175,10 +130,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState<SiteContent>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return { ...DEFAULT_CONTENT, ...parsed };
-      }
+      if (raw) return { ...DEFAULT_CONTENT, ...JSON.parse(raw) };
     } catch {}
     return DEFAULT_CONTENT;
   });
@@ -194,7 +146,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
       try {
         const [settingsResult, homeResult] = await Promise.all([
           api<{ settings: any }>("/api/public/settings"),
-          api<{ team?: any[]; famous?: any[] }>("/api/public/home"),
+          api<{ team?: any[]; famous?: any[]; news?: any[]; journey?: any[]; careers?: any[] }>("/api/public/home"),
         ]);
         const settings = settingsResult.settings || {};
         const team = (homeResult.team || []).map((member) => ({
@@ -213,6 +165,24 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           image: character.picture_url || "",
           bio: character.bio || character.description || "",
         }));
+        const news = (homeResult.news || []).map((post) => ({
+          id: String(post.id || ""),
+          icon: "Newspaper",
+          date: post.published_at || post.created_at || "",
+          title: post.title || "News",
+          excerpt: post.subtitle || post.excerpt || String(post.content || "").slice(0, 140),
+        }));
+        const journey = (homeResult.journey || []).map((item) => ({
+          year: item.journey_date ? new Date(item.journey_date).getFullYear().toString() : "",
+          title: item.title || "Journey",
+          desc: item.description || "",
+        }));
+        const careers = (homeResult.careers || []).map((job) => ({
+          id: String(job.id || ""),
+          role: job.title || "Open Position",
+          type: job.is_open === false || job.is_open === 0 ? "Closed" : "Open",
+          dept: job.department || "Department",
+        }));
         if (cancel) return;
         setContent((prev) => ({
           ...prev,
@@ -226,8 +196,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           discordLink: settings.heroPrimaryButtonLink || prev.discordLink,
           fivemLink: settings.heroSecondaryButtonLink || prev.fivemLink,
           storeLink: settings.storeButtonLink || prev.storeLink,
-          roster: team.length ? team : prev.roster,
-          famousCharacters: famous.length ? famous : prev.famousCharacters,
+          roster: team,
+          famousCharacters: famous,
+          news,
+          journey,
+          careers,
         }));
       } catch {}
     };
@@ -243,11 +216,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     setContent(DEFAULT_CONTENT);
   };
 
-  return (
-    <SiteContext.Provider value={{ content, updateContent, resetContent }}>
-      {children}
-    </SiteContext.Provider>
-  );
+  return <SiteContext.Provider value={{ content, updateContent, resetContent }}>{children}</SiteContext.Provider>;
 }
 
 export function useSite() {

@@ -18,21 +18,7 @@ export default function NewsPage() {
     let cancel = false;
     const load = async () => {
       if (MOCK) {
-        // Use local news data as fallback
-        setPosts(content.news.map((n, i) => ({
-          id: `local-${i}`,
-          title: n.title,
-          excerpt: n.excerpt,
-          image: null,
-          category: "Announcement",
-          tags: "",
-          author: "Gotham City",
-          pinned: i === 0,
-          likes: 10 + i,
-          dislikes: 0,
-          comment_count: 0,
-          published_at: new Date(n.date).toISOString(),
-        })));
+        setPosts([]);
         setLoading(false);
         return;
       }

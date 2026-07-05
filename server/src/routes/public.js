@@ -28,7 +28,7 @@ router.get("/settings", asyncHandler(async (_req, res) => {
 
 router.get("/home", asyncHandler(async (_req, res) => {
   const settings = await getSettings();
-  const [partners, journey, famous, news, events, team, streamers, gallery] = await Promise.all([
+  const [partners, journey, famous, news, events, team, streamers, gallery, careers] = await Promise.all([
     listResource("partners", { limit: 20, publicOnly: true }),
     listResource("journey", { limit: 4, publicOnly: true }),
     listResource("famous", { limit: 4, publicOnly: true }),
@@ -36,7 +36,8 @@ router.get("/home", asyncHandler(async (_req, res) => {
     listResource("events", { limit: 4, publicOnly: true }),
     listResource("team", { limit: 6, publicOnly: true }),
     listResource("streamers", { limit: 8, publicOnly: true }),
-    listGalleryPhotos({ status: "Approved", limit: 4 })
+    listGalleryPhotos({ status: "Approved", limit: 4 }),
+    listResource("careerJobs", { limit: 6, publicOnly: true })
   ]);
 
   res.json({
@@ -51,6 +52,7 @@ router.get("/home", asyncHandler(async (_req, res) => {
     }),
     team: team.rows,
     gallery,
+    careers: careers.rows,
     streamers: await withLiveStatus(streamers.rows)
   });
 }));

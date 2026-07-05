@@ -12,13 +12,6 @@ type Partner = {
   sort_order?: number;
 };
 
-const fallbackPartners: Partner[] = [
-  { id: "partner-discord", partner_name: "Gotham Discord", website_url: "#" },
-  { id: "partner-creators", partner_name: "Creator Network", website_url: "#" },
-  { id: "partner-roleplay", partner_name: "Roleplay Hub", website_url: "#" },
-  { id: "partner-a2", partner_name: "A2 Studio", website_url: "#" },
-];
-
 function visiblePartner(partner: Partner) {
   return partner.is_visible !== false && partner.is_visible !== 0;
 }
@@ -47,28 +40,33 @@ function PartnerCard({ partner }: { partner: Partner }) {
 }
 
 export default function PartnerMarquee() {
-  const [partners, setPartners] = useState<Partner[]>(fallbackPartners);
+  const [partners, setPartners] = useState<Partner[]>([]);
 
   useEffect(() => {
-    if (MOCK) return;
     let cancel = false;
     const load = async () => {
       try {
         const result = await api<{ partners?: Partner[] }>("/api/public/home");
         const rows = (result.partners || []).filter(visiblePartner).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
-        if (!cancel && rows.length > 0) setPartners(rows);
+        if (!cancel) setPartners(rows);
       } catch {
-        if (!cancel) setPartners(fallbackPartners);
+        if (!cancel) setPartners([]);
       }
     };
+    if (MOCK) {
+      setPartners([]);
+      return;
+    }
     load();
     return () => { cancel = true; };
   }, []);
 
   const rows = useMemo(() => {
-    const source = partners.length >= 4 ? partners : [...partners, ...fallbackPartners].slice(0, 4);
+    const source = partners;
     return [source, [...source].reverse()];
   }, [partners]);
+
+  if (partners.length === 0) return null;
 
   return (
     <section className="relative overflow-hidden border-y border-white/5 bg-black/20 py-6 sm:py-8">

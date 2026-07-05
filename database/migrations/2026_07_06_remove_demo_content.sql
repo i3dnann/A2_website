@@ -1,0 +1,16 @@
+DELETE FROM partners WHERE id IN ('partner-discord', 'partner-rp', 'partner-creators', 'partner-roleplay', 'partner-a2');
+DELETE FROM journey_items WHERE id IN ('journey-1', 'journey-2', 'journey-3', 'journey-beta');
+DELETE FROM famous_characters WHERE id IN ('famous-demo', 'maya-knox');
+DELETE FROM streamers WHERE id IN ('a2-creator', 'streamer-demo');
+DELETE FROM team_members WHERE id IN ('team-owner', 'team-dev', 'team-support');
+DELETE FROM career_questions WHERE id IN ('question-age', 'question-scenario');
+DELETE FROM career_sections WHERE id IN ('section-personal', 'section-rp');
+DELETE FROM career_jobs WHERE id IN ('career-police', 'career-ems');
+DELETE FROM news_comments WHERE news_id IN ('news-launch');
+DELETE FROM news_articles WHERE id IN ('news-launch');
+DELETE FROM news_categories WHERE id IN ('news-cat-community', 'news-community');
+DELETE FROM map_zones WHERE id IN ('zone-safe-legion', 'zone-danger-docks', 'zone-legion');
+DELETE FROM faq_items WHERE id IN ('faq-steam', 'faq-livestream');
+DELETE FROM faq_categories WHERE id IN ('faq-general');
+DELETE FROM terms_pages WHERE id IN ('terms-default');
+DELETE FROM events WHERE id IN ('event-opening');

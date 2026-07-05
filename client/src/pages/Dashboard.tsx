@@ -25,6 +25,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
+import { useToast } from "../components/Toast";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -43,6 +44,7 @@ const statusColor: Record<string, string> = {
 
 export default function Dashboard() {
   const { user, tickets, characters, logout, linkDiscord, linkSteam, createTicket } = useAuth();
+  const { push } = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -217,8 +219,14 @@ export default function Dashboard() {
         open={ticketModalOpen}
         onClose={() => setTicketModalOpen(false)}
         onCreate={async (subject, category, message) => {
-          await createTicket(subject, category, message);
-          setTicketModalOpen(false);
+          try {
+            await createTicket(subject, category, message);
+            setTicketModalOpen(false);
+            push({ kind: "success", message: "Ticket created" });
+          } catch (error: any) {
+            push({ kind: "error", message: error?.message || "Could not create ticket" });
+            throw error;
+          }
         }}
       />
     </div>

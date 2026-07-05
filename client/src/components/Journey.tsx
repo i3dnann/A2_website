@@ -13,7 +13,11 @@ export default function Journey() {
         </Reveal>
         <div className="relative mx-auto mt-16 max-w-3xl">
           <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-orange-500/60 via-white/10 to-transparent sm:left-1/2" />
-          {content.journey.map((j, i) => {
+          {content.journey.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
+              No story milestones are published yet.
+            </div>
+          ) : content.journey.map((j, i) => {
             const isEven = i % 2 === 0;
             return (
               <motion.div key={j.year} initial={{ opacity: 0, x: isEven ? -40 : 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true, margin: "-100px" }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
@@ -29,21 +33,25 @@ export default function Journey() {
           })}
         </div>
 
-        <Reveal className="mx-auto mt-24 max-w-2xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.famousSubtitle}</p>
-          <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.famousTitle}</h2>
-        </Reveal>
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {content.famousCharacters.map((c, i) => (
-            <motion.div key={c.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.6, delay: i * 0.08 }} whileHover={{ y: -6 }} className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6">
-              {c.image && <img src={c.image} alt={c.name} loading="lazy" className="-mx-2 -mt-2 mb-4 h-36 w-[calc(100%+1rem)] rounded-xl object-cover" />}
-              <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">{c.tag}</span>
-              <h3 className="mt-4 font-serif text-lg text-white">{c.name}</h3>
-              <p className="mt-1 text-sm text-white/50">{c.title}</p>
-              {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{c.bio}</p>}
-            </motion.div>
-          ))}
-        </div>
+        {content.famousCharacters.length > 0 && (
+          <>
+            <Reveal className="mx-auto mt-24 max-w-2xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.famousSubtitle}</p>
+              <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.famousTitle}</h2>
+            </Reveal>
+            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {content.famousCharacters.map((c, i) => (
+                <motion.div key={c.name} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.6, delay: i * 0.08 }} whileHover={{ y: -6 }} className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6">
+                  {c.image && <img src={c.image} alt={c.name} loading="lazy" className="-mx-2 -mt-2 mb-4 h-36 w-[calc(100%+1rem)] rounded-xl object-cover" />}
+                  <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">{c.tag}</span>
+                  <h3 className="mt-4 font-serif text-lg text-white">{c.name}</h3>
+                  <p className="mt-1 text-sm text-white/50">{c.title}</p>
+                  {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{c.bio}</p>}
+                </motion.div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

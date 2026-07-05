@@ -19,30 +19,22 @@ type CareerRow = {
   is_visible?: boolean | number;
 };
 
-function normalizeLocalCareers(rows: any[]): CareerRow[] {
-  return rows.map((row, index) => ({
-    id: row.id || `local-${index}`,
-    title: row.title || row.role,
-    department: row.department || row.dept,
-    description: row.description || row.desc || "",
-    requirements: row.requirements || row.type || "Application",
-    is_open: true,
-    is_visible: true,
-  }));
-}
-
 function isOpen(row: CareerRow) {
   return row.is_open !== false && row.is_open !== 0 && row.is_visible !== false && row.is_visible !== 0;
 }
 
 export default function CareersPage() {
   const { content } = useSite();
-  const [careers, setCareers] = useState<CareerRow[]>(() => normalizeLocalCareers(content.careers || []));
+  const [careers, setCareers] = useState<CareerRow[]>([]);
   const [loading, setLoading] = useState(!MOCK);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (MOCK) return;
+    if (MOCK) {
+      setCareers([]);
+      setLoading(false);
+      return;
+    }
     let cancel = false;
     const load = async () => {
       setLoading(true);
@@ -53,7 +45,7 @@ export default function CareersPage() {
       } catch (e: any) {
         if (!cancel) {
           setError(e?.message || "Could not load careers.");
-          setCareers(normalizeLocalCareers(content.careers || []));
+          setCareers([]);
         }
       } finally {
         if (!cancel) setLoading(false);
@@ -61,7 +53,7 @@ export default function CareersPage() {
     };
     load();
     return () => { cancel = true; };
-  }, [content.careers]);
+  }, []);
 
   return (
     <PageShell subtitle={content.careersSubtitle} title={content.careersTitle}>

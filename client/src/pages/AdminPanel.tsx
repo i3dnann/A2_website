@@ -37,6 +37,20 @@ const ADMIN_TABS = [
 
 const stClass = "mb-1 text-xs font-semibold uppercase tracking-wider text-white/40";
 const inpClass = "w-full rounded-lg border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50 transition";
+const FEATURE_ICON_OPTIONS = [
+  { value: "ShieldHalf", label: "Shield" },
+  { value: "Users", label: "Users" },
+  { value: "Sparkles", label: "Sparkles" },
+  { value: "Car", label: "Vehicle" },
+  { value: "Landmark", label: "Landmark" },
+  { value: "Gavel", label: "Law" },
+  { value: "Siren", label: "Emergency" },
+  { value: "Map", label: "Map" },
+  { value: "Radio", label: "Radio" },
+  { value: "Trophy", label: "Trophy" },
+  { value: "Briefcase", label: "Career" },
+  { value: "Newspaper", label: "News" },
+];
 
 type DashboardStats = {
   users: number; characters: number;
@@ -1558,7 +1572,9 @@ function ServerEditor({ content, update }: any) {
             <button onClick={() => update({ features: content.features.filter((_: any, j: number) => j !== i) })} className="text-red-400 hover:text-red-300 text-xs">Remove</button>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <input className={inpClass} value={f.icon} onChange={(e) => { const n = [...content.features]; n[i] = { ...n[i], icon: e.target.value }; update({ features: n }); }} placeholder="Icon name" />
+            <select className={inpClass} value={f.icon} onChange={(e) => { const n = [...content.features]; n[i] = { ...n[i], icon: e.target.value }; update({ features: n }); }}>
+              {FEATURE_ICON_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
             <input className={`${inpClass} sm:col-span-2`} value={f.title} onChange={(e) => { const n = [...content.features]; n[i] = { ...n[i], title: e.target.value }; update({ features: n }); }} placeholder="Title" />
           </div>
           <textarea className={inpClass} rows={2} value={f.desc} onChange={(e) => { const n = [...content.features]; n[i] = { ...n[i], desc: e.target.value }; update({ features: n }); }} placeholder="Description" />

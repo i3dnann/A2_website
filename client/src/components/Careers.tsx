@@ -17,7 +17,11 @@ export default function Careers() {
             <Link to="/careers" className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition hover:border-orange-400/40 hover:bg-white/10">View Careers Portal <ArrowRight size={16} /></Link>
           </Reveal>
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="flex flex-col gap-4">
-            {content.careers.map((c) => (
+            {content.careers.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
+                No career positions are posted right now.
+              </div>
+            ) : content.careers.map((c) => (
               <motion.div key={c.role} variants={staggerItem} whileHover={{ x: 6 }} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30">
                 <div className="flex items-center gap-4"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300"><Briefcase size={20} /></div>
                   <div><p className="font-serif text-base text-white">{c.role}</p><p className="text-xs uppercase tracking-wider text-white/40">{c.dept}</p></div>
