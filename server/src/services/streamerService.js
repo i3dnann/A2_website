@@ -3,6 +3,7 @@ import { env } from "../config/env.js";
 import { getSettings, getStreamerLiveStatuses, listResource, setStreamerLiveStatus } from "./repository.js";
 import { sendWebhook } from "./webhook.js";
 import { cleanKickSlug, getKickStatus, kickConfigured } from "./kickService.js";
+import { toBoolean } from "../utils/sanitize.js";
 
 let twitchToken = env.TWITCH_ACCESS_TOKEN || "";
 let running = false;
@@ -121,7 +122,7 @@ export async function checkAllStreamers() {
   running = true;
   try {
     const { rows } = await listResource("streamers", { limit: 100 });
-    await Promise.all(rows.filter((streamer) => streamer.is_approved && !streamer.is_hidden).map(checkStreamerLiveStatus));
+    await Promise.all(rows.filter((streamer) => toBoolean(streamer.is_approved) && !toBoolean(streamer.is_hidden)).map(checkStreamerLiveStatus));
   } catch (error) {
     console.warn("[streamers] live check failed:", error.message);
   } finally {

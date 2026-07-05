@@ -885,7 +885,14 @@ function LiveEditor({ content, update }: any) {
       const result = row.id
         ? await api<{ row: any }>(`/api/admin/streamers/${row.id}`, { method: "PATCH", body })
         : await api<{ row: any }>("/api/admin/streamers", { method: "POST", body });
-      if (result.row?.id) await api(`/api/admin/streamers/${result.row.id}/check`, { method: "POST" });
+      if (result.row?.id) {
+        setRows((current) => {
+          const saved = { ...row, ...result.row };
+          const exists = current.some((item) => String(item.id) === String(saved.id));
+          return exists ? current.map((item) => String(item.id) === String(saved.id) ? saved : item) : [...current.filter((item) => item !== row), saved];
+        });
+        await api(`/api/admin/streamers/${result.row.id}/check`, { method: "POST" });
+      }
       await load();
       push({ kind: "success", message: "Streamer saved and checked" });
     } catch (e: any) {

@@ -244,7 +244,11 @@ export async function createResource(resourceKey, payload, actor) {
       `INSERT INTO ${safeTableName(config.table)} (${keys.join(", ")}) VALUES (${keys.map((key) => `:${key}`).join(", ")})`,
       Object.fromEntries(keys.map((key) => [key, sqlValue(filtered[key])]))
     );
-    if (result) return { ...data, ...filtered };
+    if (result) {
+      const savedId = result.insertId || filtered.id || data.id;
+      const saved = savedId ? await getResource(resourceKey, savedId) : null;
+      return saved || { ...data, ...filtered, id: String(savedId || data.id) };
+    }
   }
 
   getStore(resourceKey).push(data);
