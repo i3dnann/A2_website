@@ -49,15 +49,15 @@ async function checkTwitch(streamer) {
 
   const data = await response.json();
   const stream = data.data?.[0];
-  return setStreamerLiveStatus(streamer.id, "Twitch", {
-    is_live: Boolean(stream),
-    stream_title: stream?.title || "",
-    viewer_count: stream?.viewer_count || null,
-    thumbnail_url: stream?.thumbnail_url?.replace("{width}", "640").replace("{height}", "360") || "",
-    stream_url: `https://twitch.tv/${streamer.twitch_username}`,
-    started_at: stream?.started_at || null,
-    raw_response_json: data
-  });
+    return setStreamerLiveStatus(streamer.id, "Twitch", {
+      is_live: Boolean(stream),
+      stream_title: stream?.title || "",
+      viewer_count: stream?.viewer_count || null,
+      thumbnail_url: stream?.thumbnail_url?.replace("{width}", "640").replace("{height}", "360") || "",
+      stream_url: `https://twitch.tv/${streamer.twitch_username}`,
+      started_at: stream?.started_at || null,
+      raw_response_json: { ...data, display_name: stream?.user_name || streamer.twitch_username }
+    });
 }
 
 async function checkKick(streamer) {
@@ -77,7 +77,10 @@ async function checkKick(streamer) {
       thumbnail_url: stream.thumbnail || channel.stream?.thumbnail || channel.banner_picture || "",
       stream_url: `https://kick.com/${data.slug || slug}`,
       started_at: stream.started_at || stream.start_time || channel.stream?.start_time || null,
-      raw_response_json: data
+      raw_response_json: {
+        ...data,
+        display_name: channel.user?.username || channel.user?.name || channel.broadcaster_user?.username || channel.slug || data.slug || slug
+      }
     });
   } catch (error) {
     console.warn("[streamers] Kick live check failed:", slug, error.message);
@@ -142,6 +145,7 @@ export async function withLiveStatus(streamers) {
       viewer_count: live?.viewer_count || null,
       thumbnail_url: live?.thumbnail_url || "",
       stream_url: live?.stream_url || "",
+      platform_display_name: live?.raw_response_json?.display_name || streamer.display_name,
       last_checked_at: statuses[0]?.last_checked_at || null
     };
   });

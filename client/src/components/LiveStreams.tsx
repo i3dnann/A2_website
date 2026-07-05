@@ -21,10 +21,10 @@ export default function LiveStreams() {
         setTotalLiveViewers(Number(r.totalLiveViewers || 0));
         setTotalLiveChannels(Number(r.totalLiveChannels || 0));
         setStreamers((r.streamers || []).map((s) => ({
-          name: s.display_name || s.name || s.kick_username || s.twitch_username,
+          name: s.platform_display_name || s.display_name || s.name || s.kick_username || s.twitch_username,
           platform: s.kick_username ? "Kick" : "Twitch",
           viewers: Number(s.viewer_count || 0),
-          live: Boolean(s.is_live),
+          live: s.is_live === true || s.is_live === 1 || s.is_live === "1",
           game: s.stream_title || s.category || "Gotham City Roleplay",
           url: s.stream_url || (s.kick_username ? `https://kick.com/${s.kick_username}` : s.twitch_username ? `https://twitch.tv/${s.twitch_username}` : "")
         })));

@@ -20,6 +20,23 @@ const DEMO: LiveState = {
   lastUpdate: Date.now(),
 };
 
+function flagOn(value: any) {
+  return value === true || value === 1 || value === "1";
+}
+
+function mapStreamer(s: any) {
+  const platform = s.kick_username ? "Kick" : "Twitch";
+  return {
+    name: s.platform_display_name || s.display_name || s.name || s.kick_username || s.twitch_username,
+    platform,
+    viewers: Number(s.viewer_count || 0),
+    live: flagOn(s.is_live),
+    title: s.stream_title || "",
+    game: s.stream_title || s.category || "Gotham City Roleplay",
+    url: s.stream_url || (s.kick_username ? `https://kick.com/${s.kick_username}` : s.twitch_username ? `https://twitch.tv/${s.twitch_username}` : "")
+  };
+}
+
 export default function LivePage() {
   const { content } = useSite();
   const [state, setState] = useState<LiveState | null>(MOCK ? DEMO : null);
@@ -47,14 +64,7 @@ export default function LivePage() {
         if (cancel) return;
         setTotalLiveViewers(Number(r.totalLiveViewers || 0));
         setTotalLiveChannels(Number(r.totalLiveChannels || 0));
-        setStreamers((r.streamers || []).map((s) => ({
-          name: s.display_name || s.name || s.kick_username || s.twitch_username,
-          platform: s.kick_username ? "Kick" : "Twitch",
-          viewers: Number(s.viewer_count || 0),
-          live: Boolean(s.is_live),
-          game: s.stream_title || s.category || "Gotham City Roleplay",
-          url: s.stream_url || (s.kick_username ? `https://kick.com/${s.kick_username}` : s.twitch_username ? `https://twitch.tv/${s.twitch_username}` : "")
-        })));
+        setStreamers((r.streamers || []).map(mapStreamer));
       } catch {}
     };
     loadStreamers();
@@ -68,6 +78,12 @@ export default function LivePage() {
 
   return (
     <PageShell subtitle={content.streamsSubtitle} title={content.streamsTitle}>
+      <div className="mb-5 flex justify-end">
+        <a href="#live-streamers" className="inline-flex items-center gap-3 rounded-full border border-orange-300/25 bg-orange-500/10 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-orange-100 transition hover:border-orange-300/45 hover:bg-orange-500/15">
+          <Radio size={14} />
+          {totalLiveViewers.toLocaleString()} Total Streamer Viewers
+        </a>
+      </div>
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         {/* Server status card */}
         <motion.div
@@ -137,7 +153,7 @@ export default function LivePage() {
 
         {/* Streamers */}
         <div className="flex flex-col gap-5">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <div id="live-streamers" className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-serif text-base text-white">Live Streamers</h3>
@@ -153,7 +169,7 @@ export default function LivePage() {
                 <a href={s.url || undefined} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
                   <div>
                     <p className="font-serif text-sm text-white">{s.name}</p>
-                    <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.game}</p>
+                    <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.live ? s.title : "Offline"}</p>
                     <p className="mt-1 text-[11px] text-white/45">{Number(s.viewers || 0).toLocaleString()} viewers</p>
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.live ? "bg-red-600/90 text-white" : "bg-white/10 text-white/45"}`}>{s.live ? "Live" : "Offline"}</span>

@@ -131,6 +131,22 @@ async function kickGet(path, params = {}) {
   return data;
 }
 
+function bool(value) {
+  return value === true || value === 1 || value === "1";
+}
+
+function firstValue(...values) {
+  return values.find((value) => value !== undefined && value !== null && value !== "");
+}
+
+async function getKickChannelFallback(slug) {
+  const response = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`, {
+    headers: { accept: "application/json" }
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
 export async function getKickStatus(value) {
   const slug = cleanKickSlug(value);
   const checkedAt = new Date().toISOString();
@@ -139,7 +155,8 @@ export async function getKickStatus(value) {
   }
 
   const channels = await kickGet("/channels", { slug });
-  const channel = channels?.data?.[0] || null;
+  let channel = channels?.data?.[0] || null;
+  let fallback = null;
   if (!channel) return { slug, online: false, channel: null, stream: null, checkedAt };
 
   const broadcasterUserId = channel.broadcaster_user_id || channel.user_id || channel.id;
@@ -149,14 +166,35 @@ export async function getKickStatus(value) {
     stream = livestreams?.data?.[0] || null;
   }
 
-  const embeddedStream = channel.stream?.is_live ? channel.stream : null;
-  const activeStream = stream || embeddedStream;
+  const recentStream = channel.recent_livestream || channel.livestream || null;
+  const embeddedStream = channel.stream || null;
+  let activeStream = [stream, embeddedStream, recentStream].find((item) => item && (bool(item.is_live) || bool(item.live) || item.viewer_count || item.viewers)) || null;
+
+  if (!activeStream || (!bool(activeStream.is_live) && !bool(activeStream.live) && !activeStream.viewer_count && !activeStream.viewers)) {
+    try {
+      fallback = await getKickChannelFallback(channel.slug || slug);
+      const fallbackStream = fallback?.livestream || fallback?.recent_livestream || fallback?.stream || null;
+      if (fallbackStream && (bool(fallbackStream.is_live) || bool(fallback?.is_live))) {
+        channel = { ...channel, ...fallback };
+        activeStream = fallbackStream;
+      }
+    } catch {}
+  }
+
+  const online = Boolean(activeStream && (bool(activeStream.is_live) || bool(activeStream.live) || bool(channel.is_live) || Number(activeStream.viewer_count || activeStream.viewers || 0) > 0));
 
   return {
     slug: channel.slug || slug,
-    online: Boolean(activeStream),
+    online,
     channel,
-    stream: activeStream,
+    stream: activeStream
+      ? {
+          ...activeStream,
+          stream_title: firstValue(activeStream.stream_title, activeStream.session_title, activeStream.title),
+          viewer_count: Number(firstValue(activeStream.viewer_count, activeStream.viewers, activeStream.viewerCount, 0)),
+          thumbnail: firstValue(activeStream.thumbnail, activeStream.thumbnail_url, activeStream.thumbnail_src)
+        }
+      : null,
     checkedAt
   };
 }
