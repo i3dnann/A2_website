@@ -98,37 +98,45 @@ async function getKickAccessToken() {
 }
 
 async function kickGet(path, params = {}) {
-  const token = env.KICK_API_KEY || (await getKickAccessToken());
   const url = new URL(`${apiBaseUrl()}${path}`);
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") url.searchParams.append(key, String(value));
   });
 
-  const response = await fetch(url, {
-    headers: {
-      accept: "application/json",
-      Authorization: `Bearer ${token}`
+  const tokenSources = [];
+  if (env.KICK_API_KEY) tokenSources.push({ name: "KICK_API_KEY", token: env.KICK_API_KEY });
+  if (env.KICK_CLIENT_ID && env.KICK_CLIENT_SECRET) tokenSources.push({ name: "oauth", token: await getKickAccessToken() });
+  if (!tokenSources.length) tokenSources.push({ name: "none", token: "" });
+
+  let lastError = null;
+  for (const source of tokenSources) {
+    const response = await fetch(url, {
+      headers: {
+        accept: "application/json",
+        ...(source.token ? { Authorization: `Bearer ${source.token}` } : {})
+      }
+    });
+
+    const text = await response.text();
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      data = { raw: text };
     }
-  });
 
-  const text = await response.text();
-  let data = {};
-  try {
-    data = text ? JSON.parse(text) : {};
-  } catch {
-    data = { raw: text };
+    if (response.ok) return data;
+
+    lastError = { status: response.status, source: source.name, data, text };
+    if (![401, 403].includes(response.status)) break;
   }
 
-  if (!response.ok) {
-    console.warn("[kick] api request failed", response.status, path, data?.message || data?.error || text?.slice?.(0, 200));
-    const error = new Error(`Kick API request failed with ${response.status}`);
-    error.status = response.status || 502;
-    error.code = "kick_api_failed";
-    error.details = data;
-    throw error;
-  }
-
-  return data;
+  console.warn("[kick] api request failed", lastError?.status, path, lastError?.source, lastError?.data?.message || lastError?.data?.error || lastError?.text?.slice?.(0, 200));
+  const error = new Error(`Kick API request failed with ${lastError?.status || 502}`);
+  error.status = lastError?.status || 502;
+  error.code = "kick_api_failed";
+  error.details = lastError?.data || {};
+  throw error;
 }
 
 function bool(value) {
@@ -161,7 +169,7 @@ export async function getKickStatus(value) {
 
   const broadcasterUserId = channel.broadcaster_user_id || channel.user_id || channel.id;
   let stream = null;
-  if (broadcasterUserId) {
+  if (!channel.stream && broadcasterUserId) {
     const livestreams = await kickGet("/livestreams", { broadcaster_user_id: broadcasterUserId, limit: 1 });
     stream = livestreams?.data?.[0] || null;
   }
@@ -190,7 +198,7 @@ export async function getKickStatus(value) {
     stream: activeStream
       ? {
           ...activeStream,
-          stream_title: firstValue(activeStream.stream_title, activeStream.session_title, activeStream.title),
+          stream_title: firstValue(activeStream.stream_title, activeStream.session_title, activeStream.title, channel.stream_title),
           viewer_count: Number(firstValue(activeStream.viewer_count, activeStream.viewers, activeStream.viewerCount, 0)),
           thumbnail: firstValue(activeStream.thumbnail, activeStream.thumbnail_url, activeStream.thumbnail_src)
         }
