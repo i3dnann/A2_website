@@ -487,7 +487,9 @@ function TicketsAdmin() {
                     ) : (
                       <button onClick={closeTicket} disabled={sending} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs font-semibold text-red-300 disabled:opacity-60">Close</button>
                     )}
-                    <button onClick={deleteTicket} disabled={sending} className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-60">Delete</button>
+                    {String(detail.ticket.status).toLowerCase() === "closed" ? (
+                      <button onClick={deleteTicket} disabled={sending} className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-60">Delete</button>
+                    ) : null}
                   </div>
                 </div>
                 <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_260px]">
@@ -1017,7 +1019,7 @@ function PartnersAdmin() {
 }
 
 function ApplicationsAdmin() {
-  const { push } = useToast();
+  const { push, confirm } = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [detail, setDetail] = useState<any>(null);
@@ -1109,6 +1111,33 @@ function ApplicationsAdmin() {
       }
     } catch (e: any) {
       push({ kind: "error", message: e?.message || "Failed to update application" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteApplication = async () => {
+    if (!selectedId || !detail?.application) return;
+    const status = String(detail.application.status || "").toLowerCase();
+    const canDelete = status === "approved" || status.includes("denied") || status === "closed" || status === "archived";
+    if (!canDelete) {
+      push({ kind: "error", message: "Approve, deny, or close the application before deleting it." });
+      return;
+    }
+    const ok = await confirm({ title: "Delete application?", message: "This removes the application from admin and the player's dashboard.", confirmText: "Delete" });
+    if (!ok) return;
+    setSaving(true);
+    try {
+      if (!MOCK) {
+        await api(`/api/admin/career-applications/${selectedId}`, { method: "DELETE" });
+      }
+      setRows((current) => current.filter((row) => row.id !== selectedId));
+      setSelectedId("");
+      setDetail(null);
+      push({ kind: "success", message: "Application deleted" });
+      await loadRows();
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to delete application" });
     } finally {
       setSaving(false);
     }
@@ -1213,6 +1242,14 @@ function ApplicationsAdmin() {
                       {status}
                     </button>
                   ))}
+                  <button
+                    onClick={deleteApplication}
+                    disabled={saving}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/15 disabled:opacity-60"
+                  >
+                    {saving ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    Delete
+                  </button>
                 </div>
               </div>
             ) : (

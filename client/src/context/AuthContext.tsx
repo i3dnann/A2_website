@@ -4,6 +4,7 @@ import { api, apiUrl, MOCK } from "../api/client";
 
 export type Ticket = {
   id: string;
+  ticketNumber?: string;
   subject: string;
   category: string;
   status: "Open" | "Pending" | "Closed";
@@ -117,7 +118,8 @@ function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser
 
 function normalizeTicket(raw: any): Ticket {
   return {
-    id: raw.ticket_number || raw.id,
+    id: String(raw.id || raw.ticket_number || ""),
+    ticketNumber: raw.ticket_number || raw.id,
     subject: raw.subject || "Support Ticket",
     category: raw.category || "General Support",
     status: raw.status === "Closed" ? "Closed" : raw.status === "Pending" || raw.status === "Waiting for staff" ? "Pending" : "Open",

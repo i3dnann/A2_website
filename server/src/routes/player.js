@@ -52,6 +52,16 @@ async function ownedApplications(user) {
   return enriched;
 }
 
+async function getAccessibleTicket(user, idOrNumber) {
+  let ticket = await getResource("tickets", idOrNumber);
+  if (!ticket) {
+    const { rows } = await listResource("tickets", { q: String(idOrNumber || ""), limit: 50 });
+    ticket = rows.find((row) => String(row.id) === String(idOrNumber) || String(row.ticket_number) === String(idOrNumber));
+  }
+  if (!ticket || !(await canAccessTicket(user, ticket))) return null;
+  return ticket;
+}
+
 async function accountPayload(req) {
   const characterResult = await getCharactersForAccount(req.user);
   const banStatus = await getBanStatus(characterResult.identifiers || identifiersForAccount(req.user));
@@ -153,8 +163,8 @@ router.post(
 router.get(
   "/tickets/:id",
   asyncHandler(async (req, res) => {
-    const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || !(await canAccessTicket(req.user, ticket))) return res.status(404).json({ error: "ticket_not_found" });
+    const ticket = await getAccessibleTicket(req.user, req.params.id);
+    if (!ticket) return res.status(404).json({ error: "ticket_not_found", message: "Ticket not found or you do not have access to it." });
     const { rows } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
     res.json({ ticket, messages: rows.filter((message) => String(message.ticket_id) === String(ticket.id) && Number(message.internal_only || 0) !== 1) });
   })
@@ -164,8 +174,8 @@ router.post(
   "/tickets/:id/messages",
   asyncHandler(async (req, res) => {
     const body = ticketReplySchema.parse(req.body || {});
-    const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || !(await canAccessTicket(req.user, ticket))) return res.status(404).json({ error: "ticket_not_found" });
+    const ticket = await getAccessibleTicket(req.user, req.params.id);
+    if (!ticket) return res.status(404).json({ error: "ticket_not_found", message: "Ticket not found or you do not have access to it." });
     const message = await createResource("ticketMessages", { ticket_id: ticket.id, author_id: req.user.id, author_type: "player", message: body.message, internal_only: false }, req.user);
     await updateResource("tickets", ticket.id, { status: "Waiting for staff", message_preview: body.message.slice(0, 300) }, req.user);
     res.status(201).json({ message });
@@ -175,8 +185,8 @@ router.post(
 router.post(
   "/tickets/:id/close",
   asyncHandler(async (req, res) => {
-    const ticket = await getResource("tickets", req.params.id);
-    if (!ticket || !(await canAccessTicket(req.user, ticket))) return res.status(404).json({ error: "ticket_not_found" });
+    const ticket = await getAccessibleTicket(req.user, req.params.id);
+    if (!ticket) return res.status(404).json({ error: "ticket_not_found", message: "Ticket not found or you do not have access to it." });
     const result = await updateResource("tickets", ticket.id, { status: "Closed", closed_by: req.user.id, closed_at: new Date().toISOString() }, req.user);
     const { rows: messages } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
     await sendWebhook("tickets_closed", {

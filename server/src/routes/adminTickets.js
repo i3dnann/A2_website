@@ -164,9 +164,11 @@ router.post("/tickets/:id/close", requirePermission("close_tickets"), asyncHandl
 }));
 
 router.delete("/tickets/:id", requirePermission("close_tickets"), asyncHandler(async (req, res) => {
-  const before = await deleteResource("tickets", req.params.id, req.user);
-  if (!before) return res.status(404).json({ error: "ticket_not_found" });
-  await auditAction({ req, action: "delete_ticket", targetType: "tickets", targetId: req.params.id, before, reason: req.body?.reason || "ticket deleted", webhookCategory: "admin" });
+  const ticket = await getResource("tickets", req.params.id);
+  if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+  if (!closed(ticket)) return res.status(409).json({ error: "ticket_must_be_closed", message: "Close the ticket before deleting it." });
+  const before = await deleteResource("tickets", ticket.id, req.user);
+  await auditAction({ req, action: "delete_ticket", targetType: "tickets", targetId: ticket.id, before, reason: req.body?.reason || "ticket deleted", webhookCategory: "admin" });
   res.json({ ok: true });
 }));
 

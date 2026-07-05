@@ -537,7 +537,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
           >
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-white/40">{t.id}</span>
+                <span className="text-xs font-mono text-white/40">{t.ticketNumber || t.id}</span>
                 <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${statusColor[t.status] || statusColor.Pending}`}>
                   {t.status}
                 </span>

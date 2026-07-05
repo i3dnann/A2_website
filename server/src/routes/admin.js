@@ -422,6 +422,39 @@ router.post(
   })
 );
 
+router.delete(
+  "/career-applications/:id",
+  requirePermission("review_career_applications"),
+  asyncHandler(async (req, res) => {
+    const application = await getResource("careerApplications", req.params.id);
+    if (!application) return res.status(404).json({ error: "application_not_found", message: "Application not found." });
+    const status = String(application.status || "").toLowerCase();
+    const finished = status === "approved" || status.includes("denied") || status === "closed" || status === "archived";
+    if (!finished) {
+      return res.status(409).json({
+        error: "application_must_be_finished",
+        message: "Approve, deny, or close the application before deleting it."
+      });
+    }
+
+    const [answers, notes] = await Promise.all([
+      listResource("careerAnswers", { q: application.id, limit: 200 }),
+      listResource("careerApplicationNotes", { q: application.id, limit: 200 })
+    ]);
+    await Promise.all([
+      ...answers.rows
+        .filter((answer) => String(answer.application_id) === String(application.id))
+        .map((answer) => deleteResource("careerAnswers", answer.id, req.user)),
+      ...notes.rows
+        .filter((note) => String(note.application_id) === String(application.id))
+        .map((note) => deleteResource("careerApplicationNotes", note.id, req.user))
+    ]);
+    const before = await deleteResource("careerApplications", application.id, req.user);
+    await auditAction({ req, action: "delete_career_application", targetType: "career_applications", targetId: application.id, before, reason: req.body?.reason || "application deleted", webhookCategory: "admin" });
+    res.json({ ok: true });
+  })
+);
+
 router.get(
   "/:resource",
   asyncHandler(async (req, res) => {
