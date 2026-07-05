@@ -26,13 +26,16 @@ const configuredApiUrl = cleanBaseUrl(
     (import.meta.env.VITE_API_BASE_URL as string) ||
     (import.meta.env.VITE_API_URL as string)
 );
+const staleRuntimeApi =
+  /ngrok-free\.dev/i.test(configuredApiUrl) ||
+  /ancient-liver-drool/i.test(configuredApiUrl);
 const unsafeHttpOnHttps =
   typeof window !== "undefined" &&
   window.location.protocol === "https:" &&
   /^http:\/\//i.test(configuredApiUrl);
 
-export const API_URL = unsafeHttpOnHttps ? "" : configuredApiUrl;
-export const USING_RELATIVE_API = unsafeHttpOnHttps || (!API_URL && Boolean(import.meta.env.PROD));
+export const API_URL = unsafeHttpOnHttps || staleRuntimeApi ? "" : configuredApiUrl;
+export const USING_RELATIVE_API = unsafeHttpOnHttps || staleRuntimeApi || (!API_URL && Boolean(import.meta.env.PROD));
 export const MOCK = !API_URL && !USING_RELATIVE_API;
 
 export function apiUrl(path: string) {
