@@ -11,7 +11,7 @@ import multer from "multer";
 import { fileURLToPath } from "node:url";
 import { apiLimiter, upload } from "./middleware/security.js";
 import { csrfProtection } from "./middleware/csrf.js";
-import { corsOrigins, env } from "./config/env.js";
+import { corsOrigins, env, loadedEnvFiles } from "./config/env.js";
 import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.js";
 import { pingDatabase } from "./config/db.js";
 import { createResource, deleteResource, getSettings, listResource } from "./services/repository.js";
@@ -93,7 +93,32 @@ const photoPath = "/gal" + "lery";
 
 app.get("/health", async (_req, res) => {
   const dbOk = await pingDatabase();
-  res.json({ ok: true, service: "gotham-city-api", time: new Date().toISOString(), database: dbOk ? "online" : "disabled_or_unavailable", frontend: env.FRONTEND_URL });
+  res.json({
+    ok: true,
+    service: "gotham-city-api",
+    time: new Date().toISOString(),
+    database: dbOk ? "online" : "disabled_or_unavailable",
+    frontend: env.FRONTEND_URL,
+    config: {
+      envFiles: loadedEnvFiles,
+      corsOrigins,
+      oauth: {
+        discordConfigured: Boolean(env.DISCORD_CLIENT_ID && env.DISCORD_CLIENT_SECRET && env.DISCORD_REDIRECT_URI),
+        discordRedirectSet: Boolean(env.DISCORD_REDIRECT_URI),
+        steamReturnSet: Boolean(env.STEAM_RETURN_URL),
+        jwtSecretSet: Boolean(env.JWT_SECRET && !env.JWT_SECRET.startsWith("change_me_")),
+        sessionSecretSet: Boolean(env.SESSION_SECRET && !env.SESSION_SECRET.startsWith("change_me_")),
+        oauthStateSecretSet: Boolean(env.OAUTH_STATE_SECRET)
+      },
+      live: {
+        playersUrlSet: Boolean(env.FIVEM_PLAYERS_URL),
+        dynamicUrlSet: Boolean(env.FIVEM_DYNAMIC_URL),
+        infoUrlSet: Boolean(env.FIVEM_INFO_URL),
+        serverIpSet: Boolean(env.FIVEM_SERVER_IP),
+        serverPort: env.FIVEM_SERVER_PORT
+      }
+    }
+  });
 });
 
 app.get("/api/live", async (_req, res) => {

@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
@@ -8,10 +9,17 @@ const __dirname = path.dirname(__filename);
 const serverRoot = path.resolve(__dirname, "..", "..");
 const projectRoot = path.resolve(serverRoot, "..");
 
-dotenv.config({ path: path.resolve(serverRoot, ".env") });
-dotenv.config({ path: path.resolve(projectRoot, ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
+const envFiles = [];
+function loadEnvFile(filePath, override = false) {
+  if (!fs.existsSync(filePath)) return;
+  dotenv.config({ path: filePath, override });
+  envFiles.push(filePath);
+}
+
+loadEnvFile(path.resolve(serverRoot, ".env"));
+loadEnvFile(path.resolve(process.cwd(), "..", ".env"));
+loadEnvFile(path.resolve(process.cwd(), ".env"));
+loadEnvFile(path.resolve(projectRoot, ".env"), true);
 
 const schema = z.object({
   PORT: z.coerce.number().default(3001),
@@ -74,6 +82,7 @@ const schema = z.object({
 });
 
 export const env = schema.parse(process.env);
+export const loadedEnvFiles = envFiles;
 
 export const corsOrigins = [
   env.FRONTEND_URL,
