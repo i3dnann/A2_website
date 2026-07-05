@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Wifi, WifiOff, Users, Activity, Radio, RefreshCw, MessageCircle, Cloud } from "lucide-react";
+import { motion } from "framer-motion";
+import { Wifi, WifiOff, Users, Activity, Radio, RefreshCw, Cloud } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { api, createLiveSubscriber, type LiveState, MOCK } from "../api/client";
 import PageShell from "../components/PageShell";
@@ -128,15 +128,6 @@ export default function LivePage() {
             </>
           )}
 
-          {state?.announcement && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="mt-5 flex items-start gap-2 rounded-xl border border-orange-400/20 bg-orange-500/10 p-3"
-            >
-              <MessageCircle size={16} className="mt-0.5 shrink-0 text-orange-300" />
-              <p className="text-sm text-white/80">{state.announcement}</p>
-            </motion.div>
-          )}
         </motion.div>
 
         {/* Streamers */}
@@ -163,38 +154,6 @@ export default function LivePage() {
           </div>
         </div>
       </div>
-
-      {/* Online players */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-      >
-        <h3 className="font-serif text-base text-white">Online Players</h3>
-        {connecting && !state ? (
-          <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => <Skeleton key={i} className="h-9" />)}
-          </div>
-        ) : (state?.players?.length ?? 0) === 0 ? (
-          <p className="mt-4 text-sm text-white/40">No players online right now.</p>
-        ) : (
-          <AnimatePresence>
-            <motion.div layout className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {state?.players.map((p) => (
-                <motion.div
-                  key={p.id} layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/20 px-3 py-2"
-                >
-                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                  <span className="truncate text-sm text-white/80">{p.name}</span>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </motion.div>
     </PageShell>
   );
 }
