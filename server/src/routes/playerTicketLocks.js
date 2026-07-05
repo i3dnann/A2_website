@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, getResource, updateResource } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
-import { ownsTicket } from "../services/playerTicketService.js";
+import { canAccessTicket } from "../services/playerTicketService.js";
 
 const router = Router();
 router.use(requireAuth, requirePermission("view_player_portal"));
@@ -63,7 +63,7 @@ router.post("/tickets", asyncHandler(async (req, res) => {
 
 router.post("/tickets/:id/messages", asyncHandler(async (req, res) => {
   const ticket = await getResource("tickets", req.params.id);
-  if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
+  if (!ticket || !(await canAccessTicket(req.user, ticket))) return res.status(404).json({ error: "ticket_not_found" });
   if (closed(ticket)) return res.status(409).json({ error: "ticket_closed", message: "This ticket is closed. You cannot send more replies." });
   const text = String(req.body?.message || "").trim();
   if (!text) return res.status(422).json({ error: "message_required", message: "Write a reply before sending." });
@@ -74,7 +74,7 @@ router.post("/tickets/:id/messages", asyncHandler(async (req, res) => {
 
 router.post("/tickets/:id/close", asyncHandler(async (req, res) => {
   const ticket = await getResource("tickets", req.params.id);
-  if (!ticket || !ownsTicket(req.user, ticket)) return res.status(404).json({ error: "ticket_not_found" });
+  if (!ticket || !(await canAccessTicket(req.user, ticket))) return res.status(404).json({ error: "ticket_not_found" });
   if (closed(ticket)) return res.json({ ticket });
   const result = await updateResource("tickets", ticket.id, { status: "Closed", closed_by: req.user.id, closed_at: new Date().toISOString() }, req.user);
   res.json({ ticket: result.after });

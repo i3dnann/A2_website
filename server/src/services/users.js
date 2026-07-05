@@ -125,6 +125,15 @@ export async function getUserById(id) {
   return memoryUser ? publicUser(memoryUser) : null;
 }
 
+async function getInternalUserById(id) {
+  if (!id) return null;
+  if (databaseEnabled) {
+    const rows = await query("SELECT * FROM web_users WHERE id = :id AND deleted_at IS NULL LIMIT 1", { id });
+    if (rows?.[0]) return rows[0];
+  }
+  return users.get(String(id)) || null;
+}
+
 async function getInternalUserByEmail(email) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!normalized) return null;
@@ -383,6 +392,13 @@ export async function updateAdminStatus(id, status, actor) {
   const existing = await getUserById(id);
   if (!existing) return null;
   return upsertUser({ ...existing, admin_status: status, updated_by: actor?.id || null });
+}
+
+export async function resetUserPassword(id, password, actor) {
+  const existing = await getInternalUserById(id);
+  if (!existing) return null;
+  const password_hash = await bcrypt.hash(String(password || ""), 12);
+  return upsertUser({ ...existing, password_hash, updated_by: actor?.id || null });
 }
 
 export async function deactivateWebUser(id, actor) {

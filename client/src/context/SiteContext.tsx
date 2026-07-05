@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { api, MOCK } from "../api/client";
 
 export type FeatureItem = { icon: string; title: string; desc: string };
-export type RosterItem = { name: string; role: string; count: string; icon: string };
+export type RosterItem = { name: string; role: string; count: string; icon: string; avatar?: string; bio?: string; category?: string };
 export type StreamerItem = { name: string; platform: string; viewers: number; live: boolean; game: string };
 export type JourneyItem = { year: string; title: string; desc: string };
-export type FamousChar = { name: string; title: string; tag: string };
+export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string };
 export type NewsItem = { icon: string; date: string; title: string; excerpt: string };
 export type CareerItem = { role: string; type: string; dept: string };
 export type FaqItem = { q: string; a: string };
@@ -16,6 +17,8 @@ export type SiteContent = {
   heroTitle1: string;
   heroTitle2: string;
   heroDescription: string;
+  heroBackgroundImage?: string;
+  logoUrl?: string;
   serverIp: string;
   discordLink: string;
   fivemLink: string;
@@ -63,6 +66,8 @@ const DEFAULT_CONTENT: SiteContent = {
   heroTitle2: "Gotham City",
   heroDescription:
     "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
+  heroBackgroundImage: "/images/gotham-banner-static.jpg",
+  logoUrl: "/images/gotham-emblem-static.jpg",
   serverIp: "connect play.gothamcityrp.gg",
   discordLink: "/",
   fivemLink: "/server",
@@ -181,6 +186,54 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
   }, [content]);
+
+  useEffect(() => {
+    if (MOCK) return;
+    let cancel = false;
+    const loadSettings = async () => {
+      try {
+        const [settingsResult, homeResult] = await Promise.all([
+          api<{ settings: any }>("/api/public/settings"),
+          api<{ team?: any[]; famous?: any[] }>("/api/public/home"),
+        ]);
+        const settings = settingsResult.settings || {};
+        const team = (homeResult.team || []).map((member) => ({
+          name: member.name || "Team Member",
+          role: member.role_title || member.category || "Staff",
+          count: member.category || "Member",
+          icon: "Users",
+          avatar: member.profile_image_url || "",
+          bio: member.bio || "",
+          category: member.category || "Staff",
+        }));
+        const famous = (homeResult.famous || []).map((character) => ({
+          name: character.character_name || "Character",
+          title: character.header || character.role_name || "",
+          tag: character.gang_business || character.role_name || "Featured",
+          image: character.picture_url || "",
+          bio: character.bio || character.description || "",
+        }));
+        if (cancel) return;
+        setContent((prev) => ({
+          ...prev,
+          siteName: settings.websiteName || prev.siteName,
+          siteTagline: settings.heroSubtitle || prev.siteTagline,
+          heroTitle1: settings.heroTitle ? String(settings.heroTitle).split(" ")[0] || prev.heroTitle1 : prev.heroTitle1,
+          heroTitle2: settings.heroTitle ? String(settings.heroTitle).split(" ").slice(1).join(" ") || prev.heroTitle2 : prev.heroTitle2,
+          heroDescription: settings.heroDescription || prev.heroDescription,
+          heroBackgroundImage: settings.heroBackgroundImage || prev.heroBackgroundImage,
+          logoUrl: settings.logoUrl || prev.logoUrl,
+          discordLink: settings.heroPrimaryButtonLink || prev.discordLink,
+          fivemLink: settings.heroSecondaryButtonLink || prev.fivemLink,
+          storeLink: settings.storeButtonLink || prev.storeLink,
+          roster: team.length ? team : prev.roster,
+          famousCharacters: famous.length ? famous : prev.famousCharacters,
+        }));
+      } catch {}
+    };
+    loadSettings();
+    return () => { cancel = true; };
+  }, []);
 
   const updateContent = (partial: Partial<SiteContent>) => {
     setContent((prev) => ({ ...prev, ...partial }));

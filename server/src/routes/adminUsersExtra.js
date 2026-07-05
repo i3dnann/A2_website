@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getUserById, listWebUsers, deactivateWebUser, upsertWebUserFromAdmin } from "../services/users.js";
+import { getUserById, listWebUsers, deactivateWebUser, resetUserPassword, upsertWebUserFromAdmin } from "../services/users.js";
 import { blockUserIdentity, unblockUserIdentity } from "../services/accountBlocks.js";
 import { auditAction } from "../services/audit.js";
 
@@ -46,6 +46,16 @@ router.post("/users/:id/deactivate", asyncHandler(async (req, res) => {
   const user = await deactivateWebUser(req.params.id, req.user);
   if (!user) return res.status(404).json({ error: "user_not_found" });
   await auditAction({ req, action: "deactivate_web_user", targetType: "web_users", targetId: user.id, before, after: user, reason: req.body?.reason || "Deactivated by admin", webhookCategory: "security" });
+  res.json({ user });
+}));
+
+router.post("/users/:id/password", asyncHandler(async (req, res) => {
+  const password = String(req.body?.password || "");
+  if (password.length < 8) return res.status(422).json({ error: "weak_password", message: "Password must be at least 8 characters." });
+  const before = await getUserById(req.params.id);
+  const user = await resetUserPassword(req.params.id, password, req.user);
+  if (!user) return res.status(404).json({ error: "user_not_found" });
+  await auditAction({ req, action: "reset_user_password", targetType: "web_users", targetId: user.id, before, after: { id: user.id }, reason: req.body?.reason || "Password reset by admin", webhookCategory: "security" });
   res.json({ user });
 }));
 

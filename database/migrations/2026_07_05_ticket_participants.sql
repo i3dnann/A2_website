@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS ticket_participants (
+  id VARCHAR(64) PRIMARY KEY,
+  ticket_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64),
+  discord_id VARCHAR(32),
+  steam_id VARCHAR(32),
+  added_by VARCHAR(64),
+  role_name VARCHAR(80) DEFAULT 'Participant',
+  is_active TINYINT(1) DEFAULT 1,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_ticket_participants_ticket (ticket_id),
+  INDEX idx_ticket_participants_user (user_id),
+  INDEX idx_ticket_participants_discord (discord_id),
+  INDEX idx_ticket_participants_steam (steam_id),
+  INDEX idx_ticket_participants_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

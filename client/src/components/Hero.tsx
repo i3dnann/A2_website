@@ -38,7 +38,7 @@ export default function Hero() {
   return (
     <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 -z-10">
-        <img src="/images/gotham-banner-static.jpg" alt="Gotham City" className="h-full w-full object-cover opacity-70" fetchPriority="high" />
+        <img src={content.heroBackgroundImage || "/images/gotham-banner-static.jpg"} alt="Gotham City" className="h-full w-full object-cover opacity-70" fetchPriority="high" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(96,81,155,0.12),transparent_34rem)]" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/35 via-[#080808]/72 to-[#080808]" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
@@ -107,7 +107,7 @@ export default function Hero() {
             className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(96,81,155,0.16)] backdrop-blur"
           >
             <img
-              src="/images/gotham-emblem-static.jpg"
+              src={content.logoUrl || "/images/gotham-emblem-static.jpg"}
               alt="Gotham City emblem"
               loading="lazy"
               className="h-[520px] w-full rounded-2xl object-cover"

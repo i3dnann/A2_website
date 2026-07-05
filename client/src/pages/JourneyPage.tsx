@@ -49,11 +49,13 @@ export default function JourneyPage() {
               whileHover={{ y: -6 }}
               className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6"
             >
+              {c.image && <img src={c.image} alt={c.name} loading="lazy" className="-mx-2 -mt-2 mb-4 h-36 w-[calc(100%+1rem)] rounded-xl object-cover" />}
               <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
                 {c.tag}
               </span>
               <h3 className="mt-4 font-serif text-lg text-white">{c.name}</h3>
               <p className="mt-1 text-sm text-white/50">{c.title}</p>
+              {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{c.bio}</p>}
             </motion.div>
           ))}
         </div>

@@ -5,7 +5,7 @@ import {
   Settings, Globe, Users, Play, Clock, FileText, Briefcase, HelpCircle, Palette,
   Home, Menu, X, LogOut, Save, Trash2, Plus, Loader2, LayoutDashboard,
   CheckCircle2, XCircle, MessageCircle, Shield, AlertTriangle, TrendingUp,
-  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Radio, ExternalLink,
+  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Radio, ExternalLink, Star,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
@@ -18,6 +18,7 @@ const ADMIN_TABS = [
   { id: "server", label: "Server / Features", icon: Globe },
   { id: "partners", label: "Partners", icon: ExternalLink },
   { id: "roster", label: "Roster", icon: Users },
+  { id: "famous", label: "Famous Chars", icon: Star },
   { id: "live", label: "Live Streams", icon: Play },
   { id: "journey", label: "Journey & Chars", icon: Clock },
   { id: "news", label: "News", icon: FileText },
@@ -27,6 +28,9 @@ const ADMIN_TABS = [
   { id: "tickets", label: "Tickets", icon: TicketIcon },
   { id: "comments", label: "Comments", icon: MessageCircle },
   { id: "theme", label: "Theme & Brand", icon: Palette },
+  { id: "terms", label: "Terms", icon: FileText },
+  { id: "users", label: "Users", icon: Users },
+  { id: "staff", label: "Staff & Roles", icon: Shield },
   { id: "settings", label: "Settings", icon: Settings },
   { id: "logs", label: "Audit Logs", icon: Shield },
 ];
@@ -198,16 +202,20 @@ export default function AdminPanel() {
                 {tab === "home" && <HomeEditor content={content} update={updateContent} />}
                 {tab === "server" && <ServerEditor content={content} update={updateContent} />}
                 {tab === "partners" && <PartnersAdmin />}
-                {tab === "roster" && <RosterEditor content={content} update={updateContent} />}
+                {tab === "roster" && <ResourceAdmin title="Roster Members" resource="team" blank={{ name: "New Member", role_title: "Staff", category: "Staff", profile_image_url: "", bio: "", discord_url: "", twitch_url: "", kick_url: "", sort_order: 50, is_visible: true }} fields={["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "sort_order", "is_visible"]} />}
+                {tab === "famous" && <ResourceAdmin title="Famous Characters" resource="famous" blank={{ character_name: "New Character", header: "", picture_url: "", bio: "", description: "", role_name: "", gang_business: "", is_featured: false, sort_order: 50, is_visible: true }} fields={["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "is_featured", "sort_order", "is_visible"]} />}
                 {tab === "live" && <LiveEditor content={content} update={updateContent} />}
                 {tab === "journey" && <JourneyEditor content={content} update={updateContent} />}
                 {tab === "news" && <NewsAdmin />}
-                {tab === "careers" && <CareersEditor content={content} update={updateContent} />}
+                {tab === "careers" && <CareersAdmin />}
                 {tab === "applications" && <ApplicationsAdmin />}
                 {tab === "faq" && <FaqEditor content={content} update={updateContent} />}
                 {tab === "tickets" && <TicketsAdmin />}
                 {tab === "comments" && <CommentsAdmin />}
                 {tab === "theme" && <ThemeEditor content={content} update={updateContent} />}
+                {tab === "terms" && <ResourceAdmin title="Terms of Service" resource="terms" blank={{ title: "Terms of Service", content: "", version: "1.0.0", effective_date: new Date().toISOString().slice(0, 10), is_visible: true, sort_order: 1 }} fields={["title", "content", "version", "effective_date", "is_visible", "sort_order"]} />}
+                {tab === "users" && <UsersAdmin />}
+                {tab === "staff" && <StaffAdmin />}
                 {tab === "settings" && <SettingsEditor content={content} update={updateContent} />}
                 {tab === "logs" && <LogsAdmin stats={stats} />}
               </motion.div>
@@ -347,11 +355,13 @@ function formatAction(a: string) {
 /* COMMENTS ADMIN */
 /* ─────────────────────────────────────────────────────────────── */
 function TicketsAdmin() {
-  const { push } = useToast();
+  const { push, confirm } = useToast();
   const [rows, setRows] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [detail, setDetail] = useState<any>(null);
   const [reply, setReply] = useState("");
+  const [note, setNote] = useState("");
+  const [participant, setParticipant] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
@@ -455,17 +465,53 @@ function TicketsAdmin() {
                     <h3 className="mt-1 font-serif text-xl text-white">{detail.ticket.subject}</h3>
                     <p className="mt-1 text-xs text-white/45">{detail.ticket.category} · {detail.ticket.status}</p>
                   </div>
-                  {String(detail.ticket.status).toLowerCase() !== "closed" && (
-                    <button onClick={closeTicket} disabled={sending} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs font-semibold text-red-300 disabled:opacity-60">Close</button>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={() => updateStatus("Claimed")} disabled={sending} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs font-semibold text-emerald-300 disabled:opacity-60">Claim</button>
+                    <button onClick={() => updateStatus("On Hold")} disabled={sending} className="rounded-lg border border-orange-400/30 bg-orange-500/5 px-3 py-2 text-xs font-semibold text-orange-300 disabled:opacity-60">Hold</button>
+                    {String(detail.ticket.status).toLowerCase() === "closed" ? (
+                      <button onClick={() => updateStatus("Open")} disabled={sending} className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-white/70 disabled:opacity-60">Reopen</button>
+                    ) : (
+                      <button onClick={closeTicket} disabled={sending} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs font-semibold text-red-300 disabled:opacity-60">Close</button>
+                    )}
+                    <button onClick={deleteTicket} disabled={sending} className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-200 disabled:opacity-60">Delete</button>
+                  </div>
                 </div>
-                <div className="mt-4 flex flex-1 flex-col gap-3 overflow-auto">
-                  {(detail.messages || []).map((message: any) => (
-                    <div key={message.id} className={`max-w-[88%] rounded-2xl border p-3 ${message.author_type === "admin" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-white/[0.03]"}`}>
-                      <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "admin" ? "Admin" : "Player"}</p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
+                <div className="mt-4 grid gap-4 xl:grid-cols-[1fr_260px]">
+                  <div className="flex max-h-[460px] flex-col gap-3 overflow-auto">
+                    {(detail.messages || []).map((message: any) => (
+                      <div key={message.id} className={`max-w-[88%] rounded-2xl border p-3 ${message.author_type === "admin" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-white/[0.03]"}`}>
+                        <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "admin" ? "Admin" : "Player"}</p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-white/35">Members</p>
+                      <div className="mt-2 flex flex-col gap-2">
+                        {(detail.participants || []).map((p: any) => (
+                          <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-black/25 px-2 py-1.5">
+                            <span className="truncate text-xs text-white/65">{p.user_id || p.discord_id || p.steam_id}</span>
+                            <button onClick={() => removeParticipant(p.id)} className="text-red-300 hover:text-red-200"><X size={12} /></button>
+                          </div>
+                        ))}
+                        {(detail.participants || []).length === 0 && <p className="text-xs text-white/35">Only the owner can see it.</p>}
+                      </div>
+                      <div className="mt-3 flex gap-2">
+                        <input value={participant} onChange={(e) => setParticipant(e.target.value)} placeholder="User/Discord ID" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-orange-400/50" />
+                        <button onClick={addParticipant} disabled={sending || !participant.trim()} className="rounded-lg bg-orange-500/80 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Add</button>
+                      </div>
                     </div>
-                  ))}
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-white/35">Internal Notes</p>
+                      <div className="mt-2 max-h-36 overflow-auto">
+                        {(detail.notes || []).map((n: any) => <p key={n.id} className="mb-2 rounded-lg bg-black/25 p-2 text-xs text-white/60">{n.note}</p>)}
+                        {(detail.notes || []).length === 0 && <p className="text-xs text-white/35">No internal notes.</p>}
+                      </div>
+                      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Staff-only note..." className="mt-2 w-full resize-none rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-orange-400/50" />
+                      <button onClick={addNote} disabled={sending || !note.trim()} className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/70 disabled:opacity-50">Add Note</button>
+                    </div>
+                  </div>
                 </div>
                 <div className="mt-4 flex gap-2">
                   <textarea value={reply} onChange={(e) => setReply(e.target.value)} rows={3} placeholder="Reply to player..." className="min-w-0 flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-orange-400/50" />
@@ -741,6 +787,81 @@ function PartnersAdmin() {
       push({ kind: "error", message: e?.message || "Failed to load partners" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateStatus = async (status: string) => {
+    if (!selectedId) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/status`, { method: "POST", body: { status } });
+      await refreshDetail();
+      push({ kind: "success", message: `Ticket set to ${status}` });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update ticket" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const addNote = async () => {
+    if (!selectedId || !note.trim()) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/note`, { method: "POST", body: { note: note.trim() } });
+      setNote("");
+      await refreshDetail();
+      push({ kind: "success", message: "Internal note added" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to add note" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const addParticipant = async () => {
+    if (!selectedId || !participant.trim()) return;
+    const value = participant.trim();
+    const body = /^\d{15,22}$/.test(value) ? { discord_id: value } : { user_id: value };
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/participants`, { method: "POST", body });
+      setParticipant("");
+      await refreshDetail();
+      push({ kind: "success", message: "User added to ticket" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to add user" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const removeParticipant = async (participantId: string) => {
+    if (!selectedId) return;
+    try {
+      await api(`/api/admin/tickets/${selectedId}/participants/${participantId}`, { method: "DELETE" });
+      await refreshDetail();
+      push({ kind: "success", message: "User removed from ticket" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to remove user" });
+    }
+  };
+
+  const deleteTicket = async () => {
+    if (!selectedId) return;
+    const ok = await confirm({ title: "Delete ticket?", message: "This removes the ticket from admin and player views.", confirmText: "Delete" });
+    if (!ok) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}`, { method: "DELETE" });
+      setSelectedId("");
+      setDetail(null);
+      await loadRows();
+      push({ kind: "success", message: "Ticket deleted" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to delete ticket" });
+    } finally {
+      setSending(false);
     }
   };
 
@@ -1033,6 +1154,287 @@ function adminApplicationStatusClass(status: string) {
   if (s.includes("denied") || s.includes("reject")) return "border-red-400/30 bg-red-400/10 text-red-300";
   if (s.includes("review")) return "border-orange-400/30 bg-orange-400/10 text-orange-300";
   return "border-white/15 bg-white/5 text-white/55";
+}
+
+function ResourceAdmin({ title, resource, fields, blank }: { title: string; resource: string; fields: string[]; blank: any }) {
+  const { push, confirm } = useToast();
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [savingId, setSavingId] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = await api<{ rows: any[] }>(`/api/admin/${resource}`, { params: { limit: 100 } });
+      setRows(result.rows || []);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || `Failed to load ${title}` });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [resource]);
+
+  const change = (index: number, patch: any) => setRows((current) => current.map((row, i) => i === index ? { ...row, ...patch } : row));
+
+  const save = async (row: any) => {
+    setSavingId(row.id || "new");
+    try {
+      const body = Object.fromEntries(fields.map((field) => {
+        const value = row[field];
+        if (field.startsWith("is_")) return [field, flagOn(value)];
+        if (field === "sort_order") return [field, Number(value || 50)];
+        return [field, value ?? ""];
+      }));
+      if (row.id) await api(`/api/admin/${resource}/${row.id}`, { method: "PATCH", body });
+      else await api(`/api/admin/${resource}`, { method: "POST", body });
+      push({ kind: "success", message: `${title} saved` });
+      await load();
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || `Failed to save ${title}` });
+    } finally {
+      setSavingId("");
+    }
+  };
+
+  const remove = async (row: any) => {
+    const ok = await confirm({ title: `Delete ${title}?`, message: "This removes the record from the public website.", confirmText: "Delete" });
+    if (!ok) return;
+    try {
+      if (row.id) await api(`/api/admin/${resource}/${row.id}`, { method: "DELETE" });
+      setRows((current) => current.filter((item) => item !== row));
+      push({ kind: "success", message: `${title} deleted` });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || `Failed to delete ${title}` });
+    }
+  };
+
+  return (
+    <EditableSection title={title}>
+      {loading ? (
+        <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
+      ) : rows.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No records yet. Add one below.</p>
+      ) : rows.map((row, index) => (
+        <div key={row.id || index} className="rounded-xl border border-white/10 bg-black/20 p-4">
+          <div className="grid gap-3 md:grid-cols-2">
+            {fields.map((field) => (
+              <FieldEditor key={field} field={field} value={row[field]} onChange={(value: any) => change(index, { [field]: value })} />
+            ))}
+          </div>
+          <div className="mt-4 flex justify-end gap-2">
+            <button onClick={() => save(row)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingId === (row.id || "new") && <Loader2 size={12} className="animate-spin" />} Save</button>
+            <button onClick={() => remove(row)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={12} /></button>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => setRows((current) => [...current, { ...blank }])}
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Record</button>
+    </EditableSection>
+  );
+}
+
+function FieldEditor({ field, value, onChange }: { field: string; value: any; onChange: (value: any) => void }) {
+  const label = field.replace(/_/g, " ");
+  if (field.startsWith("is_")) {
+    return <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={flagOn(value)} onChange={(e) => onChange(e.target.checked)} className="accent-orange-500" /> {label}</label>;
+  }
+  if (field.includes("bio") || field.includes("description") || field === "content") {
+    return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{label}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+  }
+  return <div><label className={stClass}>{label}</label><input className={inpClass} type={field === "sort_order" ? "number" : field.includes("date") ? "date" : "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+}
+
+function CareersAdmin() {
+  return (
+    <div className="flex flex-col gap-1">
+      <ResourceAdmin
+        title="Career Positions"
+        resource="careerJobs"
+        blank={{ title: "New Position", department: "Department", description: "", image_url: "", is_open: true, requirements: "", sort_order: 50, is_visible: true }}
+        fields={["title", "department", "description", "image_url", "is_open", "requirements", "sort_order", "is_visible"]}
+      />
+      <ResourceAdmin
+        title="Application Sections"
+        resource="careerSections"
+        blank={{ job_id: "", title: "Application Section", description: "", sort_order: 50, is_visible: true }}
+        fields={["job_id", "title", "description", "sort_order", "is_visible"]}
+      />
+      <ResourceAdmin
+        title="Application Questions"
+        resource="careerQuestions"
+        blank={{ job_id: "", section_id: "", question: "New question", help_text: "", question_type: "long_text", options_json: "[]", is_required: true, sort_order: 50, is_visible: true }}
+        fields={["job_id", "section_id", "question", "help_text", "question_type", "options_json", "is_required", "sort_order", "is_visible"]}
+      />
+    </div>
+  );
+}
+
+function UsersAdmin() {
+  const { push } = useToast();
+  const [rows, setRows] = useState<any[]>([]);
+  const [q, setQ] = useState("");
+  const [passwords, setPasswords] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = await api<{ rows: any[] }>("/api/admin/users", { params: { q, limit: 200 } });
+      setRows(result.rows || []);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to load users" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const setUserStatus = async (user: any, active: boolean) => {
+    try {
+      await api(`/api/admin/users/${user.id}/${active ? "activate" : "deactivate"}`, { method: "POST", body: {} });
+      await load();
+      push({ kind: "success", message: active ? "User enabled" : "User disabled" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update user" });
+    }
+  };
+
+  const resetPassword = async (user: any) => {
+    const password = passwords[user.id] || "";
+    if (password.length < 8) {
+      push({ kind: "error", message: "Password must be at least 8 characters." });
+      return;
+    }
+    try {
+      await api(`/api/admin/users/${user.id}/password`, { method: "POST", body: { password } });
+      setPasswords((current) => ({ ...current, [user.id]: "" }));
+      push({ kind: "success", message: "Password reset and hashed" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to reset password" });
+    }
+  };
+
+  return (
+    <EditableSection title="Website Users">
+      <div className="flex gap-2">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users, Discord, Steam..." className={inpClass} />
+        <button onClick={load} className="rounded-lg border border-white/10 px-4 text-sm text-white/70">Search</button>
+      </div>
+      {loading ? <Skeleton className="h-28" /> : (
+        <div className="flex flex-col gap-2">
+          {rows.map((user) => (
+            <div key={user.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-white">{user.username || user.email || user.id}</p>
+                  <p className="mt-1 text-xs text-white/40">{user.email || "No email"} - Discord {user.discord_id || "not linked"} - Steam {user.steam_id || "not linked"}</p>
+                  <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
+                  <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input type="password" value={passwords[user.id] || ""} onChange={(e) => setPasswords((current) => ({ ...current, [user.id]: e.target.value }))} placeholder="New password" className={`${inpClass} sm:max-w-xs`} />
+                <button onClick={() => resetPassword(user)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/70">Reset Password</button>
+              </div>
+            </div>
+          ))}
+          {rows.length === 0 && <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No users found.</p>}
+        </div>
+      )}
+    </EditableSection>
+  );
+}
+
+function StaffAdmin() {
+  const { push } = useToast();
+  const [admins, setAdmins] = useState<any[]>([]);
+  const [roles, setRoles] = useState<string[]>([]);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [draft, setDraft] = useState<any>({ username: "", email: "", discord_id: "", roles: ["Admin"], permissions: [] });
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [adminResult, permissionResult] = await Promise.all([
+        api<{ rows: any[] }>("/api/admin/admins", { params: { limit: 200 } }),
+        api<{ roles: string[]; permissions: string[]; defaults: Record<string, string[]> }>("/api/admin/permissions"),
+      ]);
+      setAdmins(adminResult.rows || []);
+      setRoles(permissionResult.roles || []);
+      setPermissions(permissionResult.permissions || []);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to load staff" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const saveAdmin = async (admin: any) => {
+    try {
+      const body = { ...admin, roles: Array.isArray(admin.roles) ? admin.roles : [admin.roles].filter(Boolean), permissions: admin.permissions || [] };
+      if (admin.id) await api(`/api/admin/admins/${admin.id}`, { method: "PATCH", body });
+      else await api("/api/admin/admins", { method: "POST", body });
+      setDraft({ username: "", email: "", discord_id: "", roles: ["Admin"], permissions: [] });
+      await load();
+      push({ kind: "success", message: "Staff permissions saved" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to save staff" });
+    }
+  };
+
+  const togglePermission = (admin: any, permission: string, index?: number) => {
+    const current = new Set(admin.permissions || []);
+    current.has(permission) ? current.delete(permission) : current.add(permission);
+    if (typeof index === "number") setAdmins((rows) => rows.map((row, i) => i === index ? { ...row, permissions: [...current] } : row));
+    else setDraft((row: any) => ({ ...row, permissions: [...current] }));
+  };
+
+  return (
+    <EditableSection title="Staff & Permissions">
+      {loading ? <Skeleton className="h-28" /> : (
+        <>
+          <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+            <h4 className="font-serif text-base text-white">Add Staff</h4>
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <input className={inpClass} value={draft.username} onChange={(e) => setDraft({ ...draft, username: e.target.value })} placeholder="Username" />
+              <input className={inpClass} value={draft.email} onChange={(e) => setDraft({ ...draft, email: e.target.value })} placeholder="Email optional" />
+              <input className={inpClass} value={draft.discord_id} onChange={(e) => setDraft({ ...draft, discord_id: e.target.value })} placeholder="Discord ID" />
+              <select className={inpClass} value={draft.roles?.[0] || "Admin"} onChange={(e) => setDraft({ ...draft, roles: [e.target.value] })}>{roles.map((role) => <option key={role}>{role}</option>)}</select>
+            </div>
+            <div className="mt-3 flex max-h-40 flex-wrap gap-2 overflow-auto">
+              {permissions.map((permission) => <label key={permission} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/60"><input type="checkbox" checked={(draft.permissions || []).includes(permission)} onChange={() => togglePermission(draft, permission)} className="mr-1 accent-orange-500" />{permission}</label>)}
+            </div>
+            <button onClick={() => saveAdmin(draft)} className="mt-3 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white">Add Staff</button>
+          </div>
+          <div className="flex flex-col gap-2">
+            {admins.map((admin, index) => (
+              <div key={admin.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                <div className="grid gap-3 md:grid-cols-4">
+                  <input className={inpClass} value={admin.username || ""} onChange={(e) => setAdmins((rows) => rows.map((row, i) => i === index ? { ...row, username: e.target.value } : row))} />
+                  <input className={inpClass} value={admin.email || ""} onChange={(e) => setAdmins((rows) => rows.map((row, i) => i === index ? { ...row, email: e.target.value } : row))} />
+                  <input className={inpClass} value={admin.discord_id || ""} onChange={(e) => setAdmins((rows) => rows.map((row, i) => i === index ? { ...row, discord_id: e.target.value } : row))} />
+                  <select className={inpClass} value={admin.roles?.[0] || "Admin"} onChange={(e) => setAdmins((rows) => rows.map((row, i) => i === index ? { ...row, roles: [e.target.value] } : row))}>{roles.map((role) => <option key={role}>{role}</option>)}</select>
+                </div>
+                <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-auto">
+                  {permissions.map((permission) => <label key={permission} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/60"><input type="checkbox" checked={(admin.permissions || []).includes(permission)} onChange={() => togglePermission(admin, permission, index)} className="mr-1 accent-orange-500" />{permission}</label>)}
+                </div>
+                <button onClick={() => saveAdmin(admin)} className="mt-3 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white">Save Staff</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </EditableSection>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -1418,15 +1820,79 @@ function ThemeEditor({ content, update }: any) {
 }
 
 function SettingsEditor({ content, update }: any) {
+  const { push } = useToast();
+  const [settings, setSettings] = useState<any>({
+    websiteName: content.siteName,
+    siteTagline: content.siteTagline,
+    logoUrl: "",
+    faviconUrl: "",
+    heroBackgroundImage: "",
+    heroTitle: content.siteName,
+    heroSubtitle: content.siteTagline,
+    heroDescription: content.heroDescription,
+    heroPrimaryButtonLink: content.discordLink,
+    heroSecondaryButtonLink: content.fivemLink,
+    storeButtonLink: content.storeLink,
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    const load = async () => {
+      try {
+        const result = await api<{ settings: any }>("/api/admin/settings");
+        if (!cancel) setSettings((current: any) => ({ ...current, ...(result.settings || {}) }));
+      } catch (e: any) {
+        push({ kind: "error", message: e?.message || "Failed to load settings" });
+      }
+    };
+    load();
+    return () => { cancel = true; };
+  }, []);
+
+  const change = (key: string, value: any) => setSettings((current: any) => ({ ...current, [key]: value }));
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api("/api/admin/settings", { method: "PATCH", body: settings });
+      update({
+        siteName: settings.websiteName || content.siteName,
+        siteTagline: settings.heroSubtitle || settings.siteTagline || content.siteTagline,
+        heroDescription: settings.heroDescription || content.heroDescription,
+        heroBackgroundImage: settings.heroBackgroundImage || content.heroBackgroundImage,
+        logoUrl: settings.logoUrl || content.logoUrl,
+        discordLink: settings.heroPrimaryButtonLink || content.discordLink,
+        fivemLink: settings.heroSecondaryButtonLink || content.fivemLink,
+        storeLink: settings.storeButtonLink || content.storeLink,
+      });
+      push({ kind: "success", message: "Site settings saved" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to save settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return <div className="flex flex-col gap-1">
     <EditableSection title="Site Configuration">
-      <p className="text-sm text-white/50 italic">These settings are saved to your browser's localStorage in this demo. In production they'll sync to your MySQL via the backend API.</p>
+      <p className="text-sm text-white/50">These settings are saved through the backend and loaded by the public site.</p>
       <div className="mt-2 grid gap-4 sm:grid-cols-2">
-        <EField label="Site Name" value={content.siteName} onChange={(v) => update({ siteName: v })} />
-        <EField label="Site Tagline" value={content.siteTagline} onChange={(v) => update({ siteTagline: v })} />
-        <EField label="Server IP" value={content.serverIp} onChange={(v) => update({ serverIp: v })} />
-        <EField label="Discord Invite URL" value={content.discordLink} onChange={(v) => update({ discordLink: v })} />
+        <EField label="Website Name" value={settings.websiteName || ""} onChange={(v) => change("websiteName", v)} />
+        <EField label="Hero Subtitle" value={settings.heroSubtitle || ""} onChange={(v) => change("heroSubtitle", v)} />
+        <EField label="Website Logo URL" value={settings.logoUrl || ""} onChange={(v) => change("logoUrl", v)} />
+        <EField label="Favicon URL" value={settings.faviconUrl || ""} onChange={(v) => change("faviconUrl", v)} />
+        <EField label="Hero Background URL" value={settings.heroBackgroundImage || ""} onChange={(v) => change("heroBackgroundImage", v)} />
+        <EField label="Join Discord Link" value={settings.heroPrimaryButtonLink || ""} onChange={(v) => change("heroPrimaryButtonLink", v)} />
+        <EField label="FiveM Connect Link" value={settings.heroSecondaryButtonLink || ""} onChange={(v) => change("heroSecondaryButtonLink", v)} />
+        <EField label="Store Link" value={settings.storeButtonLink || ""} onChange={(v) => change("storeButtonLink", v)} />
+        <div className="sm:col-span-2">
+          <EArea label="Hero Description" value={settings.heroDescription || ""} onChange={(v) => change("heroDescription", v)} />
+        </div>
       </div>
+      <button onClick={save} disabled={saving} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+        {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Save Settings
+      </button>
     </EditableSection>
     <EditableSection title="Danger Zone">
       <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6">

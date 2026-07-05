@@ -208,6 +208,15 @@ export const RESOURCE_DEFINITIONS = [
     fields: ["ticket_id", "message_id", "file_url", "original_name", "mime_type", "size_bytes"]
   },
   {
+    key: "ticketParticipants",
+    table: "ticket_participants",
+    label: "Ticket Participants",
+    public: false,
+    permission: "manage_tickets",
+    searchFields: ["ticket_id", "user_id", "discord_id", "steam_id"],
+    fields: ["ticket_id", "user_id", "discord_id", "steam_id", "added_by", "role_name", "is_active"]
+  },
+  {
     key: "ticketNotes",
     table: "ticket_notes",
     label: "Ticket Notes",
@@ -410,6 +419,7 @@ export const SEED_DATA = {
   tickets: [],
   ticketMessages: [],
   ticketAttachments: [],
+  ticketParticipants: [],
   ticketNotes: [],
   news: [
     { id: "news-launch", title: "A2 Studio Website Launch", subtitle: "A new home for the community.", content: "Manage news from the admin panel and publish updates for your FiveM city.", image_url: "", category: "Community", author_name: "A2 Studio", published_at: new Date().toISOString(), status: "Published", is_featured: true, sort_order: 1 }

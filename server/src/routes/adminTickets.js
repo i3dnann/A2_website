@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { createResource, getResource, listResource, updateResource } from "../services/repository.js";
+import { createResource, deleteResource, getResource, listResource, updateResource } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
 import { getUserById } from "../services/users.js";
@@ -45,15 +45,76 @@ router.get("/tickets/:id", requirePermission("manage_tickets"), asyncHandler(asy
   const player = await playerFor(ticket);
   const [messages, notes] = await Promise.all([
     listResource("ticketMessages", { q: ticket.id, limit: 100 }),
-    listResource("ticketNotes", { q: ticket.id, limit: 100 })
+    listResource("ticketNotes", { q: ticket.id, limit: 100 }),
+    listResource("ticketParticipants", { q: ticket.id, limit: 100 }).catch(() => ({ rows: [] }))
   ]);
   res.json({
     ticket,
     player,
     identifiers: snapshot(ticket, player),
     messages: messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)),
-    notes: notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id))
+    notes: notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id)),
+    participants: participants.rows.filter((participant) => String(participant.ticket_id) === String(ticket.id) && participant.is_active !== false && participant.is_active !== 0)
   });
+}));
+
+router.post("/tickets/:id/status", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
+  const ticket = await getResource("tickets", req.params.id);
+  if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+  const allowed = new Set(["Waiting for Support", "Waiting for staff", "Waiting for player", "Claimed", "On Hold", "Closed", "Open"]);
+  const status = String(req.body?.status || "").trim();
+  if (!allowed.has(status)) return res.status(422).json({ error: "invalid_ticket_status", message: "Choose a valid ticket status." });
+  const patch = { status };
+  if (status === "Claimed") patch.assigned_to = req.user.id;
+  if (status === "Closed") {
+    patch.closed_by = req.user.id;
+    patch.closed_at = new Date().toISOString();
+  }
+  if (status !== "Closed" && closed(ticket)) {
+    patch.closed_by = "";
+    patch.closed_at = null;
+  }
+  const result = await updateResource("tickets", ticket.id, patch, req.user);
+  await auditAction({ req, action: "update_ticket_status", targetType: "tickets", targetId: ticket.id, before: result.before, after: result.after, reason: req.body?.reason || status, webhookCategory: "admin" });
+  res.json({ ticket: result.after });
+}));
+
+router.post("/tickets/:id/claim", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
+  const ticket = await getResource("tickets", req.params.id);
+  if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+  const result = await updateResource("tickets", ticket.id, { status: "Claimed", assigned_to: req.user.id }, req.user);
+  await auditAction({ req, action: "claim_ticket", targetType: "tickets", targetId: ticket.id, before: result.before, after: result.after, reason: "ticket claimed", webhookCategory: "admin" });
+  res.json({ ticket: result.after });
+}));
+
+router.post("/tickets/:id/participants", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
+  const ticket = await getResource("tickets", req.params.id);
+  if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+  const userId = String(req.body?.user_id || "").trim();
+  const discordId = String(req.body?.discord_id || "").trim();
+  const steamId = String(req.body?.steam_id || "").trim();
+  if (!userId && !discordId && !steamId) return res.status(422).json({ error: "participant_identifier_required", message: "Enter a user ID, Discord ID, or Steam ID." });
+  const participant = await createResource("ticketParticipants", {
+    ticket_id: ticket.id,
+    user_id: userId,
+    discord_id: discordId,
+    steam_id: steamId,
+    added_by: req.user.id,
+    role_name: req.body?.role_name || "Participant",
+    is_active: true
+  }, req.user);
+  await auditAction({ req, action: "add_ticket_participant", targetType: "tickets", targetId: ticket.id, after: participant, reason: "ticket participant added", webhookCategory: "admin" });
+  res.status(201).json({ participant });
+}));
+
+router.delete("/tickets/:id/participants/:participantId", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
+  const ticket = await getResource("tickets", req.params.id);
+  if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
+  const participant = await getResource("ticketParticipants", req.params.participantId);
+  if (!participant || String(participant.ticket_id) !== String(ticket.id)) return res.status(404).json({ error: "participant_not_found" });
+  const result = await updateResource("ticketParticipants", participant.id, { is_active: false }, req.user);
+  await auditAction({ req, action: "remove_ticket_participant", targetType: "tickets", targetId: ticket.id, before: participant, after: result.after, reason: "ticket participant removed", webhookCategory: "admin" });
+  res.json({ ok: true });
 }));
 
 router.post("/tickets/:id/reply", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
@@ -100,6 +161,13 @@ router.post("/tickets/:id/close", requirePermission("close_tickets"), asyncHandl
   });
   await auditAction({ req, action: "close_ticket", targetType: "tickets", targetId: ticket.id, after: result.after, reason: req.body?.reason || "ticket closed", webhookCategory: "admin" });
   res.json({ ticket: result.after });
+}));
+
+router.delete("/tickets/:id", requirePermission("close_tickets"), asyncHandler(async (req, res) => {
+  const before = await deleteResource("tickets", req.params.id, req.user);
+  if (!before) return res.status(404).json({ error: "ticket_not_found" });
+  await auditAction({ req, action: "delete_ticket", targetType: "tickets", targetId: req.params.id, before, reason: req.body?.reason || "ticket deleted", webhookCategory: "admin" });
+  res.json({ ok: true });
 }));
 
 export default router;
