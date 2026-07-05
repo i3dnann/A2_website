@@ -14,6 +14,15 @@ export default function AuthComplete() {
   useEffect(() => {
     if (started.current) return;
     started.current = true;
+    const oauthError = params.get("error");
+    if (oauthError) {
+      const messages: Record<string, string> = {
+        invalid_oauth_state: "Login session expired or was opened from an old link. Please start Discord login again.",
+        invalid_steam_state: "Steam login session expired or was opened from an old link. Please start Steam login again."
+      };
+      setError(messages[oauthError] || "Could not finish login. Please try again.");
+      return;
+    }
     const token = params.get("token");
     if (!token) {
       setError("Missing login token from the backend.");

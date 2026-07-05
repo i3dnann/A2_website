@@ -18,6 +18,10 @@ const router = Router();
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const SESSION_EXPIRES_IN = "30d";
 const OAUTH_STATE_EXPIRES_IN = "15m";
+const LEGACY_STATE_SECRETS = [
+  "change_me_to_a_long_random_session_secret",
+  "change_me_to_a_long_random_secret"
+];
 
 const registerSchema = z.object({
   username: z.string().min(2).max(80),
@@ -31,20 +35,33 @@ const loginSchema = z.object({
   password: z.string().min(1)
 });
 
+function stateSecrets() {
+  return [env.OAUTH_STATE_SECRET, env.SESSION_SECRET, env.JWT_SECRET, ...LEGACY_STATE_SECRETS]
+    .filter(Boolean)
+    .filter((value, index, list) => list.indexOf(value) === index);
+}
+
 function createState(payload) {
   return jwt.sign(
     { ...payload, nonce: randomUUID() },
-    env.SESSION_SECRET || env.JWT_SECRET,
+    stateSecrets()[0],
     { expiresIn: OAUTH_STATE_EXPIRES_IN }
   );
 }
 
 function readState(state) {
-  try {
-    return jwt.verify(String(state || ""), env.SESSION_SECRET || env.JWT_SECRET);
-  } catch {
-    return null;
+  for (const secret of stateSecrets()) {
+    try {
+      return jwt.verify(String(state || ""), secret);
+    } catch {}
   }
+  return null;
+}
+
+function oauthError(res, code) {
+  const url = new URL("/auth/complete", env.FRONTEND_URL);
+  url.searchParams.set("error", code);
+  return res.redirect(url.toString());
 }
 
 function setSession(res, user) {
@@ -131,7 +148,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const { code, state } = req.query;
     const oauthState = readState(state);
-    if (!code || !oauthState) return res.status(400).send("Invalid OAuth state.");
+    if (!code || !oauthState || oauthState.provider !== "discord") return oauthError(res, "invalid_oauth_state");
 
     const token = await exchangeDiscordCode(code);
     const [discordUser, roles] = await Promise.all([getDiscordUser(token.access_token), getDiscordMemberRoles(token.access_token)]);
@@ -198,7 +215,7 @@ router.get(
   authLimiter,
   asyncHandler(async (req, res) => {
     const oauthState = readState(req.query.state);
-    if (!oauthState) return res.status(400).send("Invalid Steam state.");
+    if (!oauthState || oauthState.provider !== "steam") return oauthError(res, "invalid_steam_state");
     const steamId = await verifySteamOpenId(req.query);
     if (!steamId) return res.status(400).send("Steam OpenID verification failed.");
     const profile = { username: `Steam ${steamId}`, steam_id: steamId };

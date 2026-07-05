@@ -52,7 +52,13 @@ export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PU
     return res.data as T;
   } catch (err) {
     const e = err as AxiosError<{ error?: string; message?: string }>;
-    throw new Error(e.response?.data?.message || e.response?.data?.error || e.message || "Request failed");
+    const code = e.response?.data?.error;
+    const friendly: Record<string, string> = {
+      resource_not_found: "This admin section is not available on the running backend. Pull the latest backend files and restart PM2.",
+      not_found: "That item could not be found. Refresh the page and try again.",
+      cors_origin_not_allowed: "The backend rejected this website URL. Add it to CORS_ALLOWED_ORIGINS or CORS_ORIGINS in the VPS .env."
+    };
+    throw new Error(e.response?.data?.message || (code ? friendly[code] || code : "") || e.message || "Request failed");
   }
 }
 

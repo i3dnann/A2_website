@@ -40,13 +40,38 @@ const app = express();
 fs.mkdirSync(path.resolve(process.cwd(), "uploads"), { recursive: true });
 
 app.set("trust proxy", 1);
-app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" }, contentSecurityPolicy: false }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "default-src": ["'self'"],
+      "base-uri": ["'self'"],
+      "object-src": ["'none'"],
+      "frame-ancestors": ["'self'"],
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "style-src": ["'self'", "'unsafe-inline'", "https:"],
+      "img-src": ["'self'", "data:", "blob:", "https:", "http:"],
+      "font-src": ["'self'", "data:", "https:"],
+      "media-src": ["'self'", "data:", "blob:", "https:", "http:"],
+      "connect-src": ["'self'", "https:", "http:", "ws:", "wss:"],
+      "frame-src": ["'self'", "https://player.twitch.tv", "https://kick.com", "https://www.youtube.com", "https://youtube.com"]
+    }
+  }
+}));
 app.use(compression());
 app.use(morgan("tiny"));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(cors({ origin(origin, callback) { if (!origin || corsOrigins.includes(origin) || origin === env.FRONTEND_URL) return callback(null, true); return callback(new Error("CORS origin not allowed")); }, credentials: true }));
+app.use(cors({
+  origin(origin, callback) {
+    const normalized = String(origin || "").replace(/\/+$/, "");
+    if (!origin || corsOrigins.includes(normalized)) return callback(null, true);
+    return callback(new Error("CORS origin not allowed"));
+  },
+  credentials: true
+}));
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 app.use(apiLimiter);
 app.use(optionalAuth);
@@ -173,6 +198,7 @@ app.use((error, _req, res, _next) => {
     const message = error.code === "LIMIT_FILE_SIZE" ? "The uploaded file is too large. Increase MAX_UPLOAD_BYTES on the backend or upload a smaller file." : error.message;
     return res.status(413).json({ error: error.code || "upload_error", message });
   }
+  if (error?.message === "CORS origin not allowed") return res.status(403).json({ error: "cors_origin_not_allowed", message: "This website URL is not allowed by the backend CORS settings." });
   if (error?.message?.includes("Unsupported file")) return res.status(400).json({ error: "unsupported_file", message: error.message });
   if (error?.name === "ZodError") return res.status(400).json({ error: "validation_error", message: error.errors?.[0]?.message || "Please check the form fields.", issues: error.errors || [] });
   const status = error.status || 500;

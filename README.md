@@ -1,12 +1,12 @@
 # A2 Studio Website
 
-Professional FiveM QBCore roleplay community website for A2 Studio. The frontend is a dark, responsive React/Vite app and the backend is an Express/MySQL API designed for Netlify frontend hosting and a VPS backend.
+Professional FiveM CFW Roleplay community website for A2 Studio. The frontend is a dark, responsive React/Vite app and the backend is an Express/MySQL API designed for Netlify frontend hosting and a VPS backend.
 
 ## Features
 
 - Public pages: home, roster, live streams, team, careers, tickets, news, snapshots, map, FAQ, terms, events, journey, famous characters.
 - Account system: email/password, Discord OAuth2, Steam OpenID, linked providers per user.
-- Player dashboard: account status, linked identifiers, ban status, tickets, and QBCore character data after Steam is connected.
+- Player dashboard: account status, linked identifiers, ban status, tickets, and CFW character data after Steam is connected.
 - Admin panel: settings, homepage, theme/colors, performance mode, partners, journey, famous characters, roster/live, team, careers/questions/applications, tickets, news, map zones, FAQ, terms, events, users, admins, permissions, webhooks, audit logs, uploads.
 - Live streams: backend-only Twitch/Kick checks with cached status.
 - Security: bcrypt-compatible password hashing, JWT/http-only cookie sessions, CSRF guard for cookie-only unsafe requests, rate limits, Helmet, upload validation, RBAC, audit logs, webhook secrecy.
@@ -18,20 +18,8 @@ Professional FiveM QBCore roleplay community website for A2 Studio. The frontend
 /server     Node.js + Express + MySQL backend
 /database   SQL schema and seed data
 /docs       Security and deployment notes
-/gotham-city-theme    WordPress theme rebuild
-/gotham-city-core     WordPress plugin for editable content/admin tools
-/gotham-fivem-bridge  Secure VPS API bridge for QBCore/MySQL
+/gotham-fivem-bridge  Secure VPS API bridge for CFW/MySQL
 ```
-
-## WordPress Rebuild
-
-The WordPress-compatible rebuild is included in this repo. Use:
-
-- `gotham-city-theme/` as the WordPress theme.
-- `gotham-city-core/` as the required custom plugin.
-- `gotham-fivem-bridge/` on the FiveM VPS for protected QBCore/MySQL access.
-
-Full installation, security, bridge, MySQL permission, and testing steps are in [`README-WORDPRESS.md`](README-WORDPRESS.md).
 
 ## Quick Start
 
@@ -66,11 +54,11 @@ MASTER_ADMIN_STEAM_IDS=
 
 An account matching one of those values receives `Master Admin` permissions.
 
-## QBCore Integration
+## CFW Integration
 
-The backend reads QBCore `players` data defensively from MySQL/MariaDB. It does not allow normal users to edit QBCore data. Steam must be linked before a player can view characters.
+The backend reads roleplay `players` data defensively from MySQL/MariaDB. It does not allow normal users to edit game data. Steam must be linked before a player can view characters.
 
-Used QBCore fields:
+Used player fields:
 
 - `players.citizenid`
 - `players.cid`

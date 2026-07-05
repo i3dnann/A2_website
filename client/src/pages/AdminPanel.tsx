@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
-import { api, MOCK } from "../api/client";
+import { api, MOCK, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
 
 const ADMIN_TABS = [
@@ -680,7 +680,7 @@ function NewsAdmin() {
   return (
     <div className="flex flex-col gap-1">
       <EditableSection title="News Posts">
-        <button onClick={() => setEditing({ id: null, title: "", excerpt: "", content: "", category: "Announcement", tags: "", pinned: false, active: true })}
+        <button onClick={() => setEditing({ id: null, title: "", excerpt: "", content: "", image_url: "", image: "", video_url: "", category: "Announcement", tags: "", pinned: false, active: true })}
           className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white w-fit">
           <Plus size={14} /> New Post
         </button>
@@ -717,13 +717,47 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
   const { push } = useToast();
   const [form, setForm] = useState(post);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState("");
+
+  const setField = (key: string, value: any) => setForm((current: any) => ({ ...current, [key]: value }));
+
+  const uploadMedia = async (file: File | null | undefined, key: "image_url" | "video_url") => {
+    if (!file) return;
+    if (MOCK) {
+      setField(key, URL.createObjectURL(file));
+      push({ kind: "success", message: "Media attached (demo)" });
+      return;
+    }
+    setUploading(key);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await upload("/api/admin/uploads", body);
+      setField(key, result.data?.url || "");
+      if (key === "image_url") setField("image", result.data?.url || "");
+      push({ kind: "success", message: key === "image_url" ? "Image uploaded" : "Video uploaded" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Upload failed" });
+    } finally {
+      setUploading("");
+    }
+  };
 
   const save = async () => {
     setSaving(true);
     try {
       if (MOCK) { await new Promise((r) => setTimeout(r, 500)); push({ kind: "success", message: "Saved (demo)" }); onSaved(); return; }
-      if (post.id) await api(`/api/admin/news/${post.id}`, { method: "PATCH", body: form });
-      else await api("/api/admin/news", { method: "POST", body: form });
+      const payload = {
+        ...form,
+        subtitle: form.subtitle || form.excerpt || "",
+        image_url: form.image_url || form.image || "",
+        video_url: form.video_url || "",
+        status: form.active === 0 ? "Draft" : form.status || "Published",
+        is_featured: form.pinned || form.is_featured ? 1 : 0,
+        published_at: form.published_at || new Date().toISOString()
+      };
+      if (post.id) await api(`/api/admin/news/${post.id}`, { method: "PATCH", body: payload });
+      else await api("/api/admin/news", { method: "POST", body: payload });
       push({ kind: "success", message: "Post saved" });
       onSaved();
     } catch (e: any) { push({ kind: "error", message: e?.message }); }
@@ -738,16 +772,40 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
         className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl">
         <h3 className="font-serif text-lg text-white">{post.id ? "Edit News Post" : "New News Post"}</h3>
         <div className="mt-4 flex flex-col gap-3">
-          <div><label className={stClass}>Title</label><input className={inpClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+          <div><label className={stClass}>Title</label><input className={inpClass} value={form.title} onChange={(e) => setField("title", e.target.value)} /></div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div><label className={stClass}>Category</label><input className={inpClass} value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></div>
-            <div><label className={stClass}>Tags (comma-separated)</label><input className={inpClass} value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} /></div>
+            <div><label className={stClass}>Category</label><input className={inpClass} value={form.category} onChange={(e) => setField("category", e.target.value)} /></div>
+            <div><label className={stClass}>Tags (comma-separated)</label><input className={inpClass} value={form.tags} onChange={(e) => setField("tags", e.target.value)} /></div>
           </div>
-          <div><label className={stClass}>Excerpt</label><textarea className={`${inpClass} resize-none`} rows={2} value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} /></div>
-          <div><label className={stClass}>Content</label><textarea className={`${inpClass} resize-none`} rows={8} value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label className={stClass}>Image URL or upload</label>
+              <input className={inpClass} value={form.image_url || form.image || ""} onChange={(e) => { setField("image_url", e.target.value); setField("image", e.target.value); }} />
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5">
+                {uploading === "image_url" && <Loader2 size={13} className="animate-spin" />} Upload image
+                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], "image_url")} />
+              </label>
+            </div>
+            <div>
+              <label className={stClass}>Video URL or upload</label>
+              <input className={inpClass} value={form.video_url || ""} onChange={(e) => setField("video_url", e.target.value)} />
+              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5">
+                {uploading === "video_url" && <Loader2 size={13} className="animate-spin" />} Upload video
+                <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], "video_url")} />
+              </label>
+            </div>
+          </div>
+          {(form.image_url || form.image || form.video_url) && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(form.image_url || form.image) && <img src={form.image_url || form.image} alt="" className="aspect-video w-full rounded-xl border border-white/10 object-cover" />}
+              {form.video_url && <video src={form.video_url} controls preload="metadata" className="aspect-video w-full rounded-xl border border-white/10 bg-black object-contain" />}
+            </div>
+          )}
+          <div><label className={stClass}>Excerpt</label><textarea className={`${inpClass} resize-none`} rows={2} value={form.excerpt || form.subtitle || ""} onChange={(e) => { setField("excerpt", e.target.value); setField("subtitle", e.target.value); }} /></div>
+          <div><label className={stClass}>Content</label><textarea className={`${inpClass} resize-none`} rows={8} value={form.content} onChange={(e) => setField("content", e.target.value)} /></div>
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.pinned} onChange={(e) => setForm({ ...form, pinned: e.target.checked })} className="accent-orange-500" /> Pinned</label>
-            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.active !== 0} onChange={(e) => setForm({ ...form, active: e.target.checked ? 1 : 0 })} className="accent-orange-500" /> Active</label>
+            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={Boolean(form.pinned || form.is_featured)} onChange={(e) => { setField("pinned", e.target.checked); setField("is_featured", e.target.checked ? 1 : 0); }} className="accent-orange-500" /> Pinned</label>
+            <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={form.active !== 0 && form.status !== "Draft"} onChange={(e) => { setField("active", e.target.checked ? 1 : 0); setField("status", e.target.checked ? "Published" : "Draft"); }} className="accent-orange-500" /> Active</label>
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-2">

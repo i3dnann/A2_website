@@ -1,1 +1,0 @@
-<section class="gotham-section"><div class="gotham-container"><div class="gotham-grid"><?php foreach (function_exists('gotham_query_items') ? gotham_query_items('gotham_news', 24) : [] as $item) { gotham_post_card($item); } ?></div></div></section>

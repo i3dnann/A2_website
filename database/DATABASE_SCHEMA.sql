@@ -744,6 +744,7 @@ CREATE TABLE IF NOT EXISTS news_articles (
   subtitle VARCHAR(190),
   content MEDIUMTEXT,
   image_url TEXT,
+  video_url TEXT,
   category VARCHAR(80),
   author_name VARCHAR(120),
   published_at DATETIME NULL,

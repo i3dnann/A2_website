@@ -20,6 +20,7 @@ function mapPost(row = {}) {
     excerpt: row.subtitle || row.excerpt || String(row.content || "").slice(0, 180),
     content: row.content || "",
     image: row.image_url || row.image || "",
+    video_url: row.video_url || row.video || "",
     category: row.category || "News",
     tags: row.tags || "",
     author: row.author_name || row.created_by || "Gotham City",

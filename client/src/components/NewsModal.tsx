@@ -11,6 +11,7 @@ export type NewsPost = {
   excerpt: string;
   content?: string;
   image?: string | null;
+  video_url?: string | null;
   category: string;
   tags: string;
   author: string;
@@ -142,6 +143,12 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
                 <div className="mt-5 whitespace-pre-wrap text-sm leading-relaxed text-white/80">
                   {full.content || full.excerpt}
                 </div>
+
+                {full.video_url && (
+                  <div className="mt-5 overflow-hidden rounded-xl border border-white/10 bg-black/30">
+                    <video src={full.video_url} controls preload="metadata" className="aspect-video w-full bg-black object-contain" />
+                  </div>
+                )}
 
                 <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
                   <button onClick={() => doVote("like")}

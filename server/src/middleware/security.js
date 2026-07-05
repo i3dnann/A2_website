@@ -18,17 +18,17 @@ export const authLimiter = rateLimit({
 });
 
 const fileExtensions = new Set([
-  ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".avif",
+  ".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif",
   ".mp3", ".wav", ".ogg", ".oga", ".m4a", ".aac", ".flac",
   ".mp4", ".m4v", ".webm", ".mov",
-  ".pdf", ".txt", ".json"
+  ".pdf"
 ]);
 
 const mimeTypes = new Set([
-  "image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml", "image/avif",
+  "image/png", "image/jpeg", "image/webp", "image/gif", "image/avif",
   "audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/aac", "audio/flac",
   "video/mp4", "video/x-m4v", "video/webm", "video/quicktime",
-  "application/pdf", "text/plain", "application/json"
+  "application/pdf"
 ]);
 
 const storage = multer.diskStorage({

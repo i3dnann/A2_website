@@ -232,7 +232,7 @@ export const RESOURCE_DEFINITIONS = [
     public: true,
     permission: "manage_news",
     searchFields: ["title", "subtitle", "content", "category", "author_name"],
-    fields: ["title", "subtitle", "content", "image_url", "category", "author_name", "published_at", "status", "is_featured", "sort_order"]
+    fields: ["title", "subtitle", "content", "image_url", "video_url", "category", "author_name", "published_at", "status", "is_featured", "sort_order"]
   },
   {
     key: "newsCategories",
@@ -422,7 +422,7 @@ export const SEED_DATA = {
   ticketParticipants: [],
   ticketNotes: [],
   news: [
-    { id: "news-launch", title: "A2 Studio Website Launch", subtitle: "A new home for the community.", content: "Manage news from the admin panel and publish updates for your FiveM city.", image_url: "", category: "Community", author_name: "A2 Studio", published_at: new Date().toISOString(), status: "Published", is_featured: true, sort_order: 1 }
+    { id: "news-launch", title: "A2 Studio Website Launch", subtitle: "A new home for the community.", content: "Manage news from the admin panel and publish updates for your FiveM city.", image_url: "", video_url: "", category: "Community", author_name: "A2 Studio", published_at: new Date().toISOString(), status: "Published", is_featured: true, sort_order: 1 }
   ],
   newsCategories: [
     { id: "news-cat-community", name: "Community", slug: "community", description: "Community updates.", sort_order: 1, is_visible: true }

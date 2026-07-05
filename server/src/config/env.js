@@ -10,6 +10,7 @@ const schema = z.object({
   NODE_ENV: z.string().default("development"),
   FRONTEND_URL: z.string().default("http://localhost:5173"),
   CORS_ALLOWED_ORIGINS: z.string().default("http://localhost:5173"),
+  CORS_ORIGINS: z.string().default(""),
   USE_DATABASE: z.string().default("false"),
 
   MYSQL_HOST: z.string().default("localhost"),
@@ -20,6 +21,7 @@ const schema = z.object({
 
   JWT_SECRET: z.string().default("change_me_to_a_long_random_secret"),
   SESSION_SECRET: z.string().default("change_me_to_a_long_random_session_secret"),
+  OAUTH_STATE_SECRET: z.string().default(""),
   COOKIE_SECURE: z.string().default("false"),
   COOKIE_SAME_SITE: z.enum(["lax", "strict", "none"]).default("lax"),
   MASTER_ADMIN_EMAILS: z.string().default(""),
@@ -65,8 +67,12 @@ const schema = z.object({
 
 export const env = schema.parse(process.env);
 
-export const corsOrigins = env.CORS_ALLOWED_ORIGINS.split(",")
-  .map((origin) => origin.trim())
+export const corsOrigins = [
+  env.FRONTEND_URL,
+  ...env.CORS_ALLOWED_ORIGINS.split(","),
+  ...env.CORS_ORIGINS.split(",")
+]
+  .map((origin) => origin.trim().replace(/\/+$/, ""))
   .filter(Boolean);
 
 export const isProduction = env.NODE_ENV === "production";
