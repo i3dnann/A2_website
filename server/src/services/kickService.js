@@ -105,7 +105,13 @@ async function kickGet(path, params = {}) {
 
   const tokenSources = [];
   if (env.KICK_API_KEY) tokenSources.push({ name: "KICK_API_KEY", token: env.KICK_API_KEY });
-  if (env.KICK_CLIENT_ID && env.KICK_CLIENT_SECRET) tokenSources.push({ name: "oauth", token: await getKickAccessToken() });
+  if (env.KICK_CLIENT_ID && env.KICK_CLIENT_SECRET) {
+    try {
+      tokenSources.push({ name: "oauth", token: await getKickAccessToken() });
+    } catch (error) {
+      console.warn("[kick] oauth token unavailable", error.message);
+    }
+  }
   if (!tokenSources.length) tokenSources.push({ name: "none", token: "" });
 
   let lastError = null;
@@ -149,9 +155,20 @@ function firstValue(...values) {
 
 async function getKickChannelFallback(slug) {
   const response = await fetch(`https://kick.com/api/v2/channels/${encodeURIComponent(slug)}`, {
-    headers: { accept: "application/json" }
+    headers: {
+      accept: "application/json, text/plain, */*",
+      "accept-language": "en-US,en;q=0.9",
+      "cache-control": "no-cache",
+      pragma: "no-cache",
+      referer: `https://kick.com/${encodeURIComponent(slug)}`,
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+    }
   });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const error = new Error(`Kick fallback failed with ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
 
@@ -162,9 +179,17 @@ export async function getKickStatus(value) {
     return { slug: "", online: false, channel: null, stream: null, checkedAt, skipped: "missing_kick_username" };
   }
 
-  const channels = await kickGet("/channels", { slug });
-  let channel = channels?.data?.[0] || null;
+  let channels = null;
+  let channel = null;
   let fallback = null;
+  try {
+    channels = await kickGet("/channels", { slug });
+    channel = channels?.data?.[0] || null;
+  } catch (error) {
+    if (![401, 403].includes(Number(error.status || 0))) throw error;
+    fallback = await getKickChannelFallback(slug);
+    channel = fallback ? { ...fallback, slug: fallback.slug || slug } : null;
+  }
   if (!channel) return { slug, online: false, channel: null, stream: null, checkedAt };
 
   const broadcasterUserId = channel.broadcaster_user_id || channel.user_id || channel.id;
