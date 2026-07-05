@@ -271,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("a2_token", token);
     let r: { user: BackendUser | null; providers: ProviderRow[] };
     try {
-      r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me");
+      r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/complete-session", { method: "POST", body: { token } });
     } catch (error) {
       localStorage.removeItem("a2_token");
       throw error;

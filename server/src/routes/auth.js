@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
 import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordMemberRoles, getDiscordUser } from "../services/discord.js";
-import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement } from "../services/users.js";
+import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, verifyUserToken } from "../services/users.js";
 import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks.js";
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
@@ -243,6 +243,20 @@ router.get(
     if (!req.user) return res.json({ user: null, providers: [] });
     const providers = await listProvidersForUser(req.user.id);
     res.json({ user: await getUserById(req.user.id), providers });
+  })
+);
+
+router.post(
+  "/complete-session",
+  authLimiter,
+  asyncHandler(async (req, res) => {
+    const payload = verifyUserToken(req.body?.token);
+    if (!payload?.sub) return res.status(401).json({ error: "invalid_login_token", message: "The login token could not be verified. Restart the backend with the same JWT_SECRET used for OAuth." });
+    const user = await getUserById(payload.sub);
+    if (!user) return res.status(404).json({ error: "user_not_found", message: "The login token is valid, but the user account could not be found." });
+    res.cookie("a2_session", req.body.token, { ...cookieOptions, maxAge: SESSION_MAX_AGE_MS });
+    const providers = await listProvidersForUser(user.id);
+    res.json({ user, providers });
   })
 );
 
