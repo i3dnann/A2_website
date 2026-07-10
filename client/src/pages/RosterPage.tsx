@@ -124,18 +124,24 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           <button onClick={onClose} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 transition hover:text-white">
             <X size={16} />
           </button>
-          <div className="relative h-36 bg-[radial-gradient(circle_at_top,#60519b55,transparent_58%),linear-gradient(135deg,#100b18,#020203)]">
+          <div className="relative h-24 bg-[radial-gradient(circle_at_top,#60519b55,transparent_58%),linear-gradient(135deg,#100b18,#020203)]">
             <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.06)_1px,transparent_1px)] [background-size:18px_18px]" />
           </div>
-          <div className="px-6 pb-6">
-            <div className="-mt-16 flex flex-col items-center text-center">
-              <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#15101f] shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
+          <div className="px-5 pb-6 sm:px-6">
+            <div className="-mt-12 flex flex-col items-center text-center">
+              <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#15101f] shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
                 {member.avatar ? <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" /> : <Icon size={40} className="text-[#c8bcff]" />}
               </div>
               <h2 className="mt-4 font-serif text-3xl text-white">{member.name}</h2>
               <p className="mt-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#b8abef]">{member.role}</p>
               <p className="mt-1 text-xs text-white/40">{member.category || member.count}</p>
             </div>
+
+            {member.banner && (
+              <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-black/25 shadow-[0_16px_36px_rgba(0,0,0,0.25)]">
+                <img src={member.banner} alt={`${member.name} banner`} className="aspect-[16/6] w-full object-cover" loading="lazy" />
+              </div>
+            )}
 
             {member.bio && (
               <p className="mt-5 whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-white/70">

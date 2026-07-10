@@ -487,6 +487,7 @@ CREATE TABLE IF NOT EXISTS team_members (
   role_title VARCHAR(160),
   category VARCHAR(80) DEFAULT 'Other',
   profile_image_url TEXT,
+  banner_url TEXT,
   bio TEXT,
   discord_url TEXT,
   twitch_url TEXT,

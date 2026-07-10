@@ -82,7 +82,7 @@ export const RESOURCE_DEFINITIONS = [
     public: true,
     permission: "manage_team",
     searchFields: ["name", "role_title", "category", "bio"],
-    fields: ["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "youtube_url", "tiktok_url", "instagram_url", "x_url", "sort_order", "is_visible"]
+    fields: ["name", "role_title", "category", "profile_image_url", "banner_url", "bio", "discord_url", "twitch_url", "kick_url", "youtube_url", "tiktok_url", "instagram_url", "x_url", "sort_order", "is_visible"]
   },
   {
     key: "streamers",

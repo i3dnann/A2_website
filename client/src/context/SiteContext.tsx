@@ -8,6 +8,7 @@ export type RosterItem = {
   count: string;
   icon: string;
   avatar?: string;
+  banner?: string;
   bio?: string;
   category?: string;
   discordUrl?: string;
@@ -153,6 +154,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           count: member.category || "Member",
           icon: "Users",
           avatar: member.profile_image_url || "",
+          banner: member.banner_url || "",
           bio: member.bio || "",
           category: member.category || "Staff",
           discordUrl: member.discord_url || "",
