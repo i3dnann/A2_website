@@ -27,7 +27,8 @@ router.get("/settings", asyncHandler(async (_req, res) => {
 
 router.get("/home", asyncHandler(async (_req, res) => {
   const settings = await getSettings();
-  const [journey, famous, news, events, team, gallery, careers] = await Promise.all([
+  const [partners, journey, famous, news, events, team, gallery, careers] = await Promise.all([
+    listResource("partners", { limit: 100, publicOnly: true }),
     listResource("journey", { limit: 4, publicOnly: true }),
     listResource("famous", { limit: 4, publicOnly: true }),
     listResource("news", { limit: 4, publicOnly: true }),
@@ -39,6 +40,7 @@ router.get("/home", asyncHandler(async (_req, res) => {
 
   res.json({
     settings,
+    partners: partners.rows,
     journey: journey.rows,
     famous: famous.rows,
     news: news.rows,

@@ -38,6 +38,7 @@ export const DEFAULT_SETTINGS = {
   heroSecondaryButtonLink: "fivem://connect/127.0.0.1",
   storeButtonText: "Store",
   storeButtonLink: "",
+  partnersEnabled: true,
   livePageEnabled: true,
   termsVersion: "1.0.0",
   mapImageUrl: "/assets/fivem-map.svg"
@@ -47,6 +48,15 @@ const timestamps = ["created_at", "updated_at", "created_by", "updated_by", "del
 const common = ["title", "subtitle", "name", "description", "content", "image_url", "banner_url", "category", "status", "sort_order", "is_visible", "metadata_json"];
 
 export const RESOURCE_DEFINITIONS = [
+  {
+    key: "partners",
+    table: "partners",
+    label: "Partners",
+    public: true,
+    permission: "manage_partners",
+    searchFields: ["partner_name", "website_url"],
+    fields: ["partner_name", "logo_url", "website_url", "sort_order", "is_visible"]
+  },
   {
     key: "journey",
     table: "journey_items",
@@ -73,6 +83,32 @@ export const RESOURCE_DEFINITIONS = [
     permission: "manage_team",
     searchFields: ["name", "role_title", "category", "bio"],
     fields: ["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "youtube_url", "tiktok_url", "instagram_url", "x_url", "sort_order", "is_visible"]
+  },
+  {
+    key: "streamers",
+    table: "streamers",
+    label: "Live Streamers",
+    public: true,
+    permission: "manage_live",
+    searchFields: ["display_name", "discord_username", "twitch_username", "kick_username", "category", "character_name"],
+    fields: [
+      "display_name",
+      "profile_image_url",
+      "avatar_url",
+      "banner_url",
+      "bio",
+      "discord_username",
+      "character_name",
+      "category",
+      "twitch_username",
+      "kick_username",
+      "youtube_url",
+      "discord_url",
+      "is_featured",
+      "is_approved",
+      "is_hidden",
+      "sort_order"
+    ]
   },
   {
     key: "careerJobs",
@@ -180,7 +216,7 @@ export const RESOURCE_DEFINITIONS = [
     public: true,
     permission: "manage_news",
     searchFields: ["title", "subtitle", "content", "category", "author_name"],
-    fields: ["title", "subtitle", "content", "image_url", "video_url", "category", "author_name", "published_at", "status", "is_featured", "sort_order"]
+    fields: ["title", "subtitle", "content", "image_url", "video_url", "category", "author_name", "published_at", "status", "is_featured", "likes", "dislikes", "sort_order"]
   },
   {
     key: "newsCategories",
@@ -281,19 +317,23 @@ RESOURCE_DEFINITIONS.forEach((resource) => {
 export const RESOURCE_MAP = Object.fromEntries(RESOURCE_DEFINITIONS.map((resource) => [resource.key, resource]));
 
 export const PUBLIC_COLLECTIONS = {
+  partners: "partners",
   news: "news",
   events: "events",
   journey: "journey",
   famous: "famous",
   team: "team",
   careers: "careerJobs",
+  streamers: "streamers",
   map: "mapZones"
 };
 
 export const SEED_DATA = {
+  partners: [],
   journey: [],
   famous: [],
   team: [],
+  streamers: [],
   careerJobs: [],
   careerSections: [],
   careerQuestions: [],

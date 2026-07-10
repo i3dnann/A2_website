@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Hero from "../components/Hero";
+import PartnerBar from "../components/PartnerBar";
 import Features from "../components/Features";
 import Roster from "../components/Roster";
 import Journey from "../components/Journey";
@@ -49,6 +50,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <PartnerBar />
       <DeferredHomeSections />
     </main>
   );

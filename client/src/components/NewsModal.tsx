@@ -55,8 +55,16 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
   const doVote = async (kind: "like" | "dislike") => {
     if (!user) { push({ kind: "info", message: "Login to vote" }); return; }
     try {
-      const r = await api<{ liked: boolean; disliked: boolean }>(`/api/news/${post.id}/${kind}`, { method: "POST" });
+      const r = await api<{ liked: boolean; disliked: boolean; likes: number; dislikes: number }>(`/api/news/${post.id}/${kind}`, { method: "POST" });
       setVoted(r.liked ? "like" : r.disliked ? "dislike" : null);
+      setData((current) => current ? {
+        ...current,
+        post: {
+          ...current.post,
+          likes: Number(r.likes ?? current.post.likes ?? 0),
+          dislikes: Number(r.dislikes ?? current.post.dislikes ?? 0),
+        },
+      } : current);
     } catch (e: any) { push({ kind: "error", message: e?.message || "Failed" }); }
   };
 

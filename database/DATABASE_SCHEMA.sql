@@ -750,6 +750,8 @@ CREATE TABLE IF NOT EXISTS news_articles (
   published_at DATETIME NULL,
   status VARCHAR(40) DEFAULT 'Draft',
   is_featured TINYINT(1) DEFAULT 0,
+  likes INT DEFAULT 0,
+  dislikes INT DEFAULT 0,
   sort_order INT DEFAULT 9999,
   created_by VARCHAR(64),
   updated_by VARCHAR(64),

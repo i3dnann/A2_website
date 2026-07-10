@@ -110,8 +110,15 @@ router.post(
     const post = await getResource("news", req.params.id);
     if (!post) return res.status(404).json({ error: "news_not_found", message: "News post not found." });
     const field = req.params.kind === "like" ? "likes" : "dislikes";
-    await updateResource("news", post.id, { [field]: Number(post[field] || 0) + 1 }, req.user);
-    res.json({ liked: req.params.kind === "like", disliked: req.params.kind === "dislike" });
+    const nextCount = Number(post[field] || 0) + 1;
+    const updated = await updateResource("news", post.id, { [field]: nextCount }, req.user);
+    const nextPost = updated?.after || { ...post, [field]: nextCount };
+    res.json({
+      liked: req.params.kind === "like",
+      disliked: req.params.kind === "dislike",
+      likes: Number(nextPost.likes || 0),
+      dislikes: Number(nextPost.dislikes || 0)
+    });
   })
 );
 

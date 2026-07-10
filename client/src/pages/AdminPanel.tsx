@@ -5,7 +5,7 @@ import {
   Settings, Globe, Users, Clock, FileText, Briefcase, HelpCircle, Palette,
   Home, Menu, X, LogOut, Save, Trash2, Plus, Loader2, LayoutDashboard,
   CheckCircle2, XCircle, MessageCircle, Shield, AlertTriangle, TrendingUp,
-  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Star,
+  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Star, Radio,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
@@ -15,7 +15,9 @@ import { useToast, Skeleton } from "../components/Toast";
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "home", label: "Homepage", icon: Home },
+  { id: "partners", label: "Partners", icon: Globe },
   { id: "server", label: "Server / Features", icon: Globe },
+  { id: "streamers", label: "Streamers", icon: Radio },
   { id: "roster", label: "Roster", icon: Users },
   { id: "famous", label: "Famous Chars", icon: Star },
   { id: "journey", label: "Journey & Chars", icon: Clock },
@@ -204,7 +206,9 @@ export default function AdminPanel() {
               <motion.div key={tab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3 }}>
                 {tab === "dashboard" && <DashboardView stats={stats} loading={statsLoading} setTab={setTab} />}
                 {tab === "home" && <HomeEditor content={content} update={updateContent} />}
+                {tab === "partners" && <ResourceAdmin title="Homepage Partners" resource="partners" blank={{ partner_name: "New Partner", logo_url: "", website_url: "", sort_order: 50, is_visible: true }} fields={["partner_name", "logo_url", "website_url", "sort_order", "is_visible"]} />}
                 {tab === "server" && <ServerEditor content={content} update={updateContent} />}
+                {tab === "streamers" && <ResourceAdmin title="Live Streamers" resource="streamers" blank={{ display_name: "New Streamer", profile_image_url: "", avatar_url: "", banner_url: "", bio: "", discord_username: "", character_name: "", category: "Gotham City Roleplay", twitch_username: "", kick_username: "", youtube_url: "", discord_url: "", is_featured: false, is_approved: true, is_hidden: false, sort_order: 50 }} fields={["display_name", "profile_image_url", "avatar_url", "banner_url", "bio", "discord_username", "character_name", "category", "twitch_username", "kick_username", "youtube_url", "discord_url", "is_featured", "is_approved", "is_hidden", "sort_order"]} />}
                 {tab === "roster" && <ResourceAdmin title="Roster Members" resource="team" blank={{ name: "New Member", role_title: "Staff", category: "Staff", profile_image_url: "", bio: "", discord_url: "", twitch_url: "", kick_url: "", sort_order: 50, is_visible: true }} fields={["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "sort_order", "is_visible"]} />}
                 {tab === "famous" && <ResourceAdmin title="Famous Characters" resource="famous" blank={{ character_name: "New Character", header: "", picture_url: "", bio: "", description: "", role_name: "", gang_business: "", is_featured: false, sort_order: 50, is_visible: true }} fields={["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "is_featured", "sort_order", "is_visible"]} />}
                 {tab === "journey" && <JourneyEditor content={content} update={updateContent} />}
@@ -427,6 +431,81 @@ function TicketsAdmin() {
       push({ kind: "success", message: "Ticket closed" });
     } catch (e: any) {
       push({ kind: "error", message: e?.message || "Failed to close ticket" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const updateStatus = async (status: string) => {
+    if (!selectedId) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/status`, { method: "POST", body: { status } });
+      await refreshDetail();
+      push({ kind: "success", message: `Ticket set to ${status}` });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update ticket" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const addNote = async () => {
+    if (!selectedId || !note.trim()) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/note`, { method: "POST", body: { note: note.trim() } });
+      setNote("");
+      await refreshDetail();
+      push({ kind: "success", message: "Internal note added" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to add note" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const addParticipant = async () => {
+    if (!selectedId || !participant.trim()) return;
+    const value = participant.trim();
+    const body = /^\d{15,22}$/.test(value) ? { discord_id: value } : { user_id: value };
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}/participants`, { method: "POST", body });
+      setParticipant("");
+      await refreshDetail();
+      push({ kind: "success", message: "User added to ticket" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to add user" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const removeParticipant = async (participantId: string) => {
+    if (!selectedId) return;
+    try {
+      await api(`/api/admin/tickets/${selectedId}/participants/${participantId}`, { method: "DELETE" });
+      await refreshDetail();
+      push({ kind: "success", message: "User removed from ticket" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to remove user" });
+    }
+  };
+
+  const deleteTicket = async () => {
+    if (!selectedId) return;
+    const ok = await confirm({ title: "Delete ticket?", message: "This removes the ticket from admin and player views.", confirmText: "Delete" });
+    if (!ok) return;
+    setSending(true);
+    try {
+      await api(`/api/admin/tickets/${selectedId}`, { method: "DELETE" });
+      setSelectedId("");
+      setDetail(null);
+      await loadRows();
+      push({ kind: "success", message: "Ticket deleted" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to delete ticket" });
     } finally {
       setSending(false);
     }

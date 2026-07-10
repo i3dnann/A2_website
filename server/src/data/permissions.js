@@ -1,8 +1,10 @@
 export const PERMISSIONS = [
   "manage_home",
+  "manage_partners",
   "manage_journey",
   "manage_famous",
   "manage_roster",
+  "manage_live",
   "manage_team",
   "manage_gallery",
   "manage_careers",
@@ -51,9 +53,11 @@ export const DEFAULT_ROLE_PERMISSIONS = {
   Admin: [
     "view_player_portal",
     "manage_home",
+    "manage_partners",
     "manage_journey",
     "manage_famous",
     "manage_roster",
+    "manage_live",
     "manage_team",
     "manage_gallery",
     "manage_careers",
