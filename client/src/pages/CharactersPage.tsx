@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Wallet, Briefcase, Heart, ShieldAlert, Phone, Calendar, Users2, Car, Link2, ShieldHalf, Package } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { api } from "../api/client";
 import { useToast, Skeleton } from "./../components/Toast";
 import PageShell from "../components/PageShell";
@@ -57,6 +58,7 @@ function mapInventory(item: any) {
 
 export default function CharactersPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const { push } = useToast();
   const [chars, setChars] = useState<Character[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,9 +116,9 @@ export default function CharactersPage() {
       <PageShell subtitle="Restricted" title="Characters">
         <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
           <ShieldAlert size={32} className="mx-auto text-orange-300" />
-          <h3 className="mt-4 font-serif text-lg text-white">Login Required</h3>
-          <p className="mt-2 text-sm text-white/55">Please log in to view your FiveM characters.</p>
-          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">Sign in</Link>
+          <h3 className="mt-4 font-serif text-lg text-white">{t("Login Required")}</h3>
+          <p className="mt-2 text-sm text-white/55">{t("Please log in to view your FiveM characters.")}</p>
+          <Link to="/login" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">{t("Sign in")}</Link>
         </div>
       </PageShell>
     );
@@ -127,9 +129,9 @@ export default function CharactersPage() {
       <PageShell subtitle="Link Steam" title="Characters">
         <div className="mx-auto max-w-md rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
           <Link2 size={32} className="mx-auto text-orange-300" />
-          <h3 className="mt-4 font-serif text-lg text-white">Connect Your Steam Account</h3>
-          <p className="mt-2 text-sm text-white/55">We match your Steam identity to your FiveM characters. Link Steam to see your characters, inventory, vehicles, and more.</p>
-          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">Go to Dashboard</Link>
+          <h3 className="mt-4 font-serif text-lg text-white">{t("Connect Your Steam Account")}</h3>
+          <p className="mt-2 text-sm text-white/55">{t("We match your Steam identity to your FiveM characters. Link Steam to see your characters, inventory, vehicles, and more.")}</p>
+          <Link to="/dashboard" className="mt-5 inline-flex rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-2.5 text-sm font-semibold text-white">{t("Go to Dashboard")}</Link>
         </div>
       </PageShell>
     );
@@ -152,8 +154,8 @@ export default function CharactersPage() {
       ) : chars.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-12 text-center">
           <Users2 size={32} className="mx-auto text-white/20" />
-          <h3 className="mt-4 font-serif text-lg text-white">No Characters Found</h3>
-          <p className="mt-2 text-sm text-white/50">Your Steam account doesn't appear to own any characters on this server yet. Join the server and create one!</p>
+          <h3 className="mt-4 font-serif text-lg text-white">{t("No Characters Found")}</h3>
+          <p className="mt-2 text-sm text-white/50">{t("Your Steam account doesn't appear to own any characters on this server yet. Join the server and create one!")}</p>
         </div>
       ) : (
         <>
@@ -180,15 +182,15 @@ export default function CharactersPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-white/60">
-                  <span className="flex items-center gap-1.5"><Briefcase size={12} className="text-orange-300" /> {c.job} · Grade {c.jobGrade}</span>
+                  <span className="flex items-center gap-1.5"><Briefcase size={12} className="text-orange-300" /> {t(c.job)} · {t("Grade")} {c.jobGrade}</span>
                   {c.gang && <span className="flex items-center gap-1.5"><Users2 size={12} className="text-orange-300" /> {c.gang}</span>}
                   {c.phone && <span className="flex items-center gap-1.5"><Phone size={12} /> {c.phone}</span>}
                   {c.birthdate && <span className="flex items-center gap-1.5"><Calendar size={12} /> {c.birthdate}</span>}
                 </div>
 
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  <MoneyCell icon={Wallet} label="Cash" value={c.cash} color="text-emerald-300" />
-                  <MoneyCell icon={Wallet} label="Bank" value={c.bank} color="text-orange-300" />
+                  <MoneyCell icon={Wallet} label={t("Cash")} value={c.cash} color="text-emerald-300" />
+                  <MoneyCell icon={Wallet} label={t("Bank")} value={c.bank} color="text-orange-300" />
                 </div>
               </motion.button>
             ))}
@@ -204,19 +206,19 @@ export default function CharactersPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h3 className="font-serif text-xl text-white">{selected.name}</h3>
-                  <p className="mt-0.5 text-xs text-white/40">Character details · Citizen ID: {selected.citizenid}</p>
+                  <p className="mt-0.5 text-xs text-white/40">{t("Character details")} · {t("Citizen ID")}: {selected.citizenid}</p>
                 </div>
               </div>
 
               {/* Health & Armor vitals */}
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <VitalBar icon={Heart} label="Health" value={selected.health} tone="red" />
-                <VitalBar icon={ShieldHalf} label="Armor" value={selected.armor} tone="blue" />
+                <VitalBar icon={Heart} label={t("Health")} value={selected.health} tone="red" />
+                <VitalBar icon={ShieldHalf} label={t("Armor")} value={selected.armor} tone="blue" />
               </div>
 
               {vehicles.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="flex items-center gap-2 text-sm font-semibold text-white"><Car size={14} /> Vehicles ({vehicles.length})</h4>
+                  <h4 className="flex items-center gap-2 text-sm font-semibold text-white"><Car size={14} /> {t("Vehicles")} ({vehicles.length})</h4>
                   <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {vehicles.map((v, i) => (
                       <motion.div
@@ -226,8 +228,8 @@ export default function CharactersPage() {
                         whileHover={{ y: -2 }}
                         className="rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-orange-400/30"
                       >
-                        <p className="font-serif text-sm text-white">{v.model || v.vehicle || "Unknown"}</p>
-                        <p className="text-[11px] text-white/40">Plate: {v.plate || "—"}</p>
+                        <p className="font-serif text-sm text-white">{v.model || v.vehicle || t("Unknown")}</p>
+                        <p className="text-[11px] text-white/40">{t("Plate")}: {v.plate || "-"}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -236,7 +238,7 @@ export default function CharactersPage() {
 
               <div className="mt-6">
                 <h4 className="flex items-center gap-2 text-sm font-semibold text-white">
-                  <Package size={14} /> Inventory ({inventory.length})
+                  <Package size={14} /> {t("Inventory")} ({inventory.length})
                 </h4>
                 <div className="mt-3">
                   <InventoryGrid items={inventory} />

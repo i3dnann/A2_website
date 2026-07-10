@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import PageShell from "../components/PageShell";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { useToast } from "../components/Toast";
 
 type CareerJob = {
@@ -55,6 +56,7 @@ export default function CareerApplyPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t, isArabic } = useLanguage();
   const { push } = useToast();
   const [job, setJob] = useState<CareerJob | null>(null);
   const [questions, setQuestions] = useState<CareerQuestion[]>(baseQuestions);
@@ -100,7 +102,7 @@ export default function CareerApplyPage() {
       return;
     }
     if (!job || missingRequired.length > 0) {
-      push({ kind: "error", message: "Please answer all required questions." });
+      push({ kind: "error", message: t("Please answer all required questions.") });
       return;
     }
     setSubmitting(true);
@@ -112,10 +114,10 @@ export default function CareerApplyPage() {
         answer: answers[questionKey(question, index)] || "",
       }));
       await api(`/api/player/careers/${job.id}/apply`, { method: "POST", body: { answers: payload, termsVersion: "1.0.0" } });
-      push({ kind: "success", message: "Application submitted. You can track it from your dashboard." });
+      push({ kind: "success", message: t("Application submitted. You can track it from your dashboard.") });
       navigate("/dashboard");
     } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Could not submit application." });
+      push({ kind: "error", message: e?.message || t("Could not submit application.") });
     } finally {
       setSubmitting(false);
     }
@@ -124,16 +126,16 @@ export default function CareerApplyPage() {
   return (
     <PageShell subtitle="Careers Portal" title={loading ? "Loading Position" : job?.title || "Position Not Found"}>
       <Link to="/careers" className="mb-6 inline-flex items-center gap-2 text-sm text-white/55 transition hover:text-white">
-        <ArrowLeft size={15} /> Back to careers
+        <ArrowLeft size={15} className={isArabic ? "rotate-180" : ""} /> {t("Back to careers")}
       </Link>
 
       {loading ? (
         <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
-          <Loader2 size={16} className="animate-spin" /> Loading application...
+          <Loader2 size={16} className="animate-spin" /> {t("Loading application...")}
         </div>
       ) : error || !job ? (
         <div className="rounded-2xl border border-orange-400/20 bg-orange-500/5 p-8 text-center text-orange-100">
-          {error || "This position could not be found."}
+          {error ? t(error) : t("This position could not be found.")}
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
@@ -141,13 +143,13 @@ export default function CareerApplyPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
               <Briefcase size={22} />
             </div>
-            <p className="mt-5 text-xs uppercase tracking-[0.22em] text-orange-200">{job.department || "Department"}</p>
-            <h2 className="mt-2 font-serif text-2xl text-white">{job.title}</h2>
-            {job.description && <p className="mt-4 text-sm leading-6 text-white/55">{job.description}</p>}
+            <p className="mt-5 text-xs uppercase tracking-[0.22em] text-orange-200">{t(job.department || "Department")}</p>
+            <h2 className="mt-2 font-serif text-2xl text-white">{t(job.title)}</h2>
+            {job.description && <p className="mt-4 text-sm leading-6 text-white/55">{t(job.description)}</p>}
             {job.requirements && (
               <div className="mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-white/40">Requirements</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-white/65">{job.requirements}</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-white/40">{t("Requirements")}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-white/65">{t(job.requirements)}</p>
               </div>
             )}
           </motion.aside>
@@ -155,7 +157,7 @@ export default function CareerApplyPage() {
           <motion.form initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} onSubmit={submit} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
             {!user && (
               <div className="mb-5 rounded-xl border border-orange-400/25 bg-orange-500/10 p-4 text-sm text-orange-100">
-                You need to log in before submitting. You can still read the questions here.
+                {t("You need to log in before submitting. You can still read the questions here.")}
               </div>
             )}
             <div className="grid gap-4">
@@ -164,9 +166,9 @@ export default function CareerApplyPage() {
                 return (
                   <label key={key} className="block">
                     <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-white/45">
-                      {question.question}{isRequired(question) ? " *" : ""}
+                      {t(question.question)}{isRequired(question) ? " *" : ""}
                     </span>
-                    {question.help_text && <span className="mb-2 block text-xs text-white/35">{question.help_text}</span>}
+                    {question.help_text && <span className="mb-2 block text-xs text-white/35">{t(question.help_text)}</span>}
                     {isLong(question) ? (
                       <textarea
                         rows={4}
@@ -188,13 +190,13 @@ export default function CareerApplyPage() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-white/40">Required questions are marked with an asterisk.</p>
+              <p className="text-xs text-white/40">{t("Required questions are marked with an asterisk.")}</p>
               <button
                 disabled={submitting || !user}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                {submitting ? "Submitting..." : user ? "Submit Application" : "Log in to Submit"}
+                {submitting ? t("Submitting...") : user ? t("Submit Application") : t("Log in to Submit")}
               </button>
             </div>
           </motion.form>

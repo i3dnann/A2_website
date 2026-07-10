@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function PageShell({
   children,
@@ -10,6 +11,7 @@ export default function PageShell({
   subtitle: string;
   title: string;
 }) {
+  const { t } = useLanguage();
   return (
     <section className="relative min-h-screen pt-32 pb-20">
       <motion.div
@@ -20,10 +22,10 @@ export default function PageShell({
       >
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
-            {subtitle}
+            {t(subtitle)}
           </p>
           <h1 className="mt-3 font-serif text-4xl text-white sm:text-5xl lg:text-6xl">
-            {title}
+            {t(title)}
           </h1>
         </div>
         <div className="mt-14">{children}</div>

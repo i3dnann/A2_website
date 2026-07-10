@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import { getIcon } from "../lib/iconMap";
 import PageShell from "../components/PageShell";
 import { staggerContainer, staggerItem } from "../components/Reveal";
 
 export default function ServerPage() {
   const { content } = useSite();
+  const { t } = useLanguage();
   return (
     <PageShell subtitle={content.featuresSubtitle} title={content.featuresTitle}>
       <motion.p
@@ -14,7 +16,7 @@ export default function ServerPage() {
         transition={{ delay: 0.2, duration: 0.6 }}
         className="mx-auto -mt-8 mb-10 max-w-xl text-center text-white/55"
       >
-        {content.featuresDesc}
+        {t(content.featuresDesc)}
       </motion.p>
       <motion.div
         variants={staggerContainer}
@@ -35,8 +37,8 @@ export default function ServerPage() {
               <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/10 text-orange-300 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
                 <Icon size={22} />
               </div>
-              <h3 className="relative mt-5 font-serif text-lg text-white">{f.title}</h3>
-              <p className="relative mt-2 text-sm leading-relaxed text-white/55">{f.desc}</p>
+              <h3 className="relative mt-5 font-serif text-lg text-white">{t(f.title)}</h3>
+              <p className="relative mt-2 text-sm leading-relaxed text-white/55">{t(f.desc)}</p>
             </motion.div>
           );
         })}

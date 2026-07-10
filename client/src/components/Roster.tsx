@@ -1,20 +1,22 @@
 import { motion } from "framer-motion";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import { getIcon } from "../lib/iconMap";
 import { Reveal, staggerContainer, staggerItem } from "./Reveal";
 
 export default function Roster() {
   const { content } = useSite();
+  const { t } = useLanguage();
   return (
     <section id="roster" className="relative py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <Reveal>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{content.rosterSubtitle}</p>
-            <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{content.rosterTitle}</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{t(content.rosterSubtitle)}</p>
+            <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{t(content.rosterTitle)}</h2>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="max-w-sm text-sm text-white/55">{content.rosterDesc}</p>
+            <p className="max-w-sm text-sm text-white/55">{t(content.rosterDesc)}</p>
           </Reveal>
         </div>
         <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
@@ -32,8 +34,8 @@ export default function Roster() {
                     )}
                   </div>
                 </div>
-                <h3 className="mt-4 max-w-full truncate font-serif text-lg text-white">{r.name}</h3>
-                <p className="mt-1 max-w-full truncate text-xs font-semibold uppercase tracking-wider text-white/45">{r.role}</p>
+                <h3 className="mt-4 max-w-full truncate font-serif text-lg text-white">{t(r.name)}</h3>
+                <p className="mt-1 max-w-full truncate text-xs font-semibold uppercase tracking-wider text-white/45">{t(r.role)}</p>
               </motion.div>
             );
           })}

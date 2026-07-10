@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Copy, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
   const [display, setDisplay] = useState(0);
@@ -28,6 +29,7 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 
 export default function Hero() {
   const { content } = useSite();
+  const { t, isArabic } = useLanguage();
   const [copied, setCopied] = useState(false);
   const copyIp = () => {
     navigator.clipboard?.writeText(content.serverIp);
@@ -56,14 +58,14 @@ export default function Hero() {
           </div>
 
           <h1 className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            {content.heroTitle1}
+            {t(content.heroTitle1)}
             <span className="block bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
-              {content.heroTitle2}
+              {t(content.heroTitle2)}
             </span>
           </h1>
 
           <p className="mt-6 max-w-xl text-base text-white/60 sm:text-lg">
-            {content.heroDescription}
+            {t(content.heroDescription)}
           </p>
 
           <div className="mt-9 flex flex-wrap items-center gap-4">
@@ -71,15 +73,15 @@ export default function Hero() {
               href={content.fivemLink && content.fivemLink !== "#" ? content.fivemLink : "/server"}
               className="group inline-flex items-center gap-2 rounded-xl bg-[#60519b] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(96,81,155,0.35)] transition hover:-translate-y-0.5 hover:bg-[#7868b8] hover:shadow-[0_0_42px_rgba(96,81,155,0.65)]"
             >
-              <PlayCircle size={18} /> Connect Now
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
+              <PlayCircle size={18} /> {t("Connect Now")}
+              <ArrowRight size={16} className={`transition-transform ${isArabic ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
             </a>
             <button
               onClick={copyIp}
               className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-sm font-semibold text-white/85 backdrop-blur transition hover:border-white/30 hover:bg-white/10"
             >
               <Copy size={16} />
-              {copied ? "Copied!" : content.serverIp}
+              {copied ? t("Copied!") : content.serverIp}
             </button>
           </div>
 
@@ -89,7 +91,7 @@ export default function Hero() {
                 <div className="font-serif text-2xl text-white sm:text-3xl">
                   <Counter value={s.value} suffix={s.suffix} />
                 </div>
-                <div className="mt-1 text-xs uppercase tracking-wider text-white/40">{s.label}</div>
+                <div className="mt-1 text-xs uppercase tracking-wider text-white/40">{t(s.label)}</div>
               </div>
             ))}
           </div>
@@ -114,8 +116,8 @@ export default function Hero() {
             />
             <div className="absolute inset-2 rounded-2xl bg-gradient-to-t from-black/70 via-transparent to-transparent" />
             <div className="absolute bottom-6 left-6 right-6 rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-md">
-              <p className="text-xs uppercase tracking-widest text-orange-300">Now Live</p>
-              <p className="mt-1 font-serif text-lg text-white">Season 4: Gotham Nights</p>
+              <p className="text-xs uppercase tracking-widest text-orange-300">{t("Now Live")}</p>
+              <p className="mt-1 font-serif text-lg text-white">{t("Season 4: Gotham Nights")}</p>
             </div>
           </motion.div>
           <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-orange-600/30 blur-3xl" />

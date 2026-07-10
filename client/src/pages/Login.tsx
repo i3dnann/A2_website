@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Login() {
   const { login, loginDiscord, loginSteam, loading } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +28,7 @@ export default function Login() {
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
-            Email Address
+            {t("Email Address")}
           </label>
           <div className="relative">
             <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -44,10 +46,10 @@ export default function Login() {
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label className="block text-xs font-medium uppercase tracking-wider text-white/50">
-              Password
+              {t("Password")}
             </label>
             <a href="#" className="text-xs text-orange-300 hover:text-orange-200">
-              Forgot password?
+              {t("Forgot password?")}
             </a>
           </div>
           <div className="relative">
@@ -87,16 +89,16 @@ export default function Login() {
         >
           {loading ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Signing in...
+              <Loader2 size={16} className="animate-spin" /> {t("Signing in...")}
             </>
           ) : (
-            "Sign In"
+            t("Sign In")
           )}
         </button>
 
         <div className="relative my-2 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/10" />
-          <span className="text-[11px] uppercase tracking-widest text-white/30">Or continue with</span>
+          <span className="text-[11px] uppercase tracking-widest text-white/30">{t("Or continue with")}</span>
           <div className="h-px flex-1 bg-white/10" />
         </div>
 
@@ -111,9 +113,9 @@ export default function Login() {
       </form>
 
       <p className="mt-8 text-center text-sm text-white/50">
-        Don't have an account?{" "}
+        {t("Don't have an account?")}{" "}
         <Link to="/register" className="font-medium text-orange-300 hover:text-orange-200">
-          Create one
+          {t("Create one")}
         </Link>
       </p>
     </AuthShell>

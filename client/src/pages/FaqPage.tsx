@@ -2,11 +2,13 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import PageShell from "../components/PageShell";
 import { Reveal } from "../components/Reveal";
 
 export default function FaqPage() {
   const { content } = useSite();
+  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
     <PageShell subtitle={content.faqSubtitle} title={content.faqTitle}>
@@ -21,7 +23,7 @@ export default function FaqPage() {
                     onClick={() => setOpenIndex(isOpen ? null : i)}
                     className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
                   >
-                    <span className="font-serif text-base text-white sm:text-lg">{f.q}</span>
+                    <span className="font-serif text-base text-white sm:text-lg">{t(f.q)}</span>
                     <motion.span
                       animate={{ rotate: isOpen ? 45 : 0 }}
                       transition={{ duration: 0.3 }}
@@ -38,7 +40,7 @@ export default function FaqPage() {
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                       >
-                        <p className="px-6 pb-5 text-sm leading-relaxed text-white/55">{f.a}</p>
+                        <p className="px-6 pb-5 text-sm leading-relaxed text-white/55">{t(f.a)}</p>
                       </motion.div>
                     )}
                   </AnimatePresence>

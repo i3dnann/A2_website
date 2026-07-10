@@ -2,12 +2,14 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, MessageCircle, Radio, Tv, X } from "lucide-react";
 import { useSite, type RosterItem } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import { getIcon } from "../lib/iconMap";
 import PageShell from "../components/PageShell";
 import { staggerContainer, staggerItem } from "../components/Reveal";
 
 export default function RosterPage() {
   const { content } = useSite();
+  const { t } = useLanguage();
   const [selected, setSelected] = useState<RosterItem | null>(null);
   const groups = useMemo(() => {
     const map = new Map<string, RosterItem[]>();
@@ -26,13 +28,13 @@ export default function RosterPage() {
         transition={{ delay: 0.2, duration: 0.6 }}
         className="mx-auto -mt-8 mb-10 max-w-xl text-center text-white/55"
       >
-        {content.rosterDesc}
+        {t(content.rosterDesc)}
       </motion.p>
 
       {groups.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
-          <p className="font-serif text-xl text-white">No roster members added yet</p>
-          <p className="mt-2 text-sm text-white/45">Add roster profiles from the admin panel.</p>
+          <p className="font-serif text-xl text-white">{t("No roster members added yet")}</p>
+          <p className="mt-2 text-sm text-white/45">{t("Add roster profiles from the admin panel.")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-12">
@@ -41,7 +43,7 @@ export default function RosterPage() {
               <div className="mb-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/10" />
                 <h2 className="rounded-full border border-[#60519b]/35 bg-[#60519b]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.22em] text-[#d7ceff]">
-                  {group}
+                  {t(group)}
                 </h2>
                 <div className="h-px flex-1 bg-white/10" />
               </div>
@@ -67,6 +69,7 @@ export default function RosterPage() {
 
 function RosterCircle({ member, onClick }: { member: RosterItem; onClick: () => void }) {
   const Icon = getIcon(member.icon);
+  const { t } = useLanguage();
   return (
     <motion.button
       type="button"
@@ -86,21 +89,22 @@ function RosterCircle({ member, onClick }: { member: RosterItem; onClick: () => 
           )}
         </div>
       </div>
-      <h3 className="mt-4 max-w-full truncate font-serif text-lg text-white">{member.name}</h3>
-      <p className="mt-1 max-w-full truncate text-xs font-semibold uppercase tracking-wider text-white/45">{member.role}</p>
+      <h3 className="mt-4 max-w-full truncate font-serif text-lg text-white">{t(member.name)}</h3>
+      <p className="mt-1 max-w-full truncate text-xs font-semibold uppercase tracking-wider text-white/45">{t(member.role)}</p>
     </motion.button>
   );
 }
 
 function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose: () => void }) {
+  const { t } = useLanguage();
   if (!member) return null;
   const Icon = getIcon(member.icon);
   const links = [
-    { label: "Discord", url: member.discordUrl, icon: MessageCircle },
-    { label: "Twitch", url: member.twitchUrl, icon: Tv },
-    { label: "Kick", url: member.kickUrl, icon: Radio },
-    { label: "YouTube", url: member.youtubeUrl, icon: ExternalLink },
-    { label: "Instagram", url: member.instagramUrl, icon: ExternalLink },
+    { label: t("Discord"), url: member.discordUrl, icon: MessageCircle },
+    { label: t("Twitch"), url: member.twitchUrl, icon: Tv },
+    { label: t("Kick"), url: member.kickUrl, icon: Radio },
+    { label: t("YouTube"), url: member.youtubeUrl, icon: ExternalLink },
+    { label: t("Instagram"), url: member.instagramUrl, icon: ExternalLink },
     { label: "X", url: member.xUrl, icon: ExternalLink },
   ].map((link) => ({ ...link, url: externalUrl(link.url) })).filter((link) => link.url);
 
@@ -136,14 +140,14 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
               <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#15101f] shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
                 {member.avatar ? <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" /> : <Icon size={40} className="text-[#c8bcff]" />}
               </div>
-              <h2 className="mt-4 font-serif text-3xl text-white">{member.name}</h2>
-              <p className="mt-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#b8abef]">{member.role}</p>
-              <p className="mt-1 text-xs text-white/40">{member.category || member.count}</p>
+              <h2 className="mt-4 font-serif text-3xl text-white">{t(member.name)}</h2>
+              <p className="mt-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#b8abef]">{t(member.role)}</p>
+              <p className="mt-1 text-xs text-white/40">{t(member.category || member.count)}</p>
             </div>
 
             {member.bio && (
               <p className="mt-5 whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-white/70">
-                {member.bio}
+                {t(member.bio)}
               </p>
             )}
 

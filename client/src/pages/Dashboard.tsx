@@ -23,6 +23,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 import { useToast } from "../components/Toast";
@@ -44,6 +45,7 @@ const statusColor: Record<string, string> = {
 
 export default function Dashboard() {
   const { user, tickets, characters, logout, linkDiscord, linkSteam, createTicket } = useAuth();
+  const { t } = useLanguage();
   const { push } = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState("overview");
@@ -87,7 +89,7 @@ export default function Dashboard() {
     try {
       await linkDiscord();
     } catch (error: any) {
-      window.alert(error?.message || "Could not start Discord link. Please try again.");
+      window.alert(error?.message || t("Could not start Discord link. Please try again."));
     } finally {
       setLinkingDiscord(false);
     }
@@ -97,7 +99,7 @@ export default function Dashboard() {
     try {
       await linkSteam();
     } catch (error: any) {
-      window.alert(error?.message || "Could not start Steam link. Please try again.");
+      window.alert(error?.message || t("Could not start Steam link. Please try again."));
     } finally {
       setLinkingSteam(false);
     }
@@ -109,7 +111,7 @@ export default function Dashboard() {
     <div className="relative min-h-screen pt-28 pb-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 lg:hidden">
-          <h1 className="font-serif text-2xl text-white">Dashboard</h1>
+          <h1 className="font-serif text-2xl text-white">{t("Dashboard")}</h1>
           <button
             onClick={() => setMobileNavOpen((o) => !o)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white"
@@ -138,27 +140,27 @@ export default function Dashboard() {
                   </div>
 
                   <nav className="flex flex-col gap-1">
-                    {TABS.map((t) => (
+                    {TABS.map((item) => (
                       <button
-                        key={t.id}
+                        key={item.id}
                         onClick={() => {
-                          setTab(t.id);
+                          setTab(item.id);
                           setMobileNavOpen(false);
                         }}
                         className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${
-                          tab === t.id
+                          tab === item.id
                             ? "bg-orange-500/10 text-white"
                             : "text-white/55 hover:bg-white/5 hover:text-white"
                         }`}
                       >
-                        {tab === t.id && (
+                        {tab === item.id && (
                           <motion.span
                             layoutId="dash-tab"
                             className="absolute left-0 h-6 w-[3px] rounded-full bg-gradient-to-b from-orange-400 to-orange-300"
                           />
                         )}
-                        <t.icon size={17} />
-                        {t.label}
+                        <item.icon size={17} />
+                        {t(item.label)}
                       </button>
                     ))}
                   </nav>
@@ -167,7 +169,7 @@ export default function Dashboard() {
                     to="/"
                     className="rounded-xl border border-white/10 px-3.5 py-2.5 text-center text-sm font-medium text-white/60 transition hover:border-white/20 hover:text-white"
                   >
-                    ← Back to site
+                    {t("Back to site")}
                   </Link>
 
                   <button
@@ -175,7 +177,7 @@ export default function Dashboard() {
                     className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-3.5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/10"
                   >
                     <LogOut size={16} />
-                    Log out
+                    {t("Log out")}
                   </button>
                 </div>
               </motion.aside>
@@ -222,9 +224,9 @@ export default function Dashboard() {
           try {
             await createTicket(subject, category, message);
             setTicketModalOpen(false);
-            push({ kind: "success", message: "Ticket created" });
+            push({ kind: "success", message: t("Ticket created") });
           } catch (error: any) {
-            push({ kind: "error", message: error?.message || "Could not create ticket" });
+            push({ kind: "error", message: error?.message || t("Could not create ticket") });
             throw error;
           }
         }}
@@ -244,28 +246,29 @@ function StatCard({
   value: string;
   tone: string;
 }) {
+  const { t } = useLanguage();
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone}`}>
         <Icon size={18} />
       </div>
       <p className="mt-4 font-serif text-2xl text-white">{value}</p>
-      <p className="mt-1 text-xs uppercase tracking-wider text-white/40">{label}</p>
+      <p className="mt-1 text-xs uppercase tracking-wider text-white/40">{t(label)}</p>
     </div>
   );
 }
 
 function Overview({ user, openTickets, characters, applications }: { user: any; openTickets: number; characters: any[]; applications: any[] }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-6">
       <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
-          Welcome back
+          {t("Welcome back")}
         </p>
         <h2 className="mt-2 font-serif text-3xl text-white">{user.username}</h2>
         <p className="mt-2 max-w-lg text-sm text-white/55">
-          Here's a snapshot of your Gotham City account. Keep your identifiers linked
-          to unlock in-game character syncing and faster support.
+          {t("Here's a snapshot of your Gotham City account. Keep your identifiers linked to unlock in-game character syncing and faster support.")}
         </p>
       </div>
 
@@ -273,7 +276,7 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
         <StatCard
           icon={user.banned ? ShieldAlert : ShieldCheck}
           label="Account Status"
-          value={user.banned ? "Banned" : "Good Standing"}
+          value={t(user.banned ? "Banned" : "Good Standing")}
           tone={user.banned ? "bg-orange-500/10 text-orange-300" : "bg-emerald-500/10 text-emerald-300"}
         />
         <StatCard icon={Link2} label="Linked Providers" value={`${(user.discordLinked ? 1 : 0) + (user.steamLinked ? 1 : 0)}/2`} tone="bg-orange-500/10 text-orange-300" />
@@ -283,7 +286,7 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h3 className="font-serif text-lg text-white">Account Timeline</h3>
+        <h3 className="font-serif text-lg text-white">{t("Account Timeline")}</h3>
         <div className="mt-4 flex flex-col gap-4">
           <TimelineRow label="Account created" value={user.joinDate} />
           <TimelineRow label="Discord linked" value={user.discordLinked ? "Connected" : "Not connected"} good={user.discordLinked} />
@@ -307,25 +310,26 @@ function applicationStatusClass(status: string) {
 }
 
 function Applications({ applications, loading }: { applications: any[]; loading: boolean }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="font-serif text-xl text-white">My Applications</h3>
+        <h3 className="font-serif text-xl text-white">{t("My Applications")}</h3>
         <Link
           to="/careers"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white transition hover:shadow-[0_0_20px_rgba(96,81,155,0.4)]"
         >
-          <Plus size={16} /> Apply for a Role
+          <Plus size={16} /> {t("Apply for a Role")}
         </Link>
       </div>
 
       {loading ? (
         <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
-          <Loader2 size={16} className="animate-spin" /> Loading applications...
+          <Loader2 size={16} className="animate-spin" /> {t("Loading applications...")}
         </div>
       ) : applications.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
-          No applications submitted yet. Open the careers portal to apply for a position.
+          {t("No applications submitted yet. Open the careers portal to apply for a position.")}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -333,19 +337,19 @@ function Applications({ applications, loading }: { applications: any[]; loading:
             <div key={application.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-wider text-white/35">{application.department || "Career Application"}</p>
-                  <h4 className="mt-1 font-serif text-lg text-white">{application.job_title || application.job_id || "Position"}</h4>
+                  <p className="text-[11px] uppercase tracking-wider text-white/35">{t(application.department || "Career Application")}</p>
+                  <h4 className="mt-1 font-serif text-lg text-white">{t(application.job_title || application.job_id || "Position")}</h4>
                   <p className="mt-1 text-xs text-white/40">
-                    Submitted {application.created_at ? new Date(application.created_at).toLocaleDateString() : "recently"}
+                    {t("Submitted")} {application.created_at ? new Date(application.created_at).toLocaleDateString() : t("recently")}
                   </p>
                 </div>
                 <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${applicationStatusClass(application.status)}`}>
-                  {applicationStatusLabel(application.status)}
+                  {t(applicationStatusLabel(application.status))}
                 </span>
               </div>
               {application.public_notes?.length > 0 && (
                 <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-white/35">Staff Reply</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-white/35">{t("Staff Reply")}</p>
                   <p className="mt-1 whitespace-pre-wrap text-sm text-white/65">{application.public_notes[application.public_notes.length - 1].note}</p>
                 </div>
               )}
@@ -358,11 +362,12 @@ function Applications({ applications, loading }: { applications: any[]; loading:
 }
 
 function TimelineRow({ label, value, good }: { label: string; value: string; good?: boolean }) {
+  const { t } = useLanguage();
   return (
     <div className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
-      <span className="text-sm text-white/55">{label}</span>
+      <span className="text-sm text-white/55">{t(label)}</span>
       <span className={`text-sm font-medium ${good === false ? "text-white/40" : good ? "text-emerald-300" : "text-white/80"}`}>
-        {value}
+        {t(value)}
       </span>
     </div>
   );
@@ -379,14 +384,14 @@ function Characters({
   onLinkSteam: () => void;
   linking: boolean;
 }) {
+  const { t, isArabic } = useLanguage();
   if (!steamLinked) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-20 text-center">
         <Gamepad2 className="text-white/20" size={40} />
-        <h3 className="mt-4 font-serif text-xl text-white">Link Steam to view characters</h3>
+        <h3 className="mt-4 font-serif text-xl text-white">{t("Link Steam to view characters")}</h3>
         <p className="mt-2 max-w-sm text-sm text-white/50">
-          Connect your Steam account to sync your in-game CFW characters, job,
-          and balances directly to your dashboard.
+          {t("Connect your Steam account to sync your in-game CFW characters, job, and balances directly to your dashboard.")}
         </p>
         <button
           onClick={onLinkSteam}
@@ -394,7 +399,7 @@ function Characters({
           className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-6 py-3 text-sm font-semibold text-white transition hover:shadow-[0_0_25px_rgba(96,81,155,0.4)] disabled:opacity-70"
         >
           {linking ? <Loader2 size={16} className="animate-spin" /> : <Link2 size={16} />}
-          {linking ? "Connecting..." : "Connect Steam"}
+          {linking ? t("Connecting...") : t("Connect Steam")}
         </button>
       </div>
     );
@@ -416,28 +421,28 @@ function Characters({
                 <VitalRing icon={Heart} value={c.health ?? 100} tone="red" size={48} />
                 <div>
                   <h3 className="font-serif text-lg text-white">{c.name}</h3>
-                  <p className="text-xs uppercase tracking-wider text-white/40">{c.grade}</p>
+                  <p className="text-xs uppercase tracking-wider text-white/40">{t(c.grade)}</p>
                 </div>
               </div>
               <span className="rounded-full border border-orange-400/30 bg-orange-400/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
-                {c.job}
+                {t(c.job)}
               </span>
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3 text-center">
               <div className="rounded-xl bg-white/5 p-3">
                 <Wallet size={14} className="mx-auto text-emerald-300" />
                 <p className="mt-1.5 text-sm font-semibold text-white">${c.cash.toLocaleString()}</p>
-                <p className="text-[10px] uppercase text-white/40">Cash</p>
+                <p className="text-[10px] uppercase text-white/40">{t("Cash")}</p>
               </div>
               <div className="rounded-xl bg-white/5 p-3">
                 <Landmark size={14} className="mx-auto text-red-300" />
                 <p className="mt-1.5 text-sm font-semibold text-white">${c.bank.toLocaleString()}</p>
-                <p className="text-[10px] uppercase text-white/40">Bank</p>
+                <p className="text-[10px] uppercase text-white/40">{t("Bank")}</p>
               </div>
               <div className="rounded-xl bg-white/5 p-3">
                 <Clock size={14} className="mx-auto text-orange-300" />
                 <p className="mt-1.5 text-sm font-semibold text-white">{c.playtime}</p>
-                <p className="text-[10px] uppercase text-white/40">Playtime</p>
+                <p className="text-[10px] uppercase text-white/40">{t("Playtime")}</p>
               </div>
             </div>
           </motion.div>
@@ -449,9 +454,9 @@ function Characters({
         className="group flex items-center justify-between rounded-2xl border border-dashed border-orange-400/25 bg-orange-500/5 px-6 py-4 text-sm font-medium text-orange-200 transition hover:border-orange-400/50 hover:bg-orange-500/10"
       >
         <span className="flex items-center gap-2">
-          <Package size={16} /> View full health, armor & inventory details
+          <Package size={16} /> {t("View full health, armor & inventory details")}
         </span>
-        <ArrowUpRight size={16} className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
+        <ArrowUpRight size={16} className={`transition-transform group-hover:-translate-y-1 ${isArabic ? "rotate-[-90deg] group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
       </Link>
     </div>
   );

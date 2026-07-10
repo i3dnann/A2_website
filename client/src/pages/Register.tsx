@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, User, Loader2, Check } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function Register() {
   const { register, loading } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -37,7 +39,7 @@ export default function Register() {
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
-            Username
+            {t("Username")}
           </label>
           <div className="relative">
             <User size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -53,7 +55,7 @@ export default function Register() {
 
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
-            Email Address
+            {t("Email Address")}
           </label>
           <div className="relative">
             <Mail size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -71,7 +73,7 @@ export default function Register() {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
-              Password
+              {t("Password")}
             </label>
             <div className="relative">
               <Lock size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -94,7 +96,7 @@ export default function Register() {
           </div>
           <div>
             <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
-              Confirm
+              {t("Confirm")}
             </label>
             <div className="relative">
               <Lock size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -120,7 +122,7 @@ export default function Register() {
           >
             {agree && <Check size={11} className="text-white" />}
           </button>
-          I agree to the Gotham City community rules, terms of service, and privacy policy.
+          {t("I agree to the Gotham City community rules, terms of service, and privacy policy.")}
         </label>
 
         {error && (
@@ -140,18 +142,18 @@ export default function Register() {
         >
           {loading ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Creating account...
+              <Loader2 size={16} className="animate-spin" /> {t("Creating account...")}
             </>
           ) : (
-            "Create Account"
+            t("Create Account")
           )}
         </button>
       </form>
 
       <p className="mt-8 text-center text-sm text-white/50">
-        Already have an account?{" "}
+        {t("Already have an account?")}{" "}
         <Link to="/login" className="font-medium text-orange-300 hover:text-orange-200">
-          Sign in
+          {t("Sign in")}
         </Link>
       </p>
     </AuthShell>

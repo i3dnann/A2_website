@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { api } from "../api/client";
+import { useLanguage } from "../context/LanguageContext";
 
 type Partner = {
   id: string;
@@ -11,6 +12,7 @@ type Partner = {
 
 export default function PartnerBar() {
   const [partners, setPartners] = useState<Partner[]>([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     let cancel = false;
@@ -50,11 +52,11 @@ export default function PartnerBar() {
 
       <div className="mx-auto mb-4 flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#9b8ad8]">Partners</p>
-          <h2 className="mt-1 font-serif text-xl text-white sm:text-2xl">Trusted city allies</h2>
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#9b8ad8]">{t("Partners")}</p>
+          <h2 className="mt-1 font-serif text-xl text-white sm:text-2xl">{t("Trusted city allies")}</h2>
         </div>
         <div className="hidden rounded-full border border-[#60519b]/35 bg-[#60519b]/10 px-3 py-1 text-xs font-semibold text-[#c8bcff] sm:block">
-          {partners.length} active
+          {partners.length} {t("active")}
         </div>
       </div>
 
@@ -79,6 +81,7 @@ export default function PartnerBar() {
 }
 
 function PartnerCard({ partner }: { partner: Partner }) {
+  const { t } = useLanguage();
   const name = partner.partner_name || "Partner";
   const content = (
     <div className="group flex h-20 w-64 items-center gap-4 rounded-xl border border-white/10 bg-white/[0.035] px-4 shadow-[0_14px_30px_rgba(0,0,0,0.25)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/12 hover:shadow-[0_0_28px_rgba(96,81,155,0.22)]">
@@ -90,8 +93,8 @@ function PartnerCard({ partner }: { partner: Partner }) {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-white">{name}</p>
-        <p className="mt-1 text-xs text-white/40">Community partner</p>
+        <p className="truncate text-sm font-semibold text-white">{t(name)}</p>
+        <p className="mt-1 text-xs text-white/40">{t("Community partner")}</p>
       </div>
       <ExternalLink size={14} className="shrink-0 text-white/35 transition group-hover:text-[#c8bcff]" />
     </div>

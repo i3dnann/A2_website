@@ -25,10 +25,12 @@ import CharactersPage from "./pages/CharactersPage";
 import TermsPage from "./pages/TermsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider } from "./context/SiteContext";
+import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { ToastProvider } from "./components/Toast";
 
 function AppShell() {
   const location = useLocation();
+  const { dir, isArabic } = useLanguage();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -37,7 +39,7 @@ function AppShell() {
   const showFooter = !["/login", "/register", "/auth/complete", "/dashboard", "/admin"].includes(location.pathname);
 
   return (
-    <div className="relative min-h-screen text-white selection:bg-orange-500/40">
+    <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
       <AnimatedBackground />
       <BatSwingIntro replayKey={location.pathname} />
       <Navbar />
@@ -70,14 +72,16 @@ function AppShell() {
 
 export default function App() {
   return (
-    <SiteProvider>
-      <AuthProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <AppShell />
-          </BrowserRouter>
-        </ToastProvider>
-      </AuthProvider>
-    </SiteProvider>
+    <LanguageProvider>
+      <SiteProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <AppShell />
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </SiteProvider>
+    </LanguageProvider>
   );
 }

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const PERKS = [
   { icon: ShieldCheck, text: "Secure account with linked Discord & Steam" },
@@ -20,6 +21,7 @@ export default function AuthShell({
   subtitle: string;
 }) {
   const { content } = useSite();
+  const { t } = useLanguage();
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-24">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-[0_0_80px_rgba(0,0,0,0.5)] backdrop-blur-xl lg:grid-cols-2">
@@ -45,15 +47,15 @@ export default function AuthShell({
           <Link to="/" className="relative z-10 flex items-center gap-3">
             <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-10 w-10 rounded-full object-cover ring-1 ring-orange-400/30" />
             <span className="font-serif text-lg tracking-[0.25em] text-white">
-              {content.siteName}
+              {t(content.siteName)}
             </span>
           </Link>
 
           <div className="relative z-10">
             <h2 className="font-serif text-3xl leading-snug text-white">
-              Your story in
+              {t("Your story in")}
               <span className="block bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent">
-                Gotham City awaits.
+                {t("Gotham City awaits.")}
               </span>
             </h2>
             <div className="mt-8 flex flex-col gap-4">
@@ -62,7 +64,7 @@ export default function AuthShell({
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-orange-300">
                     <p.icon size={16} />
                   </span>
-                  {p.text}
+                  {t(p.text)}
                 </div>
               ))}
             </div>
@@ -79,11 +81,11 @@ export default function AuthShell({
           <Link to="/" className="mb-8 flex items-center gap-3 lg:hidden">
             <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/30" />
             <span className="font-serif text-lg tracking-[0.25em] text-white">
-                {content.siteName}
+                {t(content.siteName)}
             </span>
           </Link>
-          <h1 className="font-serif text-2xl text-white sm:text-3xl">{title}</h1>
-          <p className="mt-2 text-sm text-white/50">{subtitle}</p>
+          <h1 className="font-serif text-2xl text-white sm:text-3xl">{t(title)}</h1>
+          <p className="mt-2 text-sm text-white/50">{t(subtitle)}</p>
           <div className="mt-8">{children}</div>
         </motion.div>
       </div>

@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import PageShell from "../components/PageShell";
 
 export default function JourneyPage() {
   const { content } = useSite();
+  const { t } = useLanguage();
   return (
     <PageShell subtitle={content.journeySubtitle} title={content.journeyTitle}>
       <div className="relative mx-auto mt-6 max-w-3xl">
@@ -22,8 +24,8 @@ export default function JourneyPage() {
               <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(96,81,155,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
               <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
                 <span className="text-xs font-bold uppercase tracking-widest text-orange-300">{j.year}</span>
-                <h3 className="mt-2 font-serif text-xl text-white">{j.title}</h3>
-                <p className="mt-2 text-sm text-white/55">{j.desc}</p>
+                <h3 className="mt-2 font-serif text-xl text-white">{t(j.title)}</h3>
+                <p className="mt-2 text-sm text-white/55">{t(j.desc)}</p>
               </div>
             </motion.div>
           );
@@ -34,9 +36,9 @@ export default function JourneyPage() {
       <div className="mt-20">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
-            {content.famousSubtitle}
+            {t(content.famousSubtitle)}
           </p>
-          <h2 className="mt-3 font-serif text-3xl text-white sm:text-4xl">{content.famousTitle}</h2>
+          <h2 className="mt-3 font-serif text-3xl text-white sm:text-4xl">{t(content.famousTitle)}</h2>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {content.famousCharacters.map((c, i) => (
@@ -51,11 +53,11 @@ export default function JourneyPage() {
             >
               {c.image && <img src={c.image} alt={c.name} loading="lazy" className="-mx-2 -mt-2 mb-4 h-36 w-[calc(100%+1rem)] rounded-xl object-cover" />}
               <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
-                {c.tag}
+                {t(c.tag)}
               </span>
-              <h3 className="mt-4 font-serif text-lg text-white">{c.name}</h3>
-              <p className="mt-1 text-sm text-white/50">{c.title}</p>
-              {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{c.bio}</p>}
+              <h3 className="mt-4 font-serif text-lg text-white">{t(c.name)}</h3>
+              <p className="mt-1 text-sm text-white/50">{t(c.title)}</p>
+              {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{t(c.bio)}</p>}
             </motion.div>
           ))}
         </div>

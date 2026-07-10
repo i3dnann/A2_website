@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { Menu, X, LayoutDashboard, ShieldCheck, Globe2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 
 const NAV_ROUTES = [
   { path: "/", label: "Home" },
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, isAdmin } = useAuth();
   const { content } = useSite();
+  const { t, language, toggleLanguage, isArabic } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export default function Navbar() {
           <Link to="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3">
             <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
             <span className="font-serif text-base tracking-[0.2em] text-white sm:text-lg">
-              {content.siteName}
+              {t(content.siteName)}
             </span>
           </Link>
 
@@ -62,7 +64,7 @@ export default function Navbar() {
                 onClick={() => setOpen(false)}
                 className="relative px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white"
               >
-                {link.label}
+                {t(link.label)}
                 {location.pathname === link.path && (
                   <motion.span
                     layoutId="nav-underline"
@@ -80,7 +82,7 @@ export default function Navbar() {
                 to="/admin"
                 className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-xs font-medium text-orange-200 transition hover:border-orange-400/50"
               >
-                <ShieldCheck size={14} /> Admin
+                <ShieldCheck size={14} /> {t("Admin")}
               </Link>
             )}
             {user ? (
@@ -89,14 +91,14 @@ export default function Navbar() {
                   to="/characters"
                   className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
                 >
-                  Characters
+                  {t("Characters")}
                 </Link>
                 <Link
                   to="/dashboard"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
                 >
                   <LayoutDashboard size={15} />
-                  Dashboard
+                  {t("Dashboard")}
                 </Link>
               </>
             ) : (
@@ -104,23 +106,42 @@ export default function Navbar() {
                 to="/login"
                 className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-orange-400/40 hover:text-white"
               >
-                Login
+                {t("Login")}
               </Link>
             )}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/75 transition hover:border-[#8a7ac4]/50 hover:text-white"
+              aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}
+              title={language === "ar" ? "English" : "العربية"}
+            >
+              <Globe2 size={17} />
+            </button>
             <a
               href={content.discordLink || "/"}
               target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
               rel="noreferrer"
               className="group relative overflow-hidden rounded-xl bg-[#60519b] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)]"
             >
-              <span className="relative z-10 whitespace-nowrap">Join Discord</span>
+              <span className="relative z-10 whitespace-nowrap">{t("Join Discord")}</span>
               <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0" />
             </a>
           </div>
 
-          <button className="text-white xl:hidden" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
+          <div className="flex items-center gap-2 xl:hidden">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/75"
+              aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}
+            >
+              <Globe2 size={18} />
+            </button>
+            <button className="text-white" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
             {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
+            </button>
+          </div>
         </div>
 
         <AnimatePresence>
@@ -142,26 +163,26 @@ export default function Navbar() {
                       location.pathname === link.path ? "bg-orange-500/10 text-orange-300" : "text-white/70 hover:bg-white/5"
                     }`}
                   >
-                    {link.label}
+                    {t(link.label)}
                   </Link>
                 ))}
                 <hr className="my-2 border-white/10" />
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setOpen(false)} className="rounded-lg px-4 py-3 text-left text-sm font-medium text-orange-200 hover:bg-orange-500/5 flex items-center gap-2">
-                    <ShieldCheck size={16} /> Admin Panel
+                    <ShieldCheck size={16} /> {t("Admin Panel")}
                   </Link>
                 )}
                 {user ? (
                   <Link to="/dashboard" onClick={() => setOpen(false)} className="rounded-lg border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85 mt-1">
-                    Dashboard
+                    {t("Dashboard")}
                   </Link>
                 ) : (
                   <Link to="/login" onClick={() => setOpen(false)} className="rounded-lg border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85 mt-1">
-                    Login
+                    {t("Login")}
                   </Link>
                 )}
                 <a href={content.discordLink || "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="mt-2 rounded-lg bg-[#60519b] px-4 py-3 text-center text-sm font-semibold text-white">
-                  Join Discord
+                  {t("Join Discord")}
                 </a>
               </div>
             </motion.div>

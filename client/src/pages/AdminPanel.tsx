@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
+import { useLanguage } from "../context/LanguageContext";
 import { api, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
 
@@ -96,6 +97,7 @@ function normalizeDashboardStats(raw: any): DashboardStats {
 export default function AdminPanel() {
   const { user, logout } = useAuth();
   const { content, updateContent } = useSite();
+  const { t } = useLanguage();
   const { push } = useToast();
   const navigate = useNavigate();
   const [tab, setTab] = useState("dashboard");
@@ -137,8 +139,8 @@ export default function AdminPanel() {
       <div className="flex min-h-screen items-center justify-center px-4 pt-28">
         <div className="text-center max-w-md">
           <AlertTriangle size={40} className="mx-auto text-orange-300" />
-          <h1 className="mt-4 font-serif text-2xl text-white">Access Denied</h1>
-          <p className="mt-2 text-white/50">You need admin permissions to view this page.</p>
+          <h1 className="mt-4 font-serif text-2xl text-white">{t("Access Denied")}</h1>
+          <p className="mt-2 text-white/50">{t("You need admin permissions to view this page.")}</p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2 text-sm text-white/80">← Back to site</Link>
         </div>
       </div>
@@ -150,7 +152,7 @@ export default function AdminPanel() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-white">Admin Panel</h1>
+            <h1 className="font-serif text-3xl text-white">{t("Admin Panel")}</h1>
             <p className="mt-1 text-sm text-white/45">
               Welcome back, <span className="text-orange-300">{user.username}</span> ·{" "}
               <span className="text-orange-200">{user.role}</span>
@@ -160,10 +162,10 @@ export default function AdminPanel() {
             <button onClick={handleSave} disabled={saving}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(96,81,155,0.3)] hover:shadow-[0_0_25px_rgba(96,81,155,0.5)] transition disabled:opacity-70">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? "Saving..." : "Save All Changes"}
+              {saving ? t("Saving...") : t("Save All Changes")}
             </button>
             <Link to="/" className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-white/70 hover:text-white flex items-center gap-2">
-              <Eye size={14} /> View Site
+              <Eye size={14} /> {t("View Site")}
             </Link>
           </div>
         </div>
@@ -175,7 +177,7 @@ export default function AdminPanel() {
               <button onClick={() => setSidebarOpen(false)} className="mb-4 self-end text-white/60 hover:text-white"><X size={20} /></button>
               <SidebarNav tab={tab} setTab={(id: string) => { setTab(id); setSidebarOpen(false); }} />
               <button onClick={handleLogout} className="mt-4 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-400 hover:bg-red-500/10 transition">
-                <LogOut size={16} /> Logout
+                <LogOut size={16} /> {t("Logout")}
               </button>
             </div>
           )}
@@ -185,7 +187,7 @@ export default function AdminPanel() {
             <div className="sticky top-28 flex flex-col gap-1">
               <SidebarNav tab={tab} setTab={setTab} />
               <button onClick={handleLogout} className="mt-4 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/55 hover:bg-white/5 hover:text-white transition">
-                <LogOut size={16} /> Logout
+                <LogOut size={16} /> {t("Logout")}
               </button>
             </div>
           </aside>
@@ -194,7 +196,7 @@ export default function AdminPanel() {
           <div className="lg:hidden">
             <button onClick={() => setSidebarOpen(true)} className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white">
               <span className="flex items-center gap-2">
-                {(() => { const t = ADMIN_TABS.find((x) => x.id === tab); return t ? <><t.icon size={16} /> {t.label}</> : "Select"; })()}
+                {(() => { const activeTab = ADMIN_TABS.find((x) => x.id === tab); return activeTab ? <><activeTab.icon size={16} /> {t(activeTab.label)}</> : t("Select"); })()}
               </span>
               <Menu size={16} />
             </button>
@@ -234,13 +236,14 @@ export default function AdminPanel() {
 }
 
 function SidebarNav({ tab, setTab }: any) {
+  const { t } = useLanguage();
   return <>
-    {ADMIN_TABS.map((t) => (
-      <button key={t.id} onClick={() => setTab(t.id)}
+    {ADMIN_TABS.map((item) => (
+      <button key={item.id} onClick={() => setTab(item.id)}
         className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-          tab === t.id ? "bg-orange-500/15 text-orange-200" : "text-white/55 hover:bg-white/5 hover:text-white"
+          tab === item.id ? "bg-orange-500/15 text-orange-200" : "text-white/55 hover:bg-white/5 hover:text-white"
         }`}>
-        <t.icon size={16} /> {t.label}
+        <item.icon size={16} /> {t(item.label)}
       </button>
     ))}
   </>;
@@ -1107,6 +1110,7 @@ function adminApplicationStatusClass(status: string) {
 
 function ResourceAdmin({ title, resource, fields, blank }: { title: string; resource: string; fields: string[]; blank: any }) {
   const { push, confirm } = useToast();
+  const { t } = useLanguage();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState("");
@@ -1164,7 +1168,7 @@ function ResourceAdmin({ title, resource, fields, blank }: { title: string; reso
       {loading ? (
         <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
       ) : rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No records yet. Add one below.</p>
+        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">{t("No records yet. Add one below.")}</p>
       ) : rows.map((row, index) => (
         <div key={row.id || index} className="rounded-xl border border-white/10 bg-black/20 p-4">
           <div className="grid gap-3 md:grid-cols-2">
@@ -1173,26 +1177,27 @@ function ResourceAdmin({ title, resource, fields, blank }: { title: string; reso
             ))}
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <button onClick={() => save(row)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingId === (row.id || "new") && <Loader2 size={12} className="animate-spin" />} Save</button>
+            <button onClick={() => save(row)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingId === (row.id || "new") && <Loader2 size={12} className="animate-spin" />} {t("Save")}</button>
             <button onClick={() => remove(row)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={12} /></button>
           </div>
         </div>
       ))}
       <button onClick={() => setRows((current) => [...current, { ...blank }])}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Record</button>
+        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> {t("Add Record")}</button>
     </EditableSection>
   );
 }
 
 function FieldEditor({ field, value, onChange }: { field: string; value: any; onChange: (value: any) => void }) {
+  const { t } = useLanguage();
   const label = field.replace(/_/g, " ");
   if (field.startsWith("is_")) {
-    return <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={flagOn(value)} onChange={(e) => onChange(e.target.checked)} className="accent-orange-500" /> {label}</label>;
+    return <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={flagOn(value)} onChange={(e) => onChange(e.target.checked)} className="accent-orange-500" /> {t(label)}</label>;
   }
   if (field.includes("bio") || field.includes("description") || field === "content") {
-    return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{label}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+    return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{t(label)}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
   }
-  return <div><label className={stClass}>{label}</label><input className={inpClass} type={field === "sort_order" ? "number" : field.includes("date") ? "date" : "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+  return <div><label className={stClass}>{t(label)}</label><input className={inpClass} type={field === "sort_order" ? "number" : field.includes("date") ? "date" : "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
 }
 
 function CareersAdmin() {
@@ -1390,16 +1395,19 @@ function StaffAdmin() {
 /* Reusable primitives */
 /* ─────────────────────────────────────────────────────────────── */
 function EditableSection({ title, children }: { title: string; children: React.ReactNode }) {
+  const { t } = useLanguage();
   return <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-6 mb-5">
-    <h3 className="mb-4 font-serif text-base text-white">{title}</h3>
+    <h3 className="mb-4 font-serif text-base text-white">{t(title)}</h3>
     <div className="flex flex-col gap-3">{children}</div>
   </div>;
 }
 function EField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return <div><label className={stClass}>{label}</label><input className={inpClass} value={value} onChange={(e) => onChange(e.target.value)} /></div>;
+  const { t } = useLanguage();
+  return <div><label className={stClass}>{t(label)}</label><input className={inpClass} value={value} onChange={(e) => onChange(e.target.value)} /></div>;
 }
 function EArea({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return <div><label className={stClass}>{label}</label><textarea className={`${inpClass} resize-none`} rows={2} value={value} onChange={(e) => onChange(e.target.value)} /></div>;
+  const { t } = useLanguage();
+  return <div><label className={stClass}>{t(label)}</label><textarea className={`${inpClass} resize-none`} rows={2} value={value} onChange={(e) => onChange(e.target.value)} /></div>;
 }
 
 /* ─────────────────────────────────────────────────────────────── */
