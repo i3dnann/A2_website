@@ -118,8 +118,8 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
           <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
             <path d={upperCurve} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
             <path d={lowerCurve} fill="none" stroke="rgba(255,255,255,0.11)" strokeWidth="1" />
-            <path d={mainCurve} fill="none" stroke="rgba(255,255,255,0.34)" strokeWidth="1.4" />
-            <path d={mainCurve} fill="none" stroke="url(#roadmapGlow)" strokeWidth="2.2" strokeDasharray="180 999" strokeLinecap="round" />
+            <path d={mainCurve} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.4" />
+            <path d={mainCurve} fill="none" stroke="url(#roadmapGlow)" strokeWidth="2.8" strokeLinecap="round" />
             <defs>
               <linearGradient id="roadmapGlow" x1="0" x2="1" y1="0" y2="0">
                 <stop stopColor="#34d399" />
