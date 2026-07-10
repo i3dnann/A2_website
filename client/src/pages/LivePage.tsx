@@ -18,12 +18,22 @@ type Streamer = {
   kick_username?: string;
   youtube_url?: string;
   discord_url?: string;
+  stream?: {
+    online: boolean;
+    title?: string;
+    gameName?: string;
+    viewerCount?: number;
+    thumbnailUrl?: string;
+    source?: string;
+  };
 };
 
 export default function LivePage() {
   const { content } = useSite();
   const [state, setState] = useState<LiveState | null>(null);
   const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [totalStreamViewers, setTotalStreamViewers] = useState(0);
+  const [liveStreamCount, setLiveStreamCount] = useState(0);
   const [streamersLoading, setStreamersLoading] = useState(true);
   const [connecting, setConnecting] = useState(true);
 
@@ -43,10 +53,18 @@ export default function LivePage() {
     let cancel = false;
     const loadStreamers = async () => {
       try {
-        const result = await api<{ rows: Streamer[] }>("/api/public/streamers", { params: { limit: 100 } });
-        if (!cancel) setStreamers(result.rows || []);
+        const result = await api<{ rows: Streamer[]; totalViewers: number; liveCount: number }>("/api/public/streamers/live");
+        if (!cancel) {
+          setStreamers(result.rows || []);
+          setTotalStreamViewers(Number(result.totalViewers || 0));
+          setLiveStreamCount(Number(result.liveCount || 0));
+        }
       } catch {
-        if (!cancel) setStreamers([]);
+        if (!cancel) {
+          setStreamers([]);
+          setTotalStreamViewers(0);
+          setLiveStreamCount(0);
+        }
       } finally {
         if (!cancel) setStreamersLoading(false);
       }
@@ -119,6 +137,23 @@ export default function LivePage() {
               <Stat icon={Gauge} label="Latency" value={state?.latency == null ? "N/A" : `${state.latency} ms`} accent="text-orange-300" />
             </div>
 
+            <div className="mt-4 rounded-xl border border-[#60519b]/30 bg-[#60519b]/10 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-[#8a7ac4]/35 bg-black/25 text-[#d7ceff]">
+                    <Radio size={17} />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-white/40">Total Stream Viewers</p>
+                    <p className="font-serif text-2xl text-white">{totalStreamViewers.toLocaleString()}</p>
+                  </div>
+                </div>
+                <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-xs font-semibold text-white/55">
+                  {liveStreamCount} live / {streamers.length} listed
+                </span>
+              </div>
+            </div>
+
             {!notConfigured && (
               <div className="mt-5">
                 <div className="flex items-center justify-between text-xs text-white/45">
@@ -156,7 +191,7 @@ export default function LivePage() {
           </div>
           <div className="inline-flex items-center gap-2 rounded-full border border-[#60519b]/35 bg-[#60519b]/10 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#d7ceff]">
             <Radio size={14} />
-            {streamers.length} listed
+            {totalStreamViewers.toLocaleString()} total viewers
           </div>
         </div>
 
@@ -192,36 +227,58 @@ function Stat({ icon: Icon, label, value, accent }: { icon: any; label: string; 
 function StreamerCard({ streamer }: { streamer: Streamer }) {
   const name = streamer.display_name || streamer.kick_username || streamer.twitch_username || "Streamer";
   const avatar = streamer.profile_image_url || streamer.avatar_url || "";
+  const online = Boolean(streamer.stream?.online);
   const url = streamer.kick_username
     ? channelUrl("kick", streamer.kick_username)
     : streamer.twitch_username
       ? channelUrl("twitch", streamer.twitch_username)
       : externalUrl(streamer.youtube_url || streamer.discord_url);
   const platform = streamer.kick_username ? "Kick" : streamer.twitch_username ? "Twitch" : streamer.youtube_url ? "YouTube" : "Streamer";
+  const embedUrl = streamEmbedUrl(streamer);
+  const streamTitle = streamer.stream?.title || (online ? "Live now" : "Stream offline");
+  const gameName = streamer.stream?.gameName || streamer.category || "Gotham City Roleplay";
+  const viewers = Number(streamer.stream?.viewerCount || 0);
 
   return (
     <div className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/10">
-      <div className="relative h-28 overflow-hidden bg-gradient-to-br from-[#161022] via-[#0b0810] to-black">
-        {streamer.banner_url && <img src={streamer.banner_url} alt="" className="h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-105" loading="lazy" />}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#08060d] to-transparent" />
+      <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-[#161022] via-[#0b0810] to-black">
+        {embedUrl ? (
+          <iframe
+            src={embedUrl}
+            title={`${name} stream preview`}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+            className="h-full w-full"
+          />
+        ) : (
+          <>
+            {(streamer.stream?.thumbnailUrl || streamer.banner_url) && <img src={streamer.stream?.thumbnailUrl || streamer.banner_url} alt="" className="h-full w-full object-cover opacity-75 transition duration-500 group-hover:scale-105" loading="lazy" />}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#08060d] to-transparent" />
+          </>
+        )}
         <div className="absolute left-4 top-4 rounded-full border border-[#60519b]/40 bg-black/45 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#d7ceff]">
           {platform}
         </div>
+        <div className={`absolute right-4 top-4 rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${online ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200" : "border-white/15 bg-black/45 text-white/50"}`}>
+          {online ? "Live" : "Offline"}
+        </div>
       </div>
       <div className="p-4">
-        <div className="-mt-10 flex items-end gap-3">
+        <div className="flex items-center gap-3">
           <div className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#100b18] shadow-lg">
             {avatar ? <img src={avatar} alt={name} className="h-full w-full object-cover" loading="lazy" /> : <span className="font-serif text-2xl text-[#c8bcff]">{name.slice(0, 1).toUpperCase()}</span>}
           </div>
-          <div className="min-w-0 pb-1">
+          <div className="min-w-0">
             <h3 className="truncate font-serif text-xl text-white">{name}</h3>
-            <p className="truncate text-xs text-white/45">{streamer.category || "Gotham City Roleplay"}</p>
+            <p className="truncate text-xs text-white/45">{gameName}</p>
           </div>
         </div>
+        <p className="mt-3 line-clamp-2 min-h-[3rem] text-sm font-medium leading-6 text-white/78">{streamTitle}</p>
         {streamer.bio && <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/58">{streamer.bio}</p>}
         <div className="mt-4 flex items-center justify-between gap-3">
-          <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/45">
-            Added streamer
+          <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/55">
+            {viewers.toLocaleString()} viewers
           </span>
           {url && (
             <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-[#60519b] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#7566b6]">
@@ -247,4 +304,25 @@ function externalUrl(value?: string) {
   if (!url) return "";
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url.replace(/^\/+/, "")}`;
+}
+
+function streamEmbedUrl(streamer: Streamer) {
+  if (streamer.twitch_username) {
+    const channel = cleanChannel(streamer.twitch_username, "twitch");
+    const parent = typeof window !== "undefined" ? window.location.hostname : "localhost";
+    return `https://player.twitch.tv/?channel=${encodeURIComponent(channel)}&parent=${encodeURIComponent(parent)}&muted=true`;
+  }
+  if (streamer.kick_username) {
+    return `https://player.kick.com/${encodeURIComponent(cleanChannel(streamer.kick_username, "kick"))}`;
+  }
+  return "";
+}
+
+function cleanChannel(value: string, platform: "kick" | "twitch") {
+  return String(value || "")
+    .trim()
+    .replace(/^@/, "")
+    .replace(new RegExp(`^https?://(www\\.)?${platform === "kick" ? "kick\\.com" : "twitch\\.tv"}/`, "i"), "")
+    .replace(new RegExp(`^${platform === "kick" ? "kick\\.com" : "twitch\\.tv"}/`, "i"), "")
+    .split(/[/?#]/)[0];
 }

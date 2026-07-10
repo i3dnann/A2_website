@@ -2,7 +2,21 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { api } from "../api/client";
 
 export type FeatureItem = { icon: string; title: string; desc: string };
-export type RosterItem = { name: string; role: string; count: string; icon: string; avatar?: string; bio?: string; category?: string };
+export type RosterItem = {
+  name: string;
+  role: string;
+  count: string;
+  icon: string;
+  avatar?: string;
+  bio?: string;
+  category?: string;
+  discordUrl?: string;
+  twitchUrl?: string;
+  kickUrl?: string;
+  youtubeUrl?: string;
+  instagramUrl?: string;
+  xUrl?: string;
+};
 export type JourneyItem = { year: string; title: string; desc: string };
 export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string };
 export type NewsItem = { icon: string; date: string; title: string; excerpt: string; id?: string };
@@ -141,6 +155,12 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           avatar: member.profile_image_url || "",
           bio: member.bio || "",
           category: member.category || "Staff",
+          discordUrl: member.discord_url || "",
+          twitchUrl: member.twitch_url || "",
+          kickUrl: member.kick_url || "",
+          youtubeUrl: member.youtube_url || "",
+          instagramUrl: member.instagram_url || "",
+          xUrl: member.x_url || "",
         }));
         const famous = (homeResult.famous || []).map((character) => ({
           name: character.character_name || "Character",

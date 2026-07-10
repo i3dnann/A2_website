@@ -3,6 +3,7 @@ import { PUBLIC_COLLECTIONS, RESOURCE_MAP } from "../data/catalog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { getResource, getSettings, listResource } from "../services/repository.js";
 import { listGalleryPhotos } from "../services/galleryService.js";
+import { enrichStreamers } from "../services/streamStatusService.js";
 
 const router = Router();
 
@@ -63,6 +64,12 @@ router.get("/terms", asyncHandler(async (_req, res) => {
   const { rows } = await listResource("terms", { limit: 10, publicOnly: true });
   const terms = rows.sort((a, b) => String(b.effective_date || "").localeCompare(String(a.effective_date || "")))[0] || null;
   res.json({ terms });
+}));
+
+router.get("/streamers/live", asyncHandler(async (_req, res) => {
+  const { rows } = await listResource("streamers", { limit: 100, publicOnly: true });
+  const result = await enrichStreamers(rows);
+  res.json({ rows: result.streamers, totalViewers: result.totalViewers, liveCount: result.liveCount });
 }));
 
 router.get("/careers/:id", asyncHandler(async (req, res) => {

@@ -58,6 +58,10 @@ const schema = z.object({
   TWITCH_CLIENT_SECRET: z.string().default(""),
   TWITCH_ACCESS_TOKEN: z.string().default(""),
 
+  KICK_CLIENT_ID: z.string().default(""),
+  KICK_CLIENT_SECRET: z.string().default(""),
+  KICK_ACCESS_TOKEN: z.string().default(""),
+
   FIVEM_PLAYERS_URL: z.string().default(""),
   FIVEM_DYNAMIC_URL: z.string().default(""),
   FIVEM_INFO_URL: z.string().default(""),

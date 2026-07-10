@@ -29,9 +29,9 @@ export default function PartnerBar() {
   const rows = useMemo(() => {
     const clean = partners.filter(Boolean);
     if (!clean.length) return [[], []] as Partner[][];
-    const repeated = Array.from({ length: clean.length < 4 ? 4 : 2 }).flatMap(() => clean);
-    const split = Math.ceil(repeated.length / 2);
-    return [repeated.slice(0, split), repeated.slice(split)] as Partner[][];
+    const repeatCount = Math.max(12, Math.ceil(18 / clean.length));
+    const repeated = Array.from({ length: repeatCount }).flatMap(() => clean);
+    return [repeated, [...repeated].reverse()] as Partner[][];
   }, [partners]);
 
   if (!partners.length) return null;
@@ -60,11 +60,11 @@ export default function PartnerBar() {
 
       <div className="flex flex-col gap-3">
         {rows.map((row, index) => (
-          <div key={index} className="flex w-max min-w-full overflow-hidden">
+          <div key={index} className="w-full overflow-hidden">
             <div
-              className="partner-marquee flex min-w-max gap-3 pr-3"
+              className="partner-marquee flex w-max min-w-[200vw] gap-3 pr-3"
               style={{
-                animation: `${index === 0 ? "partner-drift-left" : "partner-drift-right"} ${Math.max(28, row.length * 6)}s linear infinite`,
+                animation: `${index === 0 ? "partner-drift-left" : "partner-drift-right"} ${Math.max(34, row.length * 4)}s linear infinite`,
               }}
             >
               {[...row, ...row].map((partner, itemIndex) => (
