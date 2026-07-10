@@ -56,17 +56,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="ml-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 px-3 text-xs font-bold uppercase tracking-wider text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)] transition hover:border-[#b8a9ff]/70 hover:bg-[#60519b]/35 xl:ml-0"
-            aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
-            title={language === "ar" ? "English" : "Arabic"}
-          >
-            <Globe2 size={17} />
-            <span>{language === "ar" ? "EN" : "AR"}</span>
-          </button>
-
           <nav className="hidden items-center gap-1 xl:flex">
             {NAV_ROUTES.map((link) => (
               <Link
@@ -120,6 +109,15 @@ export default function Navbar() {
                 {t("Login")}
               </Link>
             )}
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)] transition hover:border-[#b8a9ff]/70 hover:bg-[#60519b]/35 hover:text-white"
+              aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
+              title={language === "ar" ? "English" : "Arabic"}
+            >
+              <Globe2 size={18} />
+            </button>
             <a
               href={content.discordLink || "/"}
               target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
@@ -131,7 +129,16 @@ export default function Navbar() {
             </a>
           </div>
 
-          <div className="flex items-center gap-2 xl:hidden">
+          <div className="ml-auto flex items-center gap-2 xl:hidden">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)]"
+              aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
+              title={language === "ar" ? "English" : "Arabic"}
+            >
+              <Globe2 size={18} />
+            </button>
             <button className="text-white" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
             {open ? <X size={22} /> : <Menu size={22} />}
             </button>
