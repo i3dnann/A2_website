@@ -22,7 +22,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, isAdmin } = useAuth();
   const { content } = useSite();
-  const { t, language, toggleLanguage, isArabic } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
 
   useEffect(() => {
@@ -55,6 +55,17 @@ export default function Navbar() {
               {t(content.siteName)}
             </span>
           </Link>
+
+          <button
+            type="button"
+            onClick={toggleLanguage}
+            className="ml-auto inline-flex h-10 shrink-0 items-center gap-2 rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 px-3 text-xs font-bold uppercase tracking-wider text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)] transition hover:border-[#b8a9ff]/70 hover:bg-[#60519b]/35 xl:ml-0"
+            aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
+            title={language === "ar" ? "English" : "Arabic"}
+          >
+            <Globe2 size={17} />
+            <span>{language === "ar" ? "EN" : "AR"}</span>
+          </button>
 
           <nav className="hidden items-center gap-1 xl:flex">
             {NAV_ROUTES.map((link) => (
@@ -109,15 +120,6 @@ export default function Navbar() {
                 {t("Login")}
               </Link>
             )}
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/75 transition hover:border-[#8a7ac4]/50 hover:text-white"
-              aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}
-              title={language === "ar" ? "English" : "العربية"}
-            >
-              <Globe2 size={17} />
-            </button>
             <a
               href={content.discordLink || "/"}
               target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
@@ -130,14 +132,6 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 xl:hidden">
-            <button
-              type="button"
-              onClick={toggleLanguage}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 text-white/75"
-              aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}
-            >
-              <Globe2 size={18} />
-            </button>
             <button className="text-white" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
             {open ? <X size={22} /> : <Menu size={22} />}
             </button>
