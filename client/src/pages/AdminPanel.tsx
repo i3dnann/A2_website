@@ -38,6 +38,7 @@ const ADMIN_TABS = [
 
 const stClass = "mb-1 text-xs font-semibold uppercase tracking-wider text-white/40";
 const inpClass = "w-full rounded-lg border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50 transition";
+const USER_ROLE_OPTIONS = ["Player", "Support", "Moderator", "Admin", "Super Admin", "Master Admin"];
 const FEATURE_ICON_OPTIONS = [
   { value: "ShieldHalf", label: "Shield" },
   { value: "Users", label: "Users" },
@@ -1226,8 +1227,9 @@ function CareersAdmin() {
 }
 
 function UsersAdmin() {
-  const { push } = useToast();
+  const { push, confirm } = useToast();
   const [rows, setRows] = useState<any[]>([]);
+  const [roles, setRoles] = useState<string[]>(USER_ROLE_OPTIONS);
   const [q, setQ] = useState("");
   const [passwords, setPasswords] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -1244,7 +1246,12 @@ function UsersAdmin() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api<{ roles: string[] }>("/api/admin/permissions")
+      .then((result) => setRoles(result.roles?.length ? result.roles : USER_ROLE_OPTIONS))
+      .catch(() => setRoles(USER_ROLE_OPTIONS));
+  }, []);
 
   const setUserStatus = async (user: any, active: boolean) => {
     try {
@@ -1271,6 +1278,42 @@ function UsersAdmin() {
     }
   };
 
+  const saveUserRole = async (user: any) => {
+    const nextRole = user.roles?.[0] || "Player";
+    try {
+      await api(`/api/admin/users/${user.id}`, {
+        method: "PATCH",
+        body: {
+          username: user.username,
+          email: user.email,
+          discord_id: user.discord_id,
+          steam_id: user.steam_id,
+          roles: [nextRole],
+        },
+      });
+      await load();
+      push({ kind: "success", message: "User role updated" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update user role" });
+    }
+  };
+
+  const deleteUser = async (user: any) => {
+    const ok = await confirm({
+      title: "Delete user?",
+      message: `This disables ${user.username || user.email || "this user"} and removes their website access.`,
+      confirmText: "Delete",
+    });
+    if (!ok) return;
+    try {
+      await api(`/api/admin/users/${user.id}`, { method: "DELETE" });
+      await load();
+      push({ kind: "success", message: "User deleted" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to delete user" });
+    }
+  };
+
   return (
     <EditableSection title="Website Users">
       <div className="flex gap-2">
@@ -1290,9 +1333,18 @@ function UsersAdmin() {
                 <div className="flex gap-2">
                   <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
                   <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
+                  <button onClick={() => deleteUser(user)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={13} /></button>
                 </div>
               </div>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,220px)_auto_minmax(0,260px)_auto]">
+                <select
+                  className={inpClass}
+                  value={user.roles?.[0] || "Player"}
+                  onChange={(e) => setRows((current) => current.map((row) => row.id === user.id ? { ...row, roles: [e.target.value] } : row))}
+                >
+                  {roles.map((role) => <option key={role} value={role}>{role}</option>)}
+                </select>
+                <button onClick={() => saveUserRole(user)} className="rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-3 py-2 text-xs font-semibold text-[#d7ceff]">Save Role</button>
                 <input type="password" value={passwords[user.id] || ""} onChange={(e) => setPasswords((current) => ({ ...current, [user.id]: e.target.value }))} placeholder="New password" className={`${inpClass} sm:max-w-xs`} />
                 <button onClick={() => resetPassword(user)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/70">Reset Password</button>
               </div>
@@ -1306,7 +1358,7 @@ function UsersAdmin() {
 }
 
 function StaffAdmin() {
-  const { push } = useToast();
+  const { push, confirm } = useToast();
   const [admins, setAdmins] = useState<any[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -1352,6 +1404,22 @@ function StaffAdmin() {
     else setDraft((row: any) => ({ ...row, permissions: [...current] }));
   };
 
+  const deleteAdmin = async (admin: any) => {
+    const ok = await confirm({
+      title: "Delete admin?",
+      message: `This disables ${admin.username || admin.email || "this admin"} and removes their admin access.`,
+      confirmText: "Delete",
+    });
+    if (!ok) return;
+    try {
+      await api(`/api/admin/admins/${admin.id}`, { method: "DELETE" });
+      await load();
+      push({ kind: "success", message: "Admin deleted" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to delete admin" });
+    }
+  };
+
   return (
     <EditableSection title="Staff & Permissions">
       {loading ? <Skeleton className="h-28" /> : (
@@ -1381,7 +1449,10 @@ function StaffAdmin() {
                 <div className="mt-3 flex max-h-32 flex-wrap gap-2 overflow-auto">
                   {permissions.map((permission) => <label key={permission} className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white/60"><input type="checkbox" checked={(admin.permissions || []).includes(permission)} onChange={() => togglePermission(admin, permission, index)} className="mr-1 accent-orange-500" />{permission}</label>)}
                 </div>
-                <button onClick={() => saveAdmin(admin)} className="mt-3 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white">Save Staff</button>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button onClick={() => saveAdmin(admin)} className="rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white">Save Staff</button>
+                  <button onClick={() => deleteAdmin(admin)} className="inline-flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-500/5 px-4 py-2 text-xs font-semibold text-red-300"><Trash2 size={13} /> Delete Admin</button>
+                </div>
               </div>
             ))}
           </div>

@@ -60,6 +60,9 @@ router.post("/users/:id/password", asyncHandler(async (req, res) => {
 }));
 
 router.delete("/users/:id", asyncHandler(async (req, res) => {
+  if (String(req.params.id) === String(req.user.id)) {
+    return res.status(400).json({ error: "cannot_delete_self", message: "You cannot delete your own account while logged in." });
+  }
   const before = await getUserById(req.params.id);
   const user = await deactivateWebUser(req.params.id, req.user);
   if (!user) return res.status(404).json({ error: "user_not_found" });

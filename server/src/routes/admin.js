@@ -145,6 +145,9 @@ router.delete(
   "/users/:id",
   requireMaster,
   asyncHandler(async (req, res) => {
+    if (String(req.params.id) === String(req.user.id)) {
+      return res.status(400).json({ error: "cannot_delete_self", message: "You cannot delete your own account while logged in." });
+    }
     const user = await deactivateWebUser(req.params.id, req.user);
     if (!user) return res.status(404).json({ error: "user_not_found" });
     await auditAction({ req, action: "disable_user", targetType: "web_users", targetId: user.id, after: user, reason: "master disabled user", webhookCategory: "security" });
@@ -209,6 +212,9 @@ router.delete(
   "/admins/:id",
   requireMaster,
   asyncHandler(async (req, res) => {
+    if (String(req.params.id) === String(req.user.id)) {
+      return res.status(400).json({ error: "cannot_delete_self", message: "You cannot remove your own admin account while logged in." });
+    }
     const user = await deactivateWebUser(req.params.id, req.user);
     if (!user) return res.status(404).json({ error: "admin_not_found" });
     await auditAction({ req, action: "remove_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin removed", webhookCategory: "security" });
