@@ -90,7 +90,7 @@ const masterUser = saveMemoryUser({
   discord_id: "000000000000000001",
   discord_username: "a2_master",
   steam_id: "",
-  linked_identifiers: ["license:demo", "steam:110000000000000", "discord:000000000000000001"],
+  linked_identifiers: ["steam:110000000000000", "discord:000000000000000001"],
   first_login_at: nowIso(),
   last_login_at: nowIso(),
   created_at: nowIso(),

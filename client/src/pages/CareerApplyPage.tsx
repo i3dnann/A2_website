@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Briefcase, Loader2, Send } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 import PageShell from "../components/PageShell";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
@@ -59,17 +59,12 @@ export default function CareerApplyPage() {
   const [job, setJob] = useState<CareerJob | null>(null);
   const [questions, setQuestions] = useState<CareerQuestion[]>(baseQuestions);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(!MOCK);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!id) return;
-    if (MOCK) {
-      setJob({ id, title: "Police Department", department: "Law Enforcement", description: "Apply for an official Gotham City role.", requirements: "Mature RP, microphone, and active weekly presence.", is_open: true });
-      setLoading(false);
-      return;
-    }
     let cancel = false;
     const load = async () => {
       setLoading(true);
@@ -116,9 +111,7 @@ export default function CareerApplyPage() {
         question: question.question,
         answer: answers[questionKey(question, index)] || "",
       }));
-      if (!MOCK) {
-        await api(`/api/player/careers/${job.id}/apply`, { method: "POST", body: { answers: payload, termsVersion: "1.0.0" } });
-      }
+      await api(`/api/player/careers/${job.id}/apply`, { method: "POST", body: { answers: payload, termsVersion: "1.0.0" } });
       push({ kind: "success", message: "Application submitted. You can track it from your dashboard." });
       navigate("/dashboard");
     } catch (e: any) {

@@ -1,186 +1,111 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Wifi, WifiOff, Users, Activity, Radio, RefreshCw, Cloud } from "lucide-react";
-import { useSite } from "../context/SiteContext";
-import { api, createLiveSubscriber, type LiveState, MOCK } from "../api/client";
+import { Activity, Cloud, Gauge, RefreshCw, Users, Wifi, WifiOff } from "lucide-react";
+import { createLiveSubscriber, type LiveState } from "../api/client";
 import PageShell from "../components/PageShell";
 import { Skeleton } from "../components/Toast";
-
-const DEMO: LiveState = {
-  players: [
-    { id: 1, name: "NightWing_TV" }, { id: 2, name: "GothamKnight" },
-    { id: 3, name: "Officer_Ross" }, { id: 4, name: "Viper_01" },
-    { id: 5, name: "DocVoss" }, { id: 6, name: "MafiaDon" },
-  ],
-  count: 42,
-  maxplayers: 100,
-  status: "online",
-  queue: 3,
-  announcement: "Season 4: Gotham Nights is LIVE 🌙 — Join now via F8 with `connect play.a2studio.gg`",
-  lastUpdate: Date.now(),
-};
-
-function flagOn(value: any) {
-  return value === true || value === 1 || value === "1";
-}
-
-function mapStreamer(s: any) {
-  const platform = s.kick_username ? "Kick" : "Twitch";
-  return {
-    name: s.platform_display_name || s.display_name || s.name || s.kick_username || s.twitch_username,
-    platform,
-    viewers: Number(s.viewer_count || 0),
-    live: flagOn(s.is_live),
-    title: s.stream_title || "",
-    game: s.stream_title || s.category || "Gotham City Roleplay",
-    url: s.stream_url || (s.kick_username ? `https://kick.com/${s.kick_username}` : s.twitch_username ? `https://twitch.tv/${s.twitch_username}` : "")
-  };
-}
+import { useSite } from "../context/SiteContext";
 
 export default function LivePage() {
   const { content } = useSite();
-  const [state, setState] = useState<LiveState | null>(MOCK ? DEMO : null);
-  const [streamers, setStreamers] = useState<any[]>(content.streamers);
-  const [totalLiveViewers, setTotalLiveViewers] = useState(0);
-  const [totalLiveChannels, setTotalLiveChannels] = useState(0);
+  const [state, setState] = useState<LiveState | null>(null);
   const [connecting, setConnecting] = useState(true);
 
   useEffect(() => {
-    const sub = createLiveSubscriber((s) => {
-      setState(s);
+    const subscription = createLiveSubscriber((next) => {
+      setState(next);
       setConnecting(false);
     });
-    // Give the WS a brief moment; if no response in 2s, still show connecting state
-    const t = setTimeout(() => setConnecting(false), 2000);
-    return () => { sub.stop(); clearTimeout(t); };
-  }, []);
-
-  useEffect(() => {
-    if (MOCK) return;
-    let cancel = false;
-    const loadStreamers = async () => {
-      try {
-        const r = await api<{ streamers: any[]; totalLiveViewers: number; totalLiveChannels: number }>("/api/public/live", { params: { refresh: 1 } });
-        if (cancel) return;
-        setTotalLiveViewers(Number(r.totalLiveViewers || 0));
-        setTotalLiveChannels(Number(r.totalLiveChannels || 0));
-        setStreamers((r.streamers || []).map(mapStreamer));
-      } catch {}
+    const timeout = window.setTimeout(() => setConnecting(false), 5000);
+    return () => {
+      subscription.stop();
+      window.clearTimeout(timeout);
     };
-    loadStreamers();
-    const timer = window.setInterval(loadStreamers, 30_000);
-    return () => { cancel = true; window.clearInterval(timer); };
   }, []);
 
   const online = state?.status === "online";
+  const notConfigured = state?.status === "not_configured" || state?.configured === false;
   const usage = state && state.maxplayers > 0 ? Math.min(100, (state.count / state.maxplayers) * 100) : 0;
-  const lastUpdate = state?.lastUpdate ? new Date(state.lastUpdate).toLocaleTimeString() : "—";
+  const lastUpdate = state?.lastUpdate ? new Date(state.lastUpdate).toLocaleTimeString() : "Not available";
 
   return (
     <PageShell subtitle={content.streamsSubtitle} title={content.streamsTitle}>
-      <div className="mb-5 flex justify-end">
-        <a href="#live-streamers" className="inline-flex items-center gap-3 rounded-full border border-orange-300/25 bg-orange-500/10 px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-orange-100 transition hover:border-orange-300/45 hover:bg-orange-500/15">
-          <Radio size={14} />
-          {totalLiveViewers.toLocaleString()} Total Streamer Viewers
-        </a>
-      </div>
-      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-        {/* Server status card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className={`relative overflow-hidden rounded-2xl border p-6 ${
-            online ? "border-emerald-400/25 bg-emerald-500/5" : "border-red-400/25 bg-red-500/5"
-          }`}
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
-                online ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200" : "border-red-400/40 bg-red-400/10 text-red-200"
-              }`}>
-                <span className="relative flex h-2 w-2">
-                  <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${online ? "animate-ping bg-emerald-400" : "bg-red-400"}`} />
-                  <span className={`relative inline-flex h-2 w-2 rounded-full ${online ? "bg-emerald-400" : "bg-red-400"}`} />
-                </span>
-                {online ? "Server Online" : "Server Offline"}
-              </div>
-              <h3 className="mt-3 font-serif text-2xl text-white sm:text-3xl">Gotham City</h3>
-              <p className="mt-1 text-sm text-white/55">Gotham City - CFW Roleplay</p>
+      <motion.section
+        initial={{ opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`relative overflow-hidden rounded-2xl border p-5 sm:p-6 ${
+          online
+            ? "border-emerald-400/25 bg-emerald-500/5"
+            : notConfigured
+              ? "border-white/15 bg-white/[0.03]"
+              : "border-red-400/25 bg-red-500/5"
+        }`}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wider ${
+              online
+                ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-200"
+                : notConfigured
+                  ? "border-white/15 bg-white/5 text-white/60"
+                  : "border-red-400/40 bg-red-400/10 text-red-200"
+            }`}>
+              <span className={`h-2 w-2 rounded-full ${online ? "bg-emerald-400" : notConfigured ? "bg-white/40" : "bg-red-400"}`} />
+              {online ? "Server Online" : notConfigured ? "Server status not configured" : "Server Offline"}
             </div>
-            <div className="text-right">
-              <div className="flex items-center gap-2 justify-end text-xs text-white/40">
-                <RefreshCw size={12} className={connecting ? "animate-spin" : ""} />
-                {connecting ? "Connecting..." : `Updated ${lastUpdate}`}
-              </div>
-              <div className="mt-2 flex items-center justify-end gap-1 text-xs text-white/40">
-                {online ? <Wifi size={12} className="text-emerald-300" /> : <WifiOff size={12} className="text-red-300" />}
-                Live data (15s)
-              </div>
-            </div>
+            <h2 className="mt-3 font-serif text-2xl text-white sm:text-3xl">{state?.serverName || "Gotham City"}</h2>
+            <p className="mt-1 text-sm text-white/55">Gotham City - CFW Roleplay</p>
           </div>
 
-          {connecting && !state ? (
-            <div className="mt-6 flex flex-col gap-3">
-              <Skeleton className="h-6 w-1/2" />
-              <Skeleton className="h-3 w-1/3" />
-              <Skeleton className="mt-4 h-3 w-full" />
+          <div className="text-right text-xs text-white/45">
+            <div className="flex items-center justify-end gap-2">
+              <RefreshCw size={12} className={connecting ? "animate-spin" : ""} />
+              {connecting ? "Connecting..." : `Updated ${lastUpdate}`}
             </div>
-          ) : (
-            <>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                <Stat icon={Users} label="Online" value={String(state?.count ?? 0)} accent="text-emerald-300" />
-                <Stat icon={Activity} label="Max Players" value={String(state?.maxplayers ?? 0)} accent="text-orange-300" />
-                <Stat icon={Cloud} label="Queue" value={String(state?.queue ?? 0)} accent="text-orange-300" />
-              </div>
+            <div className="mt-2 flex items-center justify-end gap-1">
+              {online ? <Wifi size={12} className="text-emerald-300" /> : <WifiOff size={12} className={notConfigured ? "text-white/40" : "text-red-300"} />}
+              Automatic refresh every 15 seconds
+            </div>
+          </div>
+        </div>
 
+        {connecting && !state ? (
+          <div className="mt-6 flex flex-col gap-3">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-2 w-full" />
+          </div>
+        ) : (
+          <>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Stat icon={Users} label="Online" value={notConfigured ? "N/A" : String(state?.count ?? 0)} accent="text-emerald-300" />
+              <Stat icon={Activity} label="Max Players" value={notConfigured ? "N/A" : String(state?.maxplayers ?? 0)} accent="text-violet-300" />
+              <Stat icon={Cloud} label="Queue" value={notConfigured ? "N/A" : String(state?.queue ?? 0)} accent="text-cyan-300" />
+              <Stat icon={Gauge} label="Latency" value={state?.latency == null ? "N/A" : `${state.latency} ms`} accent="text-orange-300" />
+            </div>
+
+            {!notConfigured && (
               <div className="mt-5">
-                <div className="flex items-center justify-between text-xs text-white/40">
+                <div className="flex items-center justify-between text-xs text-white/45">
                   <span>Server capacity</span>
                   <span>{state?.count ?? 0} / {state?.maxplayers ?? 0}</span>
                 </div>
                 <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
                   <motion.div
-                    className="h-full bg-gradient-to-r from-orange-500 to-orange-400"
+                    className="h-full bg-gradient-to-r from-[#60519b] to-[#8a7ac4]"
                     initial={{ width: 0 }}
                     animate={{ width: `${usage}%` }}
-                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
                   />
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-        </motion.div>
-
-        {/* Streamers */}
-        <div className="flex flex-col gap-5">
-          <div id="live-streamers" className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-serif text-base text-white">Live Streamers</h3>
-                <p className="mt-1 text-xs text-white/40">{totalLiveViewers.toLocaleString()} total viewers · {totalLiveChannels} live</p>
-              </div>
-              <Radio size={16} className="text-orange-300" />
-            </div>
-            <div className="mt-4 flex flex-col gap-3">
-              {streamers.length === 0 && (
-                <p className="text-sm text-white/40">No streamers have been added yet.</p>
-              )}
-              {streamers.map((s) => {
-                const streamUrl = s.url || (String(s.platform).toLowerCase() === "kick" ? `https://kick.com/${s.name}` : `https://twitch.tv/${s.name}`);
-                return (
-                <a href={streamUrl} target="_blank" rel="noreferrer" key={s.name} className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3 transition hover:border-orange-400/30">
-                  <div>
-                    <p className="font-serif text-sm text-white">{s.name}</p>
-                    <p className="text-[11px] uppercase tracking-wider text-white/40">{s.platform} · {s.live ? s.title : "Offline"}</p>
-                    <p className="mt-1 text-[11px] text-white/45">{Number(s.viewers || 0).toLocaleString()} viewers</p>
-                  </div>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${s.live ? "bg-red-600/90 text-white" : "bg-white/10 text-white/45"}`}>{s.live ? "Live" : "Offline"}</span>
-                </a>
-              )})}
-            </div>
-          </div>
-        </div>
-      </div>
+            {state?.error === "status_unavailable" && !notConfigured && (
+              <p className="mt-4 text-sm text-red-200/80">The status service could not reach the FiveM endpoints.</p>
+            )}
+          </>
+        )}
+      </motion.section>
     </PageShell>
   );
 }

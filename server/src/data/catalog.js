@@ -28,7 +28,7 @@ export const DEFAULT_SETTINGS = {
   heroTitle: "A2 Studio Roleplay",
   heroSubtitle: "Premium FiveM community",
   heroDescription:
-    "A serious, story-driven CFW roleplay community with creator rosters, live streams, events, support, careers, and player account tools.",
+    "A serious, story-driven CFW roleplay community with active departments, events, support, careers, and player account tools.",
   heroBackgroundImage: "/images/gotham-banner-static.jpg",
   heroBackgroundVideo: "",
   heroOverlayOpacity: 78,
@@ -38,19 +38,7 @@ export const DEFAULT_SETTINGS = {
   heroSecondaryButtonLink: "fivem://connect/127.0.0.1",
   storeButtonText: "Store",
   storeButtonLink: "",
-  partnersEnabled: true,
-  partnerAnimationSpeed: 32,
-  partnerDirection: "left",
-  partnerGrayscale: true,
-  partnerPauseOnHover: true,
   livePageEnabled: true,
-  showOfflineStreamers: true,
-  showViewerCount: true,
-  showThumbnails: true,
-  liveStatusCheckIntervalSeconds: 90,
-  featuredLiveLimit: 6,
-  webhookStreamerGoLive: true,
-  webhookStreamerGoOffline: true,
   termsVersion: "1.0.0",
   mapImageUrl: "/assets/fivem-map.svg"
 };
@@ -59,15 +47,6 @@ const timestamps = ["created_at", "updated_at", "created_by", "updated_by", "del
 const common = ["title", "subtitle", "name", "description", "content", "image_url", "banner_url", "category", "status", "sort_order", "is_visible", "metadata_json"];
 
 export const RESOURCE_DEFINITIONS = [
-  {
-    key: "partners",
-    table: "partners",
-    label: "Partners",
-    public: true,
-    permission: "manage_partners",
-    searchFields: ["partner_name", "website_url"],
-    fields: ["partner_name", "logo_url", "website_url", "sort_order", "is_visible"]
-  },
   {
     key: "journey",
     table: "journey_items",
@@ -85,37 +64,6 @@ export const RESOURCE_DEFINITIONS = [
     permission: "manage_famous",
     searchFields: ["character_name", "header", "role_name", "gang_business"],
     fields: ["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "social_links_json", "is_featured", "sort_order", "is_visible"]
-  },
-  {
-    key: "streamers",
-    table: "streamers",
-    label: "Streamer Roster",
-    public: true,
-    permission: "manage_roster",
-    searchFields: ["display_name", "discord_id", "discord_username", "twitch_username", "kick_username", "category", "character_name"],
-    fields: [
-      "display_name",
-      "profile_image_url",
-      "avatar_url",
-      "banner_url",
-      "bio",
-      "discord_id",
-      "discord_username",
-      "steam_id",
-      "character_name",
-      "category",
-      "twitch_username",
-      "kick_username",
-      "youtube_url",
-      "tiktok_url",
-      "instagram_url",
-      "x_url",
-      "discord_url",
-      "is_featured",
-      "is_approved",
-      "is_hidden",
-      "sort_order"
-    ]
   },
   {
     key: "team",
@@ -338,16 +286,13 @@ export const PUBLIC_COLLECTIONS = {
   journey: "journey",
   famous: "famous",
   team: "team",
-  partners: "partners",
   careers: "careerJobs",
   map: "mapZones"
 };
 
 export const SEED_DATA = {
-  partners: [],
   journey: [],
   famous: [],
-  streamers: [],
   team: [],
   careerJobs: [],
   careerSections: [],

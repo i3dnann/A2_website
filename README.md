@@ -4,11 +4,11 @@ Professional FiveM CFW Roleplay community website for A2 Studio. The frontend is
 
 ## Features
 
-- Public pages: home, roster, live streams, team, careers, tickets, news, snapshots, map, FAQ, terms, events, journey, famous characters.
+- Public pages: home, roster, live server status, team, careers, tickets, news, snapshots, map, FAQ, terms, events, journey, famous characters.
 - Account system: email/password, Discord OAuth2, Steam OpenID, linked providers per user.
 - Player dashboard: account status, linked identifiers, ban status, tickets, and CFW character data after Steam is connected.
-- Admin panel: settings, homepage, theme/colors, performance mode, partners, journey, famous characters, roster/live, team, careers/questions/applications, tickets, news, map zones, FAQ, terms, events, users, admins, permissions, webhooks, audit logs, uploads.
-- Live streams: backend-only Twitch/Kick checks with cached status.
+- Admin panel: settings, homepage, theme/colors, performance mode, journey, famous characters, roster, team, careers/questions/applications, tickets, news, map zones, FAQ, terms, events, users, admins, permissions, webhooks, audit logs, uploads.
+- Live server status: backend FiveM status checks for players/max players, latency, queue, and configured/offline states.
 - Security: bcrypt-compatible password hashing, JWT/http-only cookie sessions, CSRF guard for cookie-only unsafe requests, rate limits, Helmet, upload validation, RBAC, audit logs, webhook secrecy.
 
 ## Folder Structure
@@ -32,8 +32,7 @@ npm.cmd run dev
 Frontend: `http://localhost:5173`  
 Backend: `http://localhost:3001/health`
 
-Live Netlify/Windows VPS update steps: [`docs/LIVE_SITE_UPDATE_GUIDE.md`](docs/LIVE_SITE_UPDATE_GUIDE.md)  
-Kick live status setup: [`KICK_SETUP.md`](KICK_SETUP.md)
+Live Netlify/Windows VPS update steps: [`docs/LIVE_SITE_UPDATE_GUIDE.md`](docs/LIVE_SITE_UPDATE_GUIDE.md)
 
 For a real database, set `USE_DATABASE=true`, fill the MySQL values in `.env`, then import:
 
@@ -87,12 +86,12 @@ Steam:
 - `STEAM_RETURN_URL=https://your-api-domain/api/auth/steam/callback`
 - Optional profile enrichment: `STEAM_API_KEY`
 
-Twitch/Kick live status:
+FiveM live status:
 
-- Twitch: `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`
-- Kick: `KICK_API_BASE_URL`, `KICK_OAUTH_BASE_URL`, `KICK_CLIENT_ID`, `KICK_CLIENT_SECRET`
+- Direct endpoint mode: `FIVEM_PLAYERS_URL`, `FIVEM_DYNAMIC_URL`, `FIVEM_INFO_URL`
+- Server mode: `FIVEM_SERVER_IP`, `FIVEM_SERVER_PORT`, `FIVEM_MAX_PLAYERS`, `FIVEM_SERVER_NAME`
 
-Missing live credentials do not crash the site; streamers show offline/unknown.
+If live status is not configured, the API reports `not_configured` instead of pretending the server is offline.
 
 ## Webhooks
 
@@ -103,7 +102,6 @@ Webhook URLs are backend-only and are never exposed to the frontend. Configure t
 - `WEBHOOK_CAREERS`
 - `WEBHOOK_ADMIN_LOGS`
 - `WEBHOOK_SECURITY`
-- `WEBHOOK_STREAMERS`
 - `WEBHOOK_USER_ACCOUNTS`
 
 ## Change Website Name, Logo, Colors

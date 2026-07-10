@@ -8,11 +8,9 @@ INSERT IGNORE INTO web_roles (id, name, description, is_system, sort_order) VALU
 INSERT IGNORE INTO web_permissions (id, name, category) VALUES
 ('perm-view-player-portal', 'view_player_portal', 'player'),
 ('perm-manage-home', 'manage_home', 'cms'),
-('perm-manage-partners', 'manage_partners', 'cms'),
 ('perm-manage-journey', 'manage_journey', 'cms'),
 ('perm-manage-famous', 'manage_famous', 'cms'),
 ('perm-manage-roster', 'manage_roster', 'creators'),
-('perm-manage-live', 'manage_live', 'creators'),
 ('perm-manage-team', 'manage_team', 'cms'),
 ('perm-manage-careers', 'manage_careers', 'careers'),
 ('perm-review-career-applications', 'review_career_applications', 'careers'),

@@ -1,9 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 
 export type FeatureItem = { icon: string; title: string; desc: string };
 export type RosterItem = { name: string; role: string; count: string; icon: string; avatar?: string; bio?: string; category?: string };
-export type StreamerItem = { name: string; platform: string; viewers: number; live: boolean; game: string };
 export type JourneyItem = { year: string; title: string; desc: string };
 export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string };
 export type NewsItem = { icon: string; date: string; title: string; excerpt: string; id?: string };
@@ -35,7 +34,6 @@ export type SiteContent = {
   streamsTitle: string;
   streamsSubtitle: string;
   streamsDesc: string;
-  streamers: StreamerItem[];
   journeyTitle: string;
   journeySubtitle: string;
   journey: JourneyItem[];
@@ -73,8 +71,8 @@ const DEFAULT_CONTENT: SiteContent = {
   storeLink: "/",
   stats: [
     { label: "Players", value: 0, suffix: "" },
-    { label: "Creators", value: 0, suffix: "" },
-    { label: "Monthly Views", value: 0, suffix: "" },
+    { label: "Departments", value: 0, suffix: "" },
+    { label: "Open Roles", value: 0, suffix: "" },
     { label: "Staff Members", value: 0, suffix: "" },
   ],
   featuresTitle: "Built for Serious Roleplayers",
@@ -89,10 +87,9 @@ const DEFAULT_CONTENT: SiteContent = {
   rosterSubtitle: "Community",
   rosterDesc: "Meet the people keeping Gotham City running.",
   roster: [],
-  streamsTitle: "Live Streams",
-  streamsSubtitle: "On Screen",
-  streamsDesc: "Watch our community bring Gotham City to life in real time.",
-  streamers: [],
+  streamsTitle: "Live Server",
+  streamsSubtitle: "Server Status",
+  streamsDesc: "Check the current FiveM server status, capacity, queue, and latest update time.",
   journeyTitle: "The Journey",
   journeySubtitle: "Our Story",
   journey: [],
@@ -116,8 +113,6 @@ const DEFAULT_CONTENT: SiteContent = {
   darkBgHex: "#080808",
 };
 
-const STORAGE_KEY = "gotham_city_site_content_v2";
-
 type SiteContextType = {
   content: SiteContent;
   updateContent: (partial: Partial<SiteContent>) => void;
@@ -127,20 +122,9 @@ type SiteContextType = {
 const SiteContext = createContext<SiteContextType | null>(null);
 
 export function SiteProvider({ children }: { children: ReactNode }) {
-  const [content, setContent] = useState<SiteContent>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return { ...DEFAULT_CONTENT, ...JSON.parse(raw) };
-    } catch {}
-    return DEFAULT_CONTENT;
-  });
+  const [content, setContent] = useState<SiteContent>(DEFAULT_CONTENT);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-  }, [content]);
-
-  useEffect(() => {
-    if (MOCK) return;
     let cancel = false;
     const loadSettings = async () => {
       try {
@@ -184,8 +168,11 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           dept: job.department || "Department",
         }));
         if (cancel) return;
-        setContent((prev) => ({
-          ...prev,
+        setContent((prev) => {
+          const savedContent = settings.siteContent && typeof settings.siteContent === "object" ? settings.siteContent : {};
+          const merged = { ...prev, ...savedContent } as SiteContent;
+          return {
+          ...merged,
           siteName: settings.websiteName || prev.siteName,
           siteTagline: settings.heroSubtitle || prev.siteTagline,
           heroTitle1: settings.heroTitle ? String(settings.heroTitle).split(" ")[0] || prev.heroTitle1 : prev.heroTitle1,
@@ -199,9 +186,10 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           roster: team,
           famousCharacters: famous,
           news,
-          journey,
+          journey: journey.length ? journey : merged.journey,
           careers,
-        }));
+        };
+        });
       } catch {}
     };
     loadSettings();

@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Hero from "../components/Hero";
-import PartnerMarquee from "../components/PartnerMarquee";
 import Features from "../components/Features";
 import Roster from "../components/Roster";
-import LiveStreams from "../components/LiveStreams";
 import Journey from "../components/Journey";
 import News from "../components/News";
 import Careers from "../components/Careers";
@@ -38,7 +36,6 @@ function DeferredHomeSections() {
     <>
       <Features />
       <Roster />
-      <LiveStreams />
       <Journey />
       <News />
       <Careers />
@@ -52,7 +49,6 @@ export default function Home() {
   return (
     <main>
       <Hero />
-      <PartnerMarquee />
       <DeferredHomeSections />
     </main>
   );

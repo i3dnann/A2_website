@@ -7,11 +7,10 @@ import { upload } from "../middleware/security.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, deleteResource, getResource, getSettings, listResource, updateResource, updateSettings } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
-import { checkAllStreamers, checkStreamerLiveStatus, withLiveStatus } from "../services/streamerService.js";
 import { deactivateWebUser, listWebUsers, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
 import { publicFileUrl } from "../utils/sanitize.js";
 import { sendWebhook } from "../services/webhook.js";
-import { cleanKickSlug } from "../services/kickService.js";
+import { getFiveMLiveState } from "../services/liveService.js";
 
 const router = Router();
 const settingsSchema = z.record(z.any());
@@ -21,7 +20,6 @@ const webhookKeys = [
   "WEBHOOK_CAREERS",
   "WEBHOOK_ADMIN_LOGS",
   "WEBHOOK_SECURITY",
-  "WEBHOOK_STREAMERS",
   "WEBHOOK_USER_ACCOUNTS"
 ];
 
@@ -30,36 +28,30 @@ function requireAnyAdmin(req, res, next) {
   return res.status(403).json({ error: "admin_permission_required" });
 }
 
-function normalizeAdminResourcePayload(resource, payload = {}) {
-  if (resource !== "streamers") return payload;
-  return {
-    ...payload,
-    kick_username: cleanKickSlug(payload.kick_username || "")
-  };
-}
-
 router.use(requireAuth, requireAnyAdmin);
 
 router.get(
   "/dashboard",
   asyncHandler(async (_req, res) => {
-    const [tickets, applications, streamers, news, audit] = await Promise.all([
+    const [tickets, applications, team, news, audit, live] = await Promise.all([
       listResource("tickets", { limit: 5 }),
       listResource("careerApplications", { limit: 5 }),
-      listResource("streamers", { limit: 5 }),
+      listResource("team", { limit: 5 }),
       listResource("news", { limit: 5 }),
-      listResource("auditLogs", { limit: 8 })
+      listResource("auditLogs", { limit: 8 }),
+      getFiveMLiveState()
     ]);
     res.json({
       cards: [
         { label: "Open tickets", value: tickets.rows.filter((ticket) => ticket.status !== "Closed").length || tickets.total },
         { label: "Career applications", value: applications.total },
-        { label: "Roster members", value: streamers.total },
+        { label: "Roster members", value: team.total },
         { label: "News articles", value: news.total }
       ],
       recentTickets: tickets.rows,
       recentApplications: applications.rows,
-      recentLogs: audit.rows
+      recentLogs: audit.rows,
+      live
     });
   })
 );
@@ -240,18 +232,6 @@ router.post("/uploads", requirePermission("manage_files"), upload.single("file")
     req.user
   );
   res.json({ url, file });
-}));
-
-router.post("/streamers/check", requirePermission("manage_live"), asyncHandler(async (_req, res) => {
-  await checkAllStreamers();
-  res.json({ ok: true });
-}));
-
-router.post("/streamers/:id/check", requirePermission("manage_live"), asyncHandler(async (req, res) => {
-  const streamer = await getResource("streamers", req.params.id);
-  if (!streamer) return res.status(404).json({ error: "streamer_not_found" });
-  const statuses = await checkStreamerLiveStatus(streamer);
-  res.json({ statuses });
 }));
 
 function commentStatus(row) {
@@ -462,8 +442,7 @@ router.get(
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
     const { rows, total } = await listResource(req.params.resource, { q: req.query.q || "", limit: req.query.limit || 25, offset: req.query.offset || 0 });
-    const withStatus = req.params.resource === "streamers" ? await withLiveStatus(rows) : rows;
-    res.json({ rows: withStatus, total, config, resources: RESOURCE_DEFINITIONS });
+    res.json({ rows, total, config, resources: RESOURCE_DEFINITIONS });
   })
 );
 
@@ -473,7 +452,7 @@ router.post(
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const payload = normalizeAdminResourcePayload(req.params.resource, req.body || {});
+    const payload = req.body || {};
     const row = await createResource(req.params.resource, payload, req.user);
     await auditAction({ req, action: `create_${req.params.resource}`, targetType: req.params.resource, targetId: row.id, after: row, reason: req.body?.reason || "created", webhookCategory: "admin" });
     res.status(201).json({ row });
@@ -486,7 +465,7 @@ router.patch(
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const payload = normalizeAdminResourcePayload(req.params.resource, req.body || {});
+    const payload = req.body || {};
     const result = await updateResource(req.params.resource, req.params.id, payload, req.user);
     if (!result) return res.status(404).json({ error: "not_found" });
     await auditAction({ req, action: `update_${req.params.resource}`, targetType: req.params.resource, targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.reason || "updated", webhookCategory: "admin" });

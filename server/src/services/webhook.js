@@ -8,7 +8,6 @@ const webhookEnvByCategory = {
   careers: "WEBHOOK_CAREERS",
   admin: "WEBHOOK_ADMIN_LOGS",
   security: "WEBHOOK_SECURITY",
-  streamers: "WEBHOOK_STREAMERS",
   accounts: "WEBHOOK_USER_ACCOUNTS"
 };
 
@@ -18,7 +17,6 @@ const categoryColors = {
   careers: 0xf1c40f,
   admin: 0xb7fe1a,
   security: 0xff3333,
-  streamers: 0x9146ff,
   accounts: 0xb7fe1a
 };
 

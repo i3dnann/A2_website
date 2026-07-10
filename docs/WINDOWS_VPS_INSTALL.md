@@ -98,7 +98,7 @@ mysql -u root -p qbcore < database\seed.sql
 If PowerShell says `mysql` is not recognized, import `database\DATABASE_SCHEMA.sql` and `database\seed.sql` with HeidiSQL:
 
 1. Open HeidiSQL
-2. Connect to your QBCore database
+2. Connect to your CFW database
 3. Select the `qbcore` database
 4. File > Load SQL file
 5. Open `C:\A2_website\database\DATABASE_SCHEMA.sql`

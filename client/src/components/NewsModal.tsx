@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThumbsDown, ThumbsUp, MessageCircle, X, Pin, Calendar, Tag, User, Loader2 } from "lucide-react";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast, Skeleton } from "./Toast";
 
@@ -43,11 +43,6 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
     if (!post) return;
     let cancel = false;
     setLoading(true);
-    if (MOCK) {
-      setData({ post: { ...post, content: post.content || post.excerpt + "\n\n(Full content is loaded from the backend in production.)" }, comments: [] });
-      setLoading(false);
-      return;
-    }
     api<{ post: NewsPost; comments: NewsComment[] }>(`/api/news/${post.id}`)
       .then((d) => { if (!cancel) setData(d); })
       .catch((e: any) => push({ kind: "error", message: e?.message || "Failed" }))
@@ -59,7 +54,6 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
 
   const doVote = async (kind: "like" | "dislike") => {
     if (!user) { push({ kind: "info", message: "Login to vote" }); return; }
-    if (MOCK) { setVoted(kind); push({ kind: "success", message: kind === "like" ? "Liked" : "Disliked" }); return; }
     try {
       const r = await api<{ liked: boolean; disliked: boolean }>(`/api/news/${post.id}/${kind}`, { method: "POST" });
       setVoted(r.liked ? "like" : r.disliked ? "dislike" : null);
@@ -72,15 +66,9 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
     if (!body.trim()) return;
     setSubmitting(true);
     try {
-      if (MOCK) {
-        setData((d) => d ? { ...d, comments: [{ id: `c${Date.now()}`, author_name: name || user.username, body, created_at: new Date().toISOString() }, ...d.comments] } : d);
-        setBody("");
-        push({ kind: "success", message: "Comment posted (demo)" });
-      } else {
-        const r = await api<{ pending: boolean }>(`/api/news/${post.id}/comments`, { method: "POST", body: { author_name: name || user.username, body } });
-        setBody(""); setName("");
-        push({ kind: "success", message: r.pending ? "Comment submitted for approval" : "Comment posted" });
-      }
+      const r = await api<{ pending: boolean }>(`/api/news/${post.id}/comments`, { method: "POST", body: { author_name: name || user.username, body } });
+      setBody(""); setName("");
+      push({ kind: "success", message: r.pending ? "Comment submitted for approval" : "Comment posted" });
     } catch (e: any) { push({ kind: "error", message: e?.message || "Failed" }); }
     finally { setSubmitting(false); }
   };

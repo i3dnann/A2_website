@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, Pin } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { getIcon } from "../lib/iconMap";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 import PageShell from "../components/PageShell";
 import { CardSkeleton } from "../components/Toast";
 import NewsModal, { type NewsPost } from "../components/NewsModal";
@@ -17,11 +17,6 @@ export default function NewsPage() {
   useEffect(() => {
     let cancel = false;
     const load = async () => {
-      if (MOCK) {
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
       try {
         const r = await api<{ data: NewsPost[] }>("/api/news");
         if (!cancel) setPosts(r.data);

@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { api, apiUrl, MOCK } from "../api/client";
+import { AUTH_INVALIDATED_EVENT, api, apiUrl, clearStoredAuth } from "../api/client";
 // Toast is not needed here
 
 export type Ticket = {
@@ -55,18 +55,6 @@ type AuthContextType = {
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
-const STORAGE_KEY = "a2studio_session";
-
-const MOCK_CHARACTERS: Character[] = [
-  { id: "c1", name: "Marcus Halloway", job: "Police Officer", grade: "Sergeant", cash: 2450, bank: 48200, playtime: "142h" },
-  { id: "c2", name: "Isabella Cruz", job: "Civilian", grade: "Entrepreneur", cash: 890, bank: 12750, playtime: "76h" },
-];
-
-const MOCK_TICKETS: Ticket[] = [
-  { id: "TCK-1042", subject: "Vehicle disappeared after restart", category: "Bug Report", status: "Open", createdAt: "Feb 10, 2026", lastReply: "2 hours ago" },
-  { id: "TCK-1038", subject: "Question about whitelist application", category: "General Support", status: "Pending", createdAt: "Feb 05, 2026", lastReply: "1 day ago" },
-  { id: "TCK-0994", subject: "Reporting a rule breaker", category: "Player Report", status: "Closed", createdAt: "Jan 22, 2026", lastReply: "3 weeks ago" },
-];
 
 type ProviderRow = {
   provider: string;
@@ -128,44 +116,41 @@ function normalizeTicket(raw: any): Ticket {
   };
 }
 
-function loadUser(): AppUser | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AppUser) : null;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AppUser | null>(() => loadUser());
-  const [loading, setLoading] = useState(!MOCK);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
 
   useEffect(() => {
-    if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    else localStorage.removeItem(STORAGE_KEY);
-  }, [user]);
+    let cancelled = false;
+    setLoading(true);
+    api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me")
+      .then((r) => {
+        if (!cancelled) setUser(r.user ? normalizeUser(r.user, r.providers) : null);
+      })
+      .catch(() => {
+        clearStoredAuth();
+        if (!cancelled) setUser(null);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
-    if (!MOCK) {
-      setLoading(true);
-      api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me")
-        .then((r) => setUser(r.user ? normalizeUser(r.user, r.providers) : null))
-        .catch(() => setUser(null))
-        .finally(() => setLoading(false));
-    }
+    const invalidate = () => {
+      setUser(null);
+      setTickets([]);
+      setCharacters([]);
+      setLoading(false);
+    };
+    window.addEventListener(AUTH_INVALIDATED_EVENT, invalidate);
+    return () => window.removeEventListener(AUTH_INVALIDATED_EVENT, invalidate);
   }, []);
 
   useEffect(() => {
     if (!user) {
       setTickets([]);
-      return;
-    }
-
-    if (MOCK) {
-      setTickets(MOCK_TICKETS);
       return;
     }
 
@@ -177,11 +162,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.steamLinked) {
       setCharacters([]);
-      return;
-    }
-
-    if (MOCK) {
-      setCharacters(MOCK_CHARACTERS);
       return;
     }
 
@@ -206,21 +186,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login: AuthContextType["login"] = async (email, password) => {
     setLoading(true);
     try {
-      if (MOCK) {
-        await new Promise((r) => setTimeout(r, 800));
-        if (!email || !password) return { ok: false, error: "Please enter your email and password." };
-        if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
-        setUser({
-          username: email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1),
-          email,
-          joinDate: "March 14, 2024",
-          discordLinked: true,
-          steamLinked: false,
-          banned: false,
-          role: "Citizen",
-        });
-        return { ok: true };
-      }
+      clearStoredAuth();
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/login", { method: "POST", body: { email, password } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
@@ -235,21 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register: AuthContextType["register"] = async (username, email, password) => {
     setLoading(true);
     try {
-      if (MOCK) {
-        await new Promise((r) => setTimeout(r, 1000));
-        if (!username || !email || !password) return { ok: false, error: "All fields are required." };
-        if (password.length < 6) return { ok: false, error: "Password must be at least 6 characters." };
-        setUser({
-          username,
-          email,
-          joinDate: new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
-          discordLinked: false,
-          steamLinked: false,
-          banned: false,
-          role: "Citizen",
-        });
-        return { ok: true };
-      }
+      clearStoredAuth();
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/register", { method: "POST", body: { username, email, password } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
@@ -262,14 +214,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    if (!MOCK) {
-      try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-    }
-    localStorage.removeItem("a2_token");
+    try { await api("/api/auth/logout", { method: "POST" }); } catch {}
+    clearStoredAuth();
     setUser(null);
+    setTickets([]);
+    setCharacters([]);
   };
 
   const completeOAuth = async (token: string) => {
+    clearStoredAuth();
     localStorage.setItem("a2_token", token);
     let r: { user: BackendUser | null; providers: ProviderRow[] };
     try {
@@ -286,40 +239,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginDiscord = () => {
-    window.location.href = MOCK ? "/login" : apiUrl("/api/auth/discord");
+    clearStoredAuth();
+    window.location.href = apiUrl("/api/auth/discord");
   };
 
   const loginSteam = () => {
-    window.location.href = MOCK ? "/login" : apiUrl("/api/auth/steam");
+    clearStoredAuth();
+    window.location.href = apiUrl("/api/auth/steam");
   };
 
   const linkDiscord = async () => {
-    if (!MOCK) {
-      const r = await api<{ url: string }>("/api/auth/discord/link-url");
-      window.location.href = r.url;
-      return;
-    }
-    setUser((u) => (u ? { ...u, discordLinked: true } : u));
+    const r = await api<{ url: string }>("/api/auth/discord/link-url");
+    window.location.href = r.url;
   };
 
   const linkSteam = async () => {
-    if (!MOCK) {
-      const r = await api<{ url: string }>("/api/auth/steam/link-url");
-      window.location.href = r.url;
-      return;
-    }
-    setUser((u) => (u ? { ...u, steamLinked: true } : u));
+    const r = await api<{ url: string }>("/api/auth/steam/link-url");
+    window.location.href = r.url;
   };
 
   const createTicket = async (subject: string, category: string, message = "Created from the player dashboard.") => {
-    if (MOCK) {
-      setTickets((t) => [
-        { id: `TCK-${Math.floor(1000 + Math.random() * 9000)}`, subject, category, status: "Open", createdAt: "Just now", lastReply: "Just now" },
-        ...t,
-      ]);
-      return;
-    }
-
     const r = await api<{ ticket: any }>("/api/player/tickets", { method: "POST", body: { subject, category, message } });
     setTickets((t) => [normalizeTicket(r.ticket), ...t]);
   };

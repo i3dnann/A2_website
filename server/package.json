@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/player.js && node --check src/routes/kick.js && node --check src/services/qbcoreService.js && node --check src/services/kickService.js"
+    "check": "node --check src/index.js && node --check src/routes/admin.js && node --check src/routes/adminTickets.js && node --check src/routes/auth.js && node --check src/routes/public.js && node --check src/routes/player.js && node --check src/services/qbcoreService.js && node --check src/services/liveService.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -22,7 +22,6 @@
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
     "mysql2": "^3.12.0",
-    "node-cron": "^4.4.1",
     "undici": "^7.2.3",
     "zod": "^3.24.1"
   }

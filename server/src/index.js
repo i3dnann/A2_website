@@ -6,7 +6,6 @@ import cookieParser from "cookie-parser";
 import morgan from "morgan";
 import path from "node:path";
 import fs from "node:fs";
-import cron from "node-cron";
 import multer from "multer";
 import { fileURLToPath } from "node:url";
 import { apiLimiter, upload } from "./middleware/security.js";
@@ -14,8 +13,7 @@ import { csrfProtection } from "./middleware/csrf.js";
 import { corsOrigins, env, loadedEnvFiles } from "./config/env.js";
 import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.js";
 import { pingDatabase } from "./config/db.js";
-import { createResource, deleteResource, getSettings, listResource } from "./services/repository.js";
-import { checkAllStreamers } from "./services/streamerService.js";
+import { createResource, deleteResource, listResource } from "./services/repository.js";
 import { getFiveMLiveState } from "./services/liveService.js";
 import { publicFileUrl } from "./utils/sanitize.js";
 import authRouter from "./routes/auth.js";
@@ -27,7 +25,6 @@ import adminRouter from "./routes/admin.js";
 import playerTicketLocksRouter from "./routes/playerTicketLocks.js";
 import playerRouter from "./routes/player.js";
 import accountRouter from "./routes/account.js";
-import kickRouter from "./routes/kick.js";
 import newsRouter from "./routes/news.js";
 
 const shots = await import("./services/" + "galleryService.js");
@@ -55,7 +52,7 @@ app.use(helmet({
       "font-src": ["'self'", "data:", "https:"],
       "media-src": ["'self'", "data:", "blob:", "https:", "http:"],
       "connect-src": ["'self'", "https:", "http:", "ws:", "wss:"],
-      "frame-src": ["'self'", "https://player.twitch.tv", "https://kick.com", "https://www.youtube.com", "https://youtube.com"]
+      "frame-src": ["'self'", "https://www.youtube.com", "https://youtube.com"]
     }
   }
 }));
@@ -200,7 +197,6 @@ app.delete(`/api/admin${photoPath}/:id`, requirePermission("manage_gallery"), as
 });
 
 app.use("/api/auth", authRouter);
-app.use("/api/kick", kickRouter);
 app.use("/api/news", newsRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/player", playerTicketLocksRouter);
@@ -229,8 +225,6 @@ app.use((error, _req, res, _next) => {
   const status = error.status || 500;
   res.status(status).json({ error: status === 500 ? "server_error" : error.message || "request_failed", message: status === 500 ? "Something went wrong. Please try again later." : error.message });
 });
-
-cron.schedule("*/2 * * * *", async () => { const settings = await getSettings(); if (settings.livePageEnabled) await checkAllStreamers(); });
 
 const port = env.PORT;
 app.listen(port, () => { console.log(`Gotham City API listening on http://localhost:${port}`); console.log(`Static uploads served from ${path.resolve(__dirname, "..", "..", "uploads")}`); });

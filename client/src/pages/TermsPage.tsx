@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import PageShell from "../components/PageShell";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 
 type Terms = {
   title?: string;
@@ -12,16 +12,12 @@ type Terms = {
 
 export default function TermsPage() {
   const [terms, setTerms] = useState<Terms | null>(null);
-  const [loading, setLoading] = useState(!MOCK);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
     async function loadTerms() {
-      if (MOCK) {
-        setLoading(false);
-        return;
-      }
       setLoading(true);
       setError("");
       try {

@@ -3,7 +3,6 @@ import { PUBLIC_COLLECTIONS, RESOURCE_MAP } from "../data/catalog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { getResource, getSettings, listResource } from "../services/repository.js";
 import { listGalleryPhotos } from "../services/galleryService.js";
-import { checkAllStreamers, withLiveStatus } from "../services/streamerService.js";
 
 const router = Router();
 
@@ -28,21 +27,18 @@ router.get("/settings", asyncHandler(async (_req, res) => {
 
 router.get("/home", asyncHandler(async (_req, res) => {
   const settings = await getSettings();
-  const [partners, journey, famous, news, events, team, streamers, gallery, careers] = await Promise.all([
-    listResource("partners", { limit: 20, publicOnly: true }),
+  const [journey, famous, news, events, team, gallery, careers] = await Promise.all([
     listResource("journey", { limit: 4, publicOnly: true }),
     listResource("famous", { limit: 4, publicOnly: true }),
     listResource("news", { limit: 4, publicOnly: true }),
     listResource("events", { limit: 4, publicOnly: true }),
     listResource("team", { limit: 6, publicOnly: true }),
-    listResource("streamers", { limit: 8, publicOnly: true }),
     listGalleryPhotos({ status: "Approved", limit: 4 }),
     listResource("careerJobs", { limit: 6, publicOnly: true })
   ]);
 
   res.json({
     settings,
-    partners: partners.rows,
     journey: journey.rows,
     famous: famous.rows,
     news: news.rows,
@@ -52,42 +48,8 @@ router.get("/home", asyncHandler(async (_req, res) => {
     }),
     team: team.rows,
     gallery,
-    careers: careers.rows,
-    streamers: await withLiveStatus(streamers.rows)
+    careers: careers.rows
   });
-}));
-
-router.get("/live", asyncHandler(async (req, res) => {
-  const settings = await getSettings();
-  if (!settings.livePageEnabled) return res.status(404).json({ error: "live_page_disabled" });
-  if (req.query.refresh === "1") await checkAllStreamers();
-  const { q = "", platform = "" } = req.query;
-  const { rows } = await listResource("streamers", { q, limit: 100, publicOnly: true });
-  let streamers = await withLiveStatus(rows);
-  if (platform) {
-    streamers = streamers.filter((streamer) => {
-      const selected = String(platform).toLowerCase();
-      return (selected === "twitch" && streamer.twitch_username) || (selected === "kick" && streamer.kick_username);
-    });
-  }
-  if (!settings.showOfflineStreamers) streamers = streamers.filter((streamer) => streamer.is_live);
-  streamers = streamers.sort((a, b) => Number(b.is_live) - Number(a.is_live) || Number(b.is_featured) - Number(a.is_featured) || Number(a.sort_order || 9999) - Number(b.sort_order || 9999));
-  res.json({ streamers, totalLiveChannels: streamers.filter((streamer) => streamer.is_live).length, totalLiveViewers: streamers.reduce((sum, streamer) => sum + Number(streamer.viewer_count || 0), 0), settings });
-}));
-
-router.get("/streamers", asyncHandler(async (req, res) => {
-  const { q = "", category = "" } = req.query;
-  const { rows, total } = await listResource("streamers", { q, limit: 100, publicOnly: true });
-  let streamers = await withLiveStatus(rows);
-  if (category) streamers = streamers.filter((streamer) => String(streamer.category || "").toLowerCase() === String(category).toLowerCase());
-  res.json({ streamers, total });
-}));
-
-router.get("/streamers/:id", asyncHandler(async (req, res) => {
-  const streamer = await getResource("streamers", req.params.id);
-  if (!streamer || streamer.is_hidden || !streamer.is_approved) return res.status(404).json({ error: "streamer_not_found" });
-  const [withStatus] = await withLiveStatus([streamer]);
-  res.json({ streamer: withStatus });
 }));
 
 router.get("/faq", asyncHandler(async (_req, res) => {

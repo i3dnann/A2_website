@@ -9,7 +9,6 @@ const state = {
   settingsLoaded: false,
   secretSettingsLoaded: false,
   resources: new Map(Object.entries(SEED_DATA).map(([key, rows]) => [key, rows.map((row) => addTimestamps(row))])),
-  liveStatus: new Map(),
   tableColumns: new Map()
 };
 
@@ -331,32 +330,4 @@ export async function addAuditLog(entry) {
     },
     entry.staff
   );
-}
-
-export function setStreamerLiveStatus(streamerId, platform, status) {
-  const key = `${streamerId}:${platform}`;
-  const row = {
-    id: key,
-    streamer_id: streamerId,
-    platform,
-    is_live: false,
-    stream_title: "",
-    viewer_count: null,
-    thumbnail_url: "",
-    stream_url: "",
-    started_at: null,
-    last_checked_at: new Date().toISOString(),
-    raw_response_json: null,
-    ...status
-  };
-  state.liveStatus.set(key, row);
-  return row;
-}
-
-export function getStreamerLiveStatuses(streamerId) {
-  return [...state.liveStatus.values()].filter((row) => String(row.streamer_id) === String(streamerId));
-}
-
-export function getAllStreamerLiveStatuses() {
-  return [...state.liveStatus.values()];
 }

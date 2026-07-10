@@ -136,20 +136,7 @@ async function findPlayerLinksByIdentifiers(identifiers = []) {
 
 async function findPlayersByIdentifiers(identifiers = []) {
   if (!databaseEnabled) {
-    if (!identifiers.length) return [];
-    return [
-      parseQbcoreCharacter({
-        citizenid: "A2DEMO1",
-        cid: 1,
-        license: "license:demo",
-        name: "Maya Knox",
-        charinfo: JSON.stringify({ firstname: "Maya", lastname: "Knox", gender: "Female", phone: "555-0101", birthdate: "1998-06-21", nationality: "Swedish" }),
-        money: JSON.stringify({ cash: 1800, bank: 32000, dirty: 0 }),
-        job: JSON.stringify({ name: "police", label: "Police", grade: { name: "Cadet", level: 1 } }),
-        gang: JSON.stringify({ name: "none", label: "None" }),
-        metadata: JSON.stringify({ warnings: [] })
-      })
-    ];
+    return [];
   }
 
   if (!identifiers.length) return [];

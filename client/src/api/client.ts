@@ -1,7 +1,7 @@
 /**
  * Central API client. Talks to the secure backend.
  * Set VITE_API_BASE_URL to your deployed backend (e.g. http://YOUR-VPS-IP:3001).
- * In mock mode (backend unreachable) we fall back to local context data.
+ * When no explicit URL is configured, requests use the same-origin /api proxy.
  */
 import axios, { AxiosError } from "axios";
 
@@ -35,8 +35,14 @@ const unsafeHttpOnHttps =
   /^http:\/\//i.test(configuredApiUrl);
 
 export const API_URL = unsafeHttpOnHttps || staleRuntimeApi ? "" : configuredApiUrl;
-export const USING_RELATIVE_API = unsafeHttpOnHttps || staleRuntimeApi || (!API_URL && Boolean(import.meta.env.PROD));
-export const MOCK = !API_URL && !USING_RELATIVE_API;
+export const USING_RELATIVE_API = !API_URL;
+export const AUTH_INVALIDATED_EVENT = "gotham:auth-invalidated";
+export const AUTH_STORAGE_KEYS = ["a2_token", "a2studio_session"] as const;
+
+export function clearStoredAuth() {
+  if (typeof window === "undefined") return;
+  AUTH_STORAGE_KEYS.forEach((key) => window.localStorage.removeItem(key));
+}
 
 export function apiUrl(path: string) {
   if (/^https?:\/\//i.test(path)) return path;
@@ -48,7 +54,11 @@ const http = axios.create({
   baseURL: API_URL || undefined,
   withCredentials: true,
   timeout: 15000,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store, no-cache",
+    Pragma: "no-cache",
+  },
 });
 
 http.interceptors.request.use((config) => {
@@ -56,6 +66,20 @@ http.interceptors.request.use((config) => {
   if (t) config.headers.Authorization = `Bearer ${t}`;
   return config;
 });
+
+http.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<{ error?: string }>) => {
+    const status = error.response?.status;
+    const code = String(error.response?.data?.error || "");
+    const invalidSession = status === 401 || (status === 403 && ["invalid_token", "invalid_session", "account_disabled"].includes(code));
+    if (invalidSession && typeof window !== "undefined") {
+      clearStoredAuth();
+      window.dispatchEvent(new CustomEvent(AUTH_INVALIDATED_EVENT));
+    }
+    return Promise.reject(error);
+  }
+);
 
 export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE"; body?: any; params?: Record<string, any> } = {}): Promise<T> {
   try {
@@ -87,16 +111,20 @@ export type LiveState = {
   players: { id: number; name: string }[];
   count: number;
   maxplayers: number;
-  status: "online" | "offline" | "reconnecting";
+  status: "online" | "offline" | "reconnecting" | "not_configured";
   queue: number;
   announcement: string;
   lastUpdate: number | null;
+  configured?: boolean;
+  serverName?: string;
+  latency?: number | null;
+  error?: string;
 };
 
 export function createLiveSubscriber(onUpdate: (s: LiveState) => void) {
   let ws: WebSocket | null = null;
   let pollTimer: number | null = null;
-  let usePolling = MOCK || !API_URL;
+  let usePolling = !API_URL;
   let stopped = false;
 
   const connect = () => {
@@ -140,7 +168,7 @@ export function createLiveSubscriber(onUpdate: (s: LiveState) => void) {
         const data = await api<LiveState>("/api/live");
         onUpdate(data);
       } catch {
-        onUpdate({ players: [], count: 0, maxplayers: 0, status: "offline", queue: 0, announcement: "", lastUpdate: Date.now() });
+        onUpdate({ players: [], count: 0, maxplayers: 0, status: "offline", queue: 0, announcement: "", lastUpdate: Date.now(), configured: true, error: "status_unavailable" });
       }
     };
     tick();

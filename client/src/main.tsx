@@ -9,8 +9,17 @@ createRoot(document.getElementById("root")!).render(
   </StrictMode>
 );
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
+// Older deployments installed a cache-first worker that cached API and auth state.
+// Remove it once for existing visitors; static assets are still cached by Netlify.
+if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .catch(() => undefined);
+    if ("caches" in window) {
+      caches.keys()
+        .then((keys) => Promise.all(keys.filter((key) => key.startsWith("gotham-city-")).map((key) => caches.delete(key))))
+        .catch(() => undefined);
+    }
   });
 }

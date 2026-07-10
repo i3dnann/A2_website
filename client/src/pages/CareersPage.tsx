@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 import { useSite } from "../context/SiteContext";
 import PageShell from "../components/PageShell";
 import { staggerContainer, staggerItem } from "../components/Reveal";
@@ -26,15 +26,10 @@ function isOpen(row: CareerRow) {
 export default function CareersPage() {
   const { content } = useSite();
   const [careers, setCareers] = useState<CareerRow[]>([]);
-  const [loading, setLoading] = useState(!MOCK);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (MOCK) {
-      setCareers([]);
-      setLoading(false);
-      return;
-    }
     let cancel = false;
     const load = async () => {
       setLoading(true);

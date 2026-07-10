@@ -58,15 +58,10 @@ const schema = z.object({
   TWITCH_CLIENT_SECRET: z.string().default(""),
   TWITCH_ACCESS_TOKEN: z.string().default(""),
 
-  KICK_API_KEY: z.string().default(""),
-  KICK_API_BASE_URL: z.string().default("https://api.kick.com/public/v1"),
-  KICK_OAUTH_BASE_URL: z.string().default("https://id.kick.com"),
-  KICK_CLIENT_ID: z.string().default(""),
-  KICK_CLIENT_SECRET: z.string().default(""),
-
   FIVEM_PLAYERS_URL: z.string().default(""),
   FIVEM_DYNAMIC_URL: z.string().default(""),
   FIVEM_INFO_URL: z.string().default(""),
+  FIVEM_SERVER_NAME: z.string().default("Gotham City"),
   FIVEM_SERVER_IP: z.string().default(""),
   FIVEM_SERVER_PORT: z.string().default("30120"),
   FIVEM_MAX_PLAYERS: z.coerce.number().default(64),
@@ -77,7 +72,6 @@ const schema = z.object({
   WEBHOOK_CAREERS: z.string().default(""),
   WEBHOOK_ADMIN_LOGS: z.string().default(""),
   WEBHOOK_SECURITY: z.string().default(""),
-  WEBHOOK_STREAMERS: z.string().default(""),
   WEBHOOK_USER_ACCOUNTS: z.string().default("")
 });
 

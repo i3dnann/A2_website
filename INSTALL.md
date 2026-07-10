@@ -238,4 +238,4 @@ https://a2.yourdomain.com/health
 
 ## Steam Character Lookup
 
-Players must link Steam from `/account/settings`. After Steam is linked, the backend searches QBCore safely by available identifiers and only returns that account's own characters.
+Players must link Steam from `/account/settings`. After Steam is linked, the backend searches CFW data safely by available identifiers and only returns that account's own characters.

@@ -12,7 +12,6 @@ import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
-import { kickConfigured } from "../services/kickService.js";
 
 const router = Router();
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -84,8 +83,7 @@ router.get("/providers", (_req, res) => {
       configured: Boolean(env.STEAM_REALM && env.STEAM_RETURN_URL),
       setupWarning: env.STEAM_API_KEY ? "" : "Steam API key is missing. OpenID linking can still work, but profile enrichment is disabled."
     },
-    twitch: { configured: Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) },
-    kick: { configured: Boolean(env.KICK_API_KEY || kickConfigured()) }
+    twitch: { configured: Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) }
   });
 });
 

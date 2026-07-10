@@ -2,24 +2,22 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  Settings, Globe, Users, Play, Clock, FileText, Briefcase, HelpCircle, Palette,
+  Settings, Globe, Users, Clock, FileText, Briefcase, HelpCircle, Palette,
   Home, Menu, X, LogOut, Save, Trash2, Plus, Loader2, LayoutDashboard,
   CheckCircle2, XCircle, MessageCircle, Shield, AlertTriangle, TrendingUp,
-  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Radio, ExternalLink, Star,
+  Server, Eye, ArrowUpRight, Ticket as TicketIcon, Star,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
-import { api, MOCK, upload } from "../api/client";
+import { api, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "home", label: "Homepage", icon: Home },
   { id: "server", label: "Server / Features", icon: Globe },
-  { id: "partners", label: "Partners", icon: ExternalLink },
   { id: "roster", label: "Roster", icon: Users },
   { id: "famous", label: "Famous Chars", icon: Star },
-  { id: "live", label: "Live Streams", icon: Play },
   { id: "journey", label: "Journey & Chars", icon: Clock },
   { id: "news", label: "News", icon: FileText },
   { id: "careers", label: "Careers", icon: Briefcase },
@@ -107,24 +105,6 @@ export default function AdminPanel() {
   useEffect(() => {
     let cancel = false;
     const load = async () => {
-      if (MOCK) {
-        setStats({
-          users: 2847, characters: 9120,
-          news: [
-            { id: "1", title: "Season 4: Gotham Nights", published_at: new Date().toISOString() },
-            { id: "2", title: "Community Awards", published_at: new Date().toISOString() },
-          ],
-          pendingComments: 4,
-          logs: [
-            { id: "1", action: "user_login", target: "abc123", meta: {}, created_at: new Date().toISOString() },
-            { id: "2", action: "section_edit", target: "features", meta: {}, created_at: new Date().toISOString() },
-            { id: "3", action: "comment_approve", target: "xyz", meta: {}, created_at: new Date().toISOString() },
-          ],
-          live: { count: 42, maxplayers: 100, status: "online" },
-        });
-        setStatsLoading(false);
-        return;
-      }
       try {
         const r = await api<any>("/api/admin/dashboard");
         if (!cancel) setStats(normalizeDashboardStats(r));
@@ -138,7 +118,17 @@ export default function AdminPanel() {
   }, []);
 
   const handleLogout = () => { logout(); navigate("/"); };
-  const handleSave = async () => { setSaving(true); await new Promise((r) => setTimeout(r, 600)); setSaving(false); push({ kind: "success", message: "All changes saved" }); };
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api("/api/admin/settings", { method: "PATCH", body: { siteContent: content } });
+      push({ kind: "success", message: "All changes saved to the website" });
+    } catch (error: any) {
+      push({ kind: "error", message: error?.message || "Failed to save website changes" });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!user || (user.role !== "Master Admin" && user.role !== "Admin")) {
     return (
@@ -215,10 +205,8 @@ export default function AdminPanel() {
                 {tab === "dashboard" && <DashboardView stats={stats} loading={statsLoading} setTab={setTab} />}
                 {tab === "home" && <HomeEditor content={content} update={updateContent} />}
                 {tab === "server" && <ServerEditor content={content} update={updateContent} />}
-                {tab === "partners" && <PartnersAdmin />}
                 {tab === "roster" && <ResourceAdmin title="Roster Members" resource="team" blank={{ name: "New Member", role_title: "Staff", category: "Staff", profile_image_url: "", bio: "", discord_url: "", twitch_url: "", kick_url: "", sort_order: 50, is_visible: true }} fields={["name", "role_title", "category", "profile_image_url", "bio", "discord_url", "twitch_url", "kick_url", "sort_order", "is_visible"]} />}
                 {tab === "famous" && <ResourceAdmin title="Famous Characters" resource="famous" blank={{ character_name: "New Character", header: "", picture_url: "", bio: "", description: "", role_name: "", gang_business: "", is_featured: false, sort_order: 50, is_visible: true }} fields={["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "is_featured", "sort_order", "is_visible"]} />}
-                {tab === "live" && <LiveEditor content={content} update={updateContent} />}
                 {tab === "journey" && <JourneyEditor content={content} update={updateContent} />}
                 {tab === "news" && <NewsAdmin />}
                 {tab === "careers" && <CareersAdmin />}
@@ -262,7 +250,7 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
     { label: "Registered Users", value: stats?.users ?? 0, icon: Users, color: "text-emerald-300", trend: "+12% this week" },
     { label: "Total Characters", value: stats?.characters ?? 0, icon: Briefcase, color: "text-orange-300", trend: "+4% this week" },
     { label: "Pending Comments", value: stats?.pendingComments ?? 0, icon: MessageCircle, color: "text-orange-300", trend: "Needs review" },
-    { label: "Server Online", value: stats?.live?.status === "online" ? `${stats.live.count}/${stats.live.maxplayers}` : "Offline", icon: Server, color: stats?.live?.status === "online" ? "text-emerald-300" : "text-red-300", trend: stats?.live?.status === "online" ? "Live now" : "Check status" },
+    { label: "Server Status", value: stats?.live?.status === "online" ? `${stats.live.count}/${stats.live.maxplayers}` : "Offline", icon: Server, color: stats?.live?.status === "online" ? "text-emerald-300" : "text-red-300", trend: stats?.live?.status === "online" ? "Live now" : "Check status" },
   ];
 
   return (
@@ -340,7 +328,6 @@ function DashboardView({ stats, loading, setTab }: { stats: DashboardStats | nul
             { label: "Edit Homepage", tab: "home", icon: Home, color: "from-orange-600/20 to-orange-700/10" },
             { label: "Post News", tab: "news", icon: FileText, color: "from-orange-500/15 to-orange-700/5" },
             { label: "Review Comments", tab: "comments", icon: MessageCircle, color: "from-emerald-500/15 to-teal-500/5" },
-            { label: "Live Streams", tab: "live", icon: Play, color: "from-orange-500/15 to-orange-700/5" },
             { label: "Features", tab: "server", icon: Globe, color: "from-cyan-500/15 to-blue-500/5" },
             { label: "Roster", tab: "roster", icon: Users, color: "from-indigo-500/15 to-purple-500/5" },
             { label: "Theme & Brand", tab: "theme", icon: Palette, color: "from-pink-500/15 to-rose-500/5" },
@@ -555,14 +542,6 @@ function CommentsAdmin() {
   const load = async () => {
     setLoading(true);
     try {
-      if (MOCK) {
-        setRows([
-          { id: "1", news_id: "n1", author_name: "John", body: "Amazing update!", approved: 0, created_at: new Date().toISOString(), user_id: "u1" },
-          { id: "2", news_id: "n1", author_name: "Alex", body: "When is the next event?", approved: 0, created_at: new Date().toISOString(), user_id: "u2" },
-          { id: "3", news_id: "n2", author_name: "Mia", body: "Great work on the new map", approved: 1, created_at: new Date().toISOString(), user_id: "u3" },
-        ]);
-        return;
-      }
       const r = await api<{ data: any[] }>(`/api/admin/comments?status=${filter}`);
       setRows(r.data);
     } catch (e: any) { push({ kind: "error", message: e?.message || "Failed" }); }
@@ -577,7 +556,6 @@ function CommentsAdmin() {
       if (!ok) return;
     }
     try {
-      if (MOCK) { push({ kind: "success", message: action + "d (demo)" }); load(); return; }
       if (action === "delete") await api(`/api/admin/comments/${id}`, { method: "DELETE" });
       else await api(`/api/admin/comments/${id}/${action}`, { method: "POST" });
       push({ kind: "success", message: `Comment ${action}d` });
@@ -632,6 +610,10 @@ function FilterPill({ active, onClick, children }: any) {
   </button>;
 }
 
+function flagOn(value: any) {
+  return value === true || value === 1 || value === "1";
+}
+
 /* ─────────────────────────────────────────────────────────────── */
 /* LOGS */
 /* ─────────────────────────────────────────────────────────────── */
@@ -667,15 +649,8 @@ function NewsAdmin() {
   const load = async () => {
     setLoading(true);
     try {
-      if (MOCK) {
-        setRows([
-          { id: "1", title: "Season 4: Gotham Nights Begins", active: 1, pinned: 1, category: "Announcement", published_at: new Date().toISOString() },
-          { id: "2", title: "Community Awards Results", active: 1, pinned: 0, category: "Community", published_at: new Date().toISOString() },
-        ]);
-        return;
-      }
-      const r = await api<{ data: any[] }>("/api/news");
-      setRows(r.data);
+      const r = await api<{ rows?: any[]; data?: any[] }>("/api/admin/news", { params: { limit: 100 } });
+      setRows(r.rows || r.data || []);
     } catch (e: any) { push({ kind: "error", message: e?.message }); }
     finally { setLoading(false); }
   };
@@ -686,7 +661,6 @@ function NewsAdmin() {
     const ok = await confirm({ title: "Delete news post?", message: "This action is permanent.", confirmText: "Delete" });
     if (!ok) return;
     try {
-      if (MOCK) { setRows((r) => r.filter((x) => x.id !== id)); push({ kind: "success", message: "Deleted (demo)" }); return; }
       await api(`/api/admin/news/${id}`, { method: "DELETE" });
       push({ kind: "success", message: "Post deleted" });
       load();
@@ -739,11 +713,6 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
 
   const uploadMedia = async (file: File | null | undefined, key: "image_url" | "video_url") => {
     if (!file) return;
-    if (MOCK) {
-      setField(key, URL.createObjectURL(file));
-      push({ kind: "success", message: "Media attached (demo)" });
-      return;
-    }
     setUploading(key);
     try {
       const body = new FormData();
@@ -762,7 +731,6 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
   const save = async () => {
     setSaving(true);
     try {
-      if (MOCK) { await new Promise((r) => setTimeout(r, 500)); push({ kind: "success", message: "Saved (demo)" }); onSaved(); return; }
       const payload = {
         ...form,
         subtitle: form.subtitle || form.excerpt || "",
@@ -835,189 +803,6 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
   );
 }
 
-function blankPartner() {
-  return { id: "", partner_name: "New Partner", logo_url: "", website_url: "", sort_order: 50, is_visible: true };
-}
-
-function PartnersAdmin() {
-  const { push, confirm } = useToast();
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState("");
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      if (MOCK) {
-        setRows([
-          { id: "partner-discord", partner_name: "Gotham Discord", logo_url: "", website_url: "https://discord.gg/change-me", sort_order: 1, is_visible: true },
-          { id: "partner-a2", partner_name: "A2 Studio", logo_url: "", website_url: "#", sort_order: 2, is_visible: true },
-        ]);
-        return;
-      }
-      const result = await api<{ rows: any[] }>("/api/admin/partners", { params: { limit: 100 } });
-      setRows(result.rows || []);
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to load partners" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateStatus = async (status: string) => {
-    if (!selectedId) return;
-    setSending(true);
-    try {
-      await api(`/api/admin/tickets/${selectedId}/status`, { method: "POST", body: { status } });
-      await refreshDetail();
-      push({ kind: "success", message: `Ticket set to ${status}` });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to update ticket" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const addNote = async () => {
-    if (!selectedId || !note.trim()) return;
-    setSending(true);
-    try {
-      await api(`/api/admin/tickets/${selectedId}/note`, { method: "POST", body: { note: note.trim() } });
-      setNote("");
-      await refreshDetail();
-      push({ kind: "success", message: "Internal note added" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to add note" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const addParticipant = async () => {
-    if (!selectedId || !participant.trim()) return;
-    const value = participant.trim();
-    const body = /^\d{15,22}$/.test(value) ? { discord_id: value } : { user_id: value };
-    setSending(true);
-    try {
-      await api(`/api/admin/tickets/${selectedId}/participants`, { method: "POST", body });
-      setParticipant("");
-      await refreshDetail();
-      push({ kind: "success", message: "User added to ticket" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to add user" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const removeParticipant = async (participantId: string) => {
-    if (!selectedId) return;
-    try {
-      await api(`/api/admin/tickets/${selectedId}/participants/${participantId}`, { method: "DELETE" });
-      await refreshDetail();
-      push({ kind: "success", message: "User removed from ticket" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to remove user" });
-    }
-  };
-
-  const deleteTicket = async () => {
-    if (!selectedId) return;
-    const ok = await confirm({ title: "Delete ticket?", message: "This removes the ticket from admin and player views.", confirmText: "Delete" });
-    if (!ok) return;
-    setSending(true);
-    try {
-      await api(`/api/admin/tickets/${selectedId}`, { method: "DELETE" });
-      setSelectedId("");
-      setDetail(null);
-      await loadRows();
-      push({ kind: "success", message: "Ticket deleted" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to delete ticket" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const change = (index: number, patch: any) => {
-    setRows((current) => current.map((row, i) => i === index ? { ...row, ...patch } : row));
-  };
-
-  const save = async (row: any) => {
-    setSavingId(row.id || "new");
-    try {
-      const body = {
-        partner_name: row.partner_name || row.name || "Partner",
-        logo_url: row.logo_url || "",
-        website_url: row.website_url || "#",
-        sort_order: Number(row.sort_order || 50),
-        is_visible: flagOn(row.is_visible),
-      };
-      if (!MOCK) {
-        if (row.id) await api(`/api/admin/partners/${row.id}`, { method: "PATCH", body });
-        else await api("/api/admin/partners", { method: "POST", body });
-      }
-      push({ kind: "success", message: "Partner saved" });
-      await load();
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to save partner" });
-    } finally {
-      setSavingId("");
-    }
-  };
-
-  const remove = async (row: any) => {
-    const ok = await confirm({ title: "Delete partner?", message: "This removes it from the homepage partner marquee.", confirmText: "Delete" });
-    if (!ok) return;
-    try {
-      if (!MOCK && row.id) await api(`/api/admin/partners/${row.id}`, { method: "DELETE" });
-      setRows((current) => current.filter((item) => item !== row));
-      push({ kind: "success", message: "Partner removed" });
-    } catch (e: any) {
-      if (String(e?.message || "").toLowerCase().includes("not found")) {
-        setRows((current) => current.filter((item) => item !== row));
-        push({ kind: "success", message: "Stale partner removed from the list" });
-        return;
-      }
-      push({ kind: "error", message: e?.message || "Failed to remove partner" });
-    }
-  };
-
-  return (
-    <EditableSection title="Homepage Partners">
-      <p className="text-sm text-white/45">These logos appear directly under the hero section in two animated rows. Use a logo URL or leave it empty to show an initial badge.</p>
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
-      ) : rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No partners yet. Add one below.</p>
-      ) : rows.map((partner, index) => (
-        <div key={partner.id || index} className="rounded-xl border border-white/10 bg-black/20 p-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_120px]">
-            <div><label className={stClass}>Partner Name</label><input className={inpClass} value={partner.partner_name || ""} onChange={(e) => change(index, { partner_name: e.target.value })} /></div>
-            <div><label className={stClass}>Logo URL</label><input className={inpClass} value={partner.logo_url || ""} onChange={(e) => change(index, { logo_url: e.target.value })} placeholder="https://..." /></div>
-            <div><label className={stClass}>Link</label><input className={inpClass} value={partner.website_url || ""} onChange={(e) => change(index, { website_url: e.target.value })} placeholder="https://..." /></div>
-            <div><label className={stClass}>Order</label><input className={inpClass} type="number" value={partner.sort_order || 50} onChange={(e) => change(index, { sort_order: +e.target.value || 50 })} /></div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-4 text-xs text-white/55">
-              <label className="flex items-center gap-1.5"><input type="checkbox" checked={flagOn(partner.is_visible)} onChange={(e) => change(index, { is_visible: e.target.checked })} className="accent-orange-500" /> Visible</label>
-              {partner.website_url && <a href={partner.website_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-orange-200 hover:text-orange-100"><ExternalLink size={12} /> Test link</a>}
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => save(partner)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingId === (partner.id || "new") && <Loader2 size={12} className="animate-spin" />} Save</button>
-              <button onClick={() => remove(partner)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={12} /></button>
-            </div>
-          </div>
-        </div>
-      ))}
-      <button onClick={() => setRows((current) => [...current, blankPartner()])}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Partner</button>
-    </EditableSection>
-  );
-}
-
 function ApplicationsAdmin() {
   const { push, confirm } = useToast();
   const [rows, setRows] = useState<any[]>([]);
@@ -1032,15 +817,6 @@ function ApplicationsAdmin() {
   const loadRows = async () => {
     setLoading(true);
     try {
-      if (MOCK) {
-        const demoRows = [
-          { id: "demo-app-1", job_id: "career-police", user_id: "demo-user", status: "Pending", created_at: new Date().toISOString() },
-          { id: "demo-app-2", job_id: "career-ems", user_id: "demo-user-2", status: "Under review", created_at: new Date().toISOString() },
-        ];
-        setRows(demoRows);
-        if (!selectedId) setSelectedId(demoRows[0].id);
-        return;
-      }
       const result = await api<{ rows: any[] }>("/api/admin/careerApplications", { params: { limit: 100 } });
       const nextRows = result.rows || [];
       setRows(nextRows);
@@ -1062,20 +838,6 @@ function ApplicationsAdmin() {
     let cancel = false;
     const loadDetail = async () => {
       try {
-        if (MOCK) {
-          if (!cancel) {
-            setDetail({
-              application: rows.find((row) => row.id === selectedId) || null,
-              job: { title: selectedId.includes("1") ? "Police Department" : "EMS Department", department: "Community" },
-              answers: [
-                { id: "a1", question_snapshot: "Name", answer_text: "Demo Player" },
-                { id: "a2", question_snapshot: "Why do you want this role?", answer_text: "I want to help build serious roleplay scenes." },
-              ],
-              notes: [],
-            });
-          }
-          return;
-        }
         const result = await api<any>(`/api/admin/career-applications/${selectedId}`);
         if (!cancel) setDetail(result);
       } catch (e: any) {
@@ -1095,20 +857,16 @@ function ApplicationsAdmin() {
     if (!selectedId) return;
     setSaving(true);
     try {
-      if (!MOCK) {
-        await api(`/api/admin/career-applications/${selectedId}/status`, {
-          method: "POST",
-          body: { status, public_note: publicNote.trim(), private_note: privateNote.trim() },
-        });
-      }
+      await api(`/api/admin/career-applications/${selectedId}/status`, {
+        method: "POST",
+        body: { status, public_note: publicNote.trim(), private_note: privateNote.trim() },
+      });
       setPublicNote("");
       setPrivateNote("");
       push({ kind: "success", message: `Application marked ${status}` });
       await loadRows();
-      if (!MOCK) {
-        const result = await api<any>(`/api/admin/career-applications/${selectedId}`);
-        setDetail(result);
-      }
+      const result = await api<any>(`/api/admin/career-applications/${selectedId}`);
+      setDetail(result);
     } catch (e: any) {
       push({ kind: "error", message: e?.message || "Failed to update application" });
     } finally {
@@ -1128,9 +886,7 @@ function ApplicationsAdmin() {
     if (!ok) return;
     setSaving(true);
     try {
-      if (!MOCK) {
-        await api(`/api/admin/career-applications/${selectedId}`, { method: "DELETE" });
-      }
+      await api(`/api/admin/career-applications/${selectedId}`, { method: "DELETE" });
       setRows((current) => current.filter((row) => row.id !== selectedId));
       setSelectedId("");
       setDetail(null);
@@ -1653,178 +1409,6 @@ function RosterEditor({ content, update }: any) {
   </div>;
 }
 
-function blankStreamer() {
-  return {
-    id: "",
-    display_name: "New Streamer",
-    twitch_username: "",
-    kick_username: "",
-    category: "Gotham City Roleplay",
-    is_approved: true,
-    is_hidden: false,
-    is_featured: false,
-    sort_order: 50
-  };
-}
-
-function flagOn(value: any) {
-  return value === true || value === 1 || value === "1";
-}
-
-function LiveEditor({ content, update }: any) {
-  const { push, confirm } = useToast();
-  const [rows, setRows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [savingId, setSavingId] = useState("");
-  const [checking, setChecking] = useState(false);
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      if (MOCK) {
-        setRows(content.streamers.map((s: any, i: number) => ({
-          id: `demo-${i}`,
-          display_name: s.name,
-          twitch_username: s.platform === "Twitch" ? s.name : "",
-          kick_username: s.platform === "Kick" ? s.name : "",
-          category: s.game,
-          is_approved: true,
-          is_hidden: false,
-          is_featured: i === 0,
-          sort_order: i + 1,
-          is_live: s.live,
-          viewer_count: s.viewers
-        })));
-        return;
-      }
-      const r = await api<{ rows: any[] }>("/api/admin/streamers", { params: { limit: 100 } });
-      setRows(r.rows || []);
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to load streamers" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const change = (index: number, patch: any) => {
-    setRows((current) => current.map((row, i) => i === index ? { ...row, ...patch } : row));
-  };
-
-  const payload = (row: any) => ({
-    display_name: row.display_name || row.kick_username || row.twitch_username || "Streamer",
-    twitch_username: String(row.twitch_username || "").trim().replace(/^@/, ""),
-    kick_username: String(row.kick_username || "").trim(),
-    category: row.category || "Gotham City Roleplay",
-    is_approved: flagOn(row.is_approved),
-    is_hidden: flagOn(row.is_hidden),
-    is_featured: flagOn(row.is_featured),
-    sort_order: Number(row.sort_order || 50)
-  });
-
-  const save = async (row: any) => {
-    setSavingId(row.id || "new");
-    try {
-      if (MOCK) { push({ kind: "success", message: "Streamer saved (demo)" }); return; }
-      const body = payload(row);
-      const result = row.id
-        ? await api<{ row: any }>(`/api/admin/streamers/${row.id}`, { method: "PATCH", body })
-        : await api<{ row: any }>("/api/admin/streamers", { method: "POST", body });
-      if (result.row?.id) {
-        setRows((current) => {
-          const saved = { ...row, ...result.row };
-          const exists = current.some((item) => String(item.id) === String(saved.id));
-          return exists ? current.map((item) => String(item.id) === String(saved.id) ? saved : item) : [...current.filter((item) => item !== row), saved];
-        });
-        await api(`/api/admin/streamers/${result.row.id}/check`, { method: "POST" });
-      }
-      await load();
-      push({ kind: "success", message: "Streamer saved and checked" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to save streamer" });
-    } finally {
-      setSavingId("");
-    }
-  };
-
-  const remove = async (row: any) => {
-    const ok = await confirm({ title: "Remove streamer?", message: "This removes the streamer from the live page.", confirmText: "Remove" });
-    if (!ok) return;
-    if (!row.id || MOCK) {
-      setRows((current) => current.filter((item) => item !== row));
-      return;
-    }
-    try {
-      await api(`/api/admin/streamers/${row.id}`, { method: "DELETE" });
-      await load();
-      push({ kind: "success", message: "Streamer removed" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to remove streamer" });
-    }
-  };
-
-  const checkAll = async () => {
-    setChecking(true);
-    try {
-      if (!MOCK) await api("/api/admin/streamers/check", { method: "POST" });
-      await load();
-      push({ kind: "success", message: "Streamer statuses refreshed" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to refresh streamers" });
-    } finally {
-      setChecking(false);
-    }
-  };
-
-  return <div className="flex flex-col gap-1">
-    <EditableSection title="Header">
-      <EField label="Subtitle" value={content.streamsSubtitle} onChange={(v) => update({ streamsSubtitle: v })} />
-      <EField label="Title" value={content.streamsTitle} onChange={(v) => update({ streamsTitle: v })} />
-      <EArea label="Description" value={content.streamsDesc} onChange={(v) => update({ streamsDesc: v })} />
-    </EditableSection>
-    <EditableSection title="Streamers">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-white/45">Add a Kick channel name or Twitch login. The website will check live status and viewers automatically.</p>
-        <button onClick={checkAll} disabled={checking} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5 disabled:opacity-60">
-          {checking ? <Loader2 size={13} className="animate-spin" /> : <Radio size={13} />}
-          Refresh Status
-        </button>
-      </div>
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
-      ) : rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No streamers yet. Add one below.</p>
-      ) : rows.map((s: any, i: number) => (
-        <div key={s.id || i} className="rounded-xl border border-white/10 p-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <div><label className={stClass}>Display Name</label><input className={inpClass} value={s.display_name || ""} onChange={(e) => change(i, { display_name: e.target.value })} /></div>
-            <div><label className={stClass}>Kick Channel</label><input className={inpClass} value={s.kick_username || ""} onChange={(e) => change(i, { kick_username: e.target.value })} placeholder="kick name" /></div>
-            <div><label className={stClass}>Twitch Login</label><input className={inpClass} value={s.twitch_username || ""} onChange={(e) => change(i, { twitch_username: e.target.value })} placeholder="twitch name" /></div>
-            <div><label className={stClass}>Category</label><input className={inpClass} value={s.category || ""} onChange={(e) => change(i, { category: e.target.value })} /></div>
-            <div><label className={stClass}>Order</label><input className={inpClass} type="number" value={s.sort_order || 50} onChange={(e) => change(i, { sort_order: +e.target.value || 50 })} /></div>
-          </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-4 text-xs text-white/55">
-              <label className="flex items-center gap-1.5"><input type="checkbox" checked={flagOn(s.is_approved)} onChange={(e) => change(i, { is_approved: e.target.checked })} className="accent-orange-500" /> Approved</label>
-              <label className="flex items-center gap-1.5"><input type="checkbox" checked={flagOn(s.is_featured)} onChange={(e) => change(i, { is_featured: e.target.checked })} className="accent-orange-500" /> Featured</label>
-              <label className="flex items-center gap-1.5"><input type="checkbox" checked={flagOn(s.is_hidden)} onChange={(e) => change(i, { is_hidden: e.target.checked })} className="accent-orange-500" /> Hidden</label>
-              <span className={flagOn(s.is_live) ? "text-emerald-300" : "text-white/35"}>{flagOn(s.is_live) ? "Live" : "Offline"}</span>
-              <span>{Number(s.viewer_count || 0).toLocaleString()} viewers</span>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => save(s)} disabled={Boolean(savingId)} className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingId === (s.id || "new") && <Loader2 size={12} className="animate-spin" />} Save</button>
-              <button onClick={() => remove(s)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={12} /></button>
-            </div>
-          </div>
-        </div>
-      ))}
-      <button onClick={() => setRows((current) => [...current, blankStreamer()])}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Streamer</button>
-    </EditableSection>
-  </div>;
-}
-
 function JourneyEditor({ content, update }: any) {
   return <div className="flex flex-col gap-1">
     <EditableSection title="Journey Header">
@@ -1936,7 +1520,7 @@ function ThemeEditor({ content, update }: any) {
 }
 
 function SettingsEditor({ content, update }: any) {
-  const { push } = useToast();
+  const { push, confirm } = useToast();
   const [settings, setSettings] = useState<any>({
     websiteName: content.siteName,
     siteTagline: content.siteTagline,
@@ -1990,6 +1574,25 @@ function SettingsEditor({ content, update }: any) {
     }
   };
 
+  const clearSavedContent = async () => {
+    const ok = await confirm({
+      title: "Clear saved content?",
+      message: "This clears backend-saved page content. Real database records such as news, careers, tickets, and users are not deleted.",
+      confirmText: "Clear",
+    });
+    if (!ok) return;
+    setSaving(true);
+    try {
+      await api("/api/admin/settings", { method: "PATCH", body: { siteContent: {} } });
+      push({ kind: "success", message: "Saved page content cleared" });
+      window.location.reload();
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to clear saved content" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return <div className="flex flex-col gap-1">
     <EditableSection title="Site Configuration">
       <p className="text-sm text-white/50">These settings are saved through the backend and loaded by the public site.</p>
@@ -2012,10 +1615,10 @@ function SettingsEditor({ content, update }: any) {
     </EditableSection>
     <EditableSection title="Danger Zone">
       <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-6">
-        <h3 className="font-serif text-lg text-white">Reset All Content</h3>
-        <p className="mt-2 text-sm text-white/50">Resetting will restore all website content to defaults.</p>
-        <button onClick={() => { window.localStorage.removeItem("gotham_city_site_content"); window.location.reload(); }}
-          className="mt-4 rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10 transition">Reset All Content</button>
+        <h3 className="font-serif text-lg text-white">Clear Saved Page Content</h3>
+        <p className="mt-2 text-sm text-white/50">This removes backend-saved homepage/theme text only. Database content stays untouched.</p>
+        <button onClick={clearSavedContent} disabled={saving}
+          className="mt-4 rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-medium text-red-300 hover:bg-red-500/10 transition disabled:opacity-60">Clear Saved Content</button>
       </div>
     </EditableSection>
   </div>;

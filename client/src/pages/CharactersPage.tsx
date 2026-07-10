@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Wallet, Briefcase, Heart, ShieldAlert, Phone, Calendar, Users2, Car, Link2, ShieldHalf, Package } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { api, MOCK } from "../api/client";
+import { api } from "../api/client";
 import { useToast, Skeleton } from "./../components/Toast";
 import PageShell from "../components/PageShell";
 import { VitalBar, VitalRing } from "../components/VitalBar";
@@ -67,8 +67,8 @@ export default function CharactersPage() {
   useEffect(() => {
     let cancel = false;
     const load = async () => {
-      if (MOCK || !user?.steamLinked) {
-        setChars(user?.steamLinked ? DEMO_CHARS : []);
+      if (!user?.steamLinked) {
+        setChars([]);
         setLoading(false);
         return;
       }
@@ -87,7 +87,6 @@ export default function CharactersPage() {
 
   useEffect(() => {
     if (!selected) return;
-    if (MOCK) { setInventory(DEMO_INV); setVehicles(DEMO_VEH); return; }
     let cancel = false;
     const loadDetails = async () => {
       setInventory([]);
@@ -260,27 +259,3 @@ function MoneyCell({ icon: Icon, label, value, color }: { icon: any; label: stri
     </div>
   );
 }
-
-// Demo data for offline mode
-const DEMO_CHARS: Character[] = [
-  { citizenid: "ABD12345", name: "Marcus Halloway", firstName: "Marcus", lastName: "Halloway", gender: "Male", birthdate: "1992-04-12", phone: "555-0142", job: "Police Officer", jobGrade: 3, jobName: "police", gang: null, cash: 2450, bank: 48200, health: 100, armor: 60 },
-  { citizenid: "XYZ98765", name: "Isabella Cruz", firstName: "Isabella", lastName: "Cruz", gender: "Female", birthdate: "1998-09-22", phone: "555-0199", job: "Civilian", jobGrade: 0, jobName: "unemployed", gang: "Lost MC", cash: 890, bank: 12750, health: 65, armor: 20 },
-];
-const DEMO_INV = [
-  { name: "Radio", amount: 1 },
-  { name: "Lockpick", amount: 3, info: { durability: "72%" } },
-  { name: "Phone", amount: 1, info: { battery: "88%", locked: false } },
-  { name: "Bandage", amount: 5 },
-  { name: "Driver License", amount: 1, info: { class: "B", expires: "2029-01-01" } },
-  { name: "Water Bottle", amount: 2 },
-  { name: "Burger", amount: 1 },
-  { name: "Weapon Pistol", amount: 1, info: { ammo: 12, serial: "GX291KD" } },
-  { name: "Diamond Ring", amount: 1 },
-  { name: "Fuel Can", amount: 1 },
-  { name: "Repair Kit", amount: 2 },
-  { name: "Backpack", amount: 1 },
-];
-const DEMO_VEH = [
-  { model: "Sultan RS", plate: "GTH4M5" },
-  { model: "Kuruma", plate: "NK77XZ" },
-];
