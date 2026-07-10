@@ -111,10 +111,6 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
           className="relative mx-auto h-[340px] min-w-[900px]"
           style={{ width: `${width}px` }}
         >
-          <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(255,255,255,.14)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.14)_1px,transparent_1px)] [background-size:54px_54px]" />
-          <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#080808] to-transparent" />
-          <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#080808] to-transparent" />
-
           <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true">
             <path d={upperCurve} fill="none" stroke="rgba(255,255,255,0.16)" strokeWidth="1" />
             <path d={lowerCurve} fill="none" stroke="rgba(255,255,255,0.11)" strokeWidth="1" />

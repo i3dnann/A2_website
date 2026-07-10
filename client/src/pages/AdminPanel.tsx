@@ -1601,6 +1601,7 @@ function ThemeEditor({ content, update }: any) {
       <EField label="Site Name" value={content.siteName} onChange={(v) => update({ siteName: v })} />
       <EField label="Tagline" value={content.siteTagline} onChange={(v) => update({ siteTagline: v })} />
       <EField label="CTA Title" value={content.ctaTitle} onChange={(v) => update({ ctaTitle: v })} />
+      <EField label="CTA Background Image URL" value={content.ctaBackgroundImage || ""} onChange={(v) => update({ ctaBackgroundImage: v })} />
       <EArea label="CTA Description" value={content.ctaDesc} onChange={(v) => update({ ctaDesc: v })} />
     </EditableSection>
   </div>;

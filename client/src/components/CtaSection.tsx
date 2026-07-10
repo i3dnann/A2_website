@@ -13,7 +13,7 @@ export default function CtaSection() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border border-white/10">
-            <img src="/images/cta-street.jpg" alt="Join Gotham City" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-35" />
+            <img src={content.ctaBackgroundImage || "/images/cta-street.jpg"} alt="Join Gotham City" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-35" />
             <div className="absolute inset-0 bg-gradient-to-br from-orange-900/60 via-black/70 to-orange-950/60" />
             <motion.div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 8, repeat: Infinity }} />
             <div className="relative flex flex-col items-center gap-8 px-6 py-16 text-center sm:px-16">

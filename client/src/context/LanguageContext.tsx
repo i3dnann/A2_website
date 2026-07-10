@@ -131,6 +131,7 @@ const AR: Record<string, string> = {
   Tagline: "الشعار النصي",
   "CTA Title": "عنوان الدعوة",
   "CTA Description": "وصف الدعوة",
+  "CTA Background Image URL": "رابط صورة خلفية الدعوة",
   "Website Name": "اسم الموقع",
   "Hero Subtitle": "العنوان الفرعي للواجهة",
   "Website Logo URL": "رابط شعار الموقع",

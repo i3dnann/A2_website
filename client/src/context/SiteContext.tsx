@@ -67,6 +67,7 @@ export type SiteContent = {
   faqs: FaqItem[];
   ctaTitle: string;
   ctaDesc: string;
+  ctaBackgroundImage?: string;
   primaryHex: string;
   accentHex: string;
   darkBgHex: string;
@@ -123,6 +124,7 @@ const DEFAULT_CONTENT: SiteContent = {
   faqs: [],
   ctaTitle: "Your Story in Gotham City Starts Tonight",
   ctaDesc: "Create your account, link Steam and Discord, and step into the city.",
+  ctaBackgroundImage: "/images/cta-street.jpg",
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",
