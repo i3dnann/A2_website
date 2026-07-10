@@ -277,8 +277,8 @@ function StreamerCard({ streamer }: { streamer: Streamer }) {
             <p className="truncate text-xs text-white/45">{t(gameName)}</p>
           </div>
         </div>
-        <p className="mt-3 line-clamp-2 min-h-[3rem] text-sm font-medium leading-6 text-white/78">{streamTitle}</p>
-        {streamer.bio && <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/58">{streamer.bio}</p>}
+        <p className="mt-3 line-clamp-2 min-h-[3rem] text-sm font-medium leading-6 text-white/78">{t(streamTitle)}</p>
+        {streamer.bio && <p className="mt-3 line-clamp-2 text-sm leading-6 text-white/58">{t(streamer.bio)}</p>}
         <div className="mt-4 flex items-center justify-between gap-3">
           <span className="rounded-full border border-white/10 bg-black/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white/55">
             {viewers.toLocaleString()} {t("viewers")}

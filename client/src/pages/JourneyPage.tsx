@@ -2,35 +2,14 @@ import { motion } from "framer-motion";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 import PageShell from "../components/PageShell";
+import RoadmapTimeline from "../components/RoadmapTimeline";
 
 export default function JourneyPage() {
   const { content } = useSite();
   const { t } = useLanguage();
   return (
     <PageShell subtitle={content.journeySubtitle} title={content.journeyTitle}>
-      <div className="relative mx-auto mt-6 max-w-3xl">
-        <div className="absolute left-4 top-0 h-full w-px bg-gradient-to-b from-orange-500/60 via-white/10 to-transparent sm:left-1/2" />
-        {content.journey.map((j, i) => {
-          const isEven = i % 2 === 0;
-          return (
-            <motion.div
-              key={j.year}
-              initial={{ opacity: 0, x: isEven ? -40 : 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className={`relative mb-10 flex items-start gap-6 sm:mb-14 sm:w-1/2 ${isEven ? "sm:pr-10" : "sm:ml-auto sm:pl-10"}`}
-            >
-              <span className="absolute -left-[3px] top-1.5 h-3 w-3 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(96,81,155,0.8)] sm:left-auto sm:right-[-3px] sm:top-1.5" />
-              <div className="ml-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:ml-0">
-                <span className="text-xs font-bold uppercase tracking-widest text-orange-300">{j.year}</span>
-                <h3 className="mt-2 font-serif text-xl text-white">{t(j.title)}</h3>
-                <p className="mt-2 text-sm text-white/55">{t(j.desc)}</p>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+      <RoadmapTimeline items={content.journey} />
 
       {/* Famous Characters section */}
       <div className="mt-20">
