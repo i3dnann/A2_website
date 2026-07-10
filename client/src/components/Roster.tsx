@@ -17,13 +17,23 @@ export default function Roster() {
             <p className="max-w-sm text-sm text-white/55">{content.rosterDesc}</p>
           </Reveal>
         </div>
-        <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
           {content.roster.map((r) => {
             const Icon = getIcon(r.icon);
             return (
-              <motion.div key={r.name} variants={staggerItem} whileHover={{ scale: 1.02 }} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.05] to-transparent p-6 transition-colors hover:border-orange-300/30">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-600/30 to-orange-700/30 text-orange-200"><Icon size={24} /></div>
-                <div><h3 className="font-serif text-lg text-white">{r.name}</h3><p className="text-sm text-white/50">{r.role}</p><p className="mt-1 text-xs uppercase tracking-wider text-orange-300/80">{r.count}</p></div>
+              <motion.div key={r.name} variants={staggerItem} whileHover={{ y: -4, scale: 1.02 }} className="group flex min-w-0 flex-col items-center text-center">
+                <div className="relative">
+                  <div className="absolute inset-0 rounded-full bg-[#60519b]/30 blur-xl opacity-0 transition group-hover:opacity-100" />
+                  <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-gradient-to-br from-[#1a1328] to-black shadow-[0_18px_40px_rgba(0,0,0,0.36)] transition group-hover:border-[#8a7ac4]/65 sm:h-32 sm:w-32">
+                    {r.avatar ? (
+                      <img src={r.avatar} alt={r.name} className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <Icon size={34} className="text-[#c8bcff]" />
+                    )}
+                  </div>
+                </div>
+                <h3 className="mt-4 max-w-full truncate font-serif text-lg text-white">{r.name}</h3>
+                <p className="mt-1 max-w-full truncate text-xs font-semibold uppercase tracking-wider text-white/45">{r.role}</p>
               </motion.div>
             );
           })}
