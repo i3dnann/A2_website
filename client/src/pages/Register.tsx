@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, Mail, User, Loader2, Check } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { launchLoginFireworks } from "../utils/loginFireworks";
 
 export default function Register() {
   const { register, loading } = useAuth();
@@ -30,7 +31,10 @@ export default function Register() {
       return;
     }
     const res = await register(username, email, password);
-    if (res.ok) navigate("/dashboard");
+    if (res.ok) {
+      launchLoginFireworks();
+      window.setTimeout(() => navigate("/dashboard"), 650);
+    }
     else setError(res.error ?? "Something went wrong.");
   };
 

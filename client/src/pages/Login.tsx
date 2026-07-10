@@ -5,6 +5,7 @@ import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { launchLoginFireworks } from "../utils/loginFireworks";
 
 export default function Login() {
   const { login, loginDiscord, loginSteam, loading } = useAuth();
@@ -19,7 +20,10 @@ export default function Login() {
     e.preventDefault();
     setError("");
     const res = await login(email, password);
-    if (res.ok) navigate("/dashboard");
+    if (res.ok) {
+      launchLoginFireworks();
+      window.setTimeout(() => navigate("/dashboard"), 650);
+    }
     else setError(res.error ?? "Something went wrong.");
   };
 

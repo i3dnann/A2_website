@@ -4,6 +4,7 @@ import { Loader2 } from "lucide-react";
 import AuthShell from "../components/AuthShell";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { launchLoginFireworks } from "../utils/loginFireworks";
 
 export default function AuthComplete() {
   const { completeOAuth } = useAuth();
@@ -33,7 +34,10 @@ export default function AuthComplete() {
     }
 
     completeOAuth(token)
-      .then(() => navigate("/dashboard", { replace: true }))
+      .then(() => {
+        launchLoginFireworks();
+        window.setTimeout(() => navigate("/dashboard", { replace: true }), 650);
+      })
       .catch((e) => setError(e?.message || t("Could not finish login. Please try again.")));
   }, [completeOAuth, navigate, params, t]);
 
