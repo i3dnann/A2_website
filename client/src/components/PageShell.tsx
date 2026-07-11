@@ -21,10 +21,12 @@ export default function PageShell({
         className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
-            {t(subtitle)}
-          </p>
-          <h1 className="mt-3 font-serif text-4xl text-white sm:text-5xl lg:text-6xl">
+          {subtitle && (
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">
+              {t(subtitle)}
+            </p>
+          )}
+          <h1 className={`${subtitle ? "mt-3" : ""} font-serif text-4xl text-white sm:text-5xl lg:text-6xl`}>
             {t(title)}
           </h1>
         </div>

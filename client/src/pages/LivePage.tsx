@@ -4,7 +4,6 @@ import { Eye, ExternalLink, Radio } from "lucide-react";
 import { api } from "../api/client";
 import PageShell from "../components/PageShell";
 import { Skeleton } from "../components/Toast";
-import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 
 type Streamer = {
@@ -31,7 +30,6 @@ type Streamer = {
 };
 
 export default function LivePage() {
-  const { content } = useSite();
   const { t } = useLanguage();
   const [streamers, setStreamers] = useState<Streamer[]>([]);
   const [totalStreamViewers, setTotalStreamViewers] = useState(0);
@@ -70,8 +68,8 @@ export default function LivePage() {
   const otherStreamers = streamers.filter((streamer) => !Boolean(Number(streamer.is_featured)));
 
   return (
-    <PageShell subtitle={content.streamsSubtitle} title={content.streamsTitle}>
-      <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-3">
+    <PageShell subtitle="" title="All Live Streams">
+      <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap justify-center gap-3">
         <MetricCard icon={Eye} value={totalStreamViewers} label={t("Total Viewers")} color="text-emerald-400" />
         <MetricCard icon={Radio} value={liveStreamCount} label={t("Live Streams")} color="text-rose-500" />
       </motion.section>
