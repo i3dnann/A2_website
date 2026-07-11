@@ -25,19 +25,27 @@ import FaqPage from "./pages/FaqPage";
 import CharactersPage from "./pages/CharactersPage";
 import TermsPage from "./pages/TermsPage";
 import { AuthProvider } from "./context/AuthContext";
-import { SiteProvider } from "./context/SiteContext";
+import { SiteProvider, useSite } from "./context/SiteContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import { useAuth } from "./context/AuthContext";
+import MaintenancePage from "./pages/MaintenancePage";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { ToastProvider } from "./components/Toast";
 
 function AppShell() {
   const location = useLocation();
   const { dir, isArabic } = useLanguage();
+  const { content } = useSite();
+  const { isAdmin, loading } = useAuth();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [location.pathname]);
 
   const showFooter = !["/login", "/register", "/auth/complete", "/dashboard", "/admin"].includes(location.pathname);
+  const adminEntry = ["/login", "/auth/complete"].includes(location.pathname);
+
+  if (!loading && content.maintenanceMode && !isAdmin && !adminEntry) return <MaintenancePage />;
 
   return (
     <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
@@ -74,7 +82,8 @@ function AppShell() {
 
 export default function App() {
   return (
-    <LanguageProvider>
+    <ThemeProvider>
+     <LanguageProvider>
       <SiteProvider>
         <AuthProvider>
           <ToastProvider>
@@ -84,6 +93,7 @@ export default function App() {
           </ToastProvider>
         </AuthProvider>
       </SiteProvider>
-    </LanguageProvider>
+     </LanguageProvider>
+    </ThemeProvider>
   );
 }

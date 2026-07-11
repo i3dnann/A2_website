@@ -1773,6 +1773,7 @@ function SettingsEditor({ content, update }: any) {
     heroPrimaryButtonLink: content.discordLink,
     heroSecondaryButtonLink: content.fivemLink,
     storeButtonLink: content.storeLink,
+    maintenanceMode: content.maintenanceMode,
   });
   const [saving, setSaving] = useState(false);
   const [uploadingAsset, setUploadingAsset] = useState("");
@@ -1821,6 +1822,7 @@ function SettingsEditor({ content, update }: any) {
         discordLink: settings.heroPrimaryButtonLink || content.discordLink,
         fivemLink: settings.heroSecondaryButtonLink || content.fivemLink,
         storeLink: settings.storeButtonLink || content.storeLink,
+        maintenanceMode: Boolean(settings.maintenanceMode),
       });
       push({ kind: "success", message: "Site settings saved" });
     } catch (e: any) {
@@ -1853,6 +1855,10 @@ function SettingsEditor({ content, update }: any) {
     <EditableSection title="Site Configuration">
       <p className="text-sm text-white/50">These settings are saved through the backend and loaded by the public site.</p>
       <div className="mt-2 grid gap-4 sm:grid-cols-2">
+        <label className="sm:col-span-2 flex items-center justify-between gap-5 rounded-xl border border-orange-400/20 bg-orange-400/5 p-4">
+          <span><span className="block text-sm font-semibold text-white">Maintenance mode</span><span className="mt-1 block text-xs text-white/50">Blocks every public page. Only administrators can log in and browse the website.</span></span>
+          <button type="button" role="switch" aria-checked={Boolean(settings.maintenanceMode)} onClick={() => change("maintenanceMode", !settings.maintenanceMode)} className={`relative h-7 w-12 shrink-0 rounded-full transition ${settings.maintenanceMode ? "bg-orange-500" : "bg-white/15"}`}><span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${settings.maintenanceMode ? "translate-x-6" : "translate-x-1"}`} /></button>
+        </label>
         <EField label="Website Name" value={settings.websiteName || ""} onChange={(v) => change("websiteName", v)} />
         <EField label="Hero Subtitle" value={settings.heroSubtitle || ""} onChange={(v) => change("heroSubtitle", v)} />
         <div>
