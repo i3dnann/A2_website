@@ -125,6 +125,75 @@ export async function getUserById(id) {
   return memoryUser ? publicUser(memoryUser) : null;
 }
 
+export function userIdentity(user, fallback = {}) {
+  const username = user?.username || fallback.username || fallback.author_name || "";
+  const discordUsername = user?.discord_username || fallback.discord_username || "";
+  const steamPersona = user?.steam_persona || fallback.steam_persona || "";
+  const email = user?.email || fallback.email || "";
+  const discordId = user?.discord_id || fallback.discord_id || "";
+  const steamId = user?.steam_id || fallback.steam_id || "";
+  const id = user?.id || fallback.user_id || fallback.id || "";
+  const label = username || discordUsername || steamPersona || email || (discordId ? `Discord ${discordId}` : "") || (steamId ? `Steam ${steamId}` : "") || "Unknown user";
+  const secondary = [
+    discordUsername && discordId ? `Discord: ${discordUsername} (${discordId})` : discordId ? `Discord: ${discordId}` : "",
+    steamPersona && steamId ? `Steam: ${steamPersona} (${steamId})` : steamId ? `Steam: ${steamId}` : "",
+    email ? `Email: ${email}` : ""
+  ].filter(Boolean);
+
+  return {
+    id: id ? String(id) : "",
+    label,
+    username,
+    email,
+    avatar_url: user?.avatar_url || fallback.avatar_url || "",
+    discord_id: discordId,
+    discord_username: discordUsername,
+    steam_id: steamId,
+    steam_persona: steamPersona,
+    roles: user?.roles || [],
+    secondary: secondary.join(" - "),
+    website_id_short: id ? String(id).slice(0, 8) : ""
+  };
+}
+
+export async function findUserByIdentifiers({ user_id = "", id = "", discord_id = "", steam_id = "", email = "", username = "" } = {}) {
+  const directId = user_id || id;
+  if (directId) {
+    const byId = await getUserById(directId);
+    if (byId) return byId;
+  }
+
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  const normalizedUsername = String(username || "").trim().toLowerCase();
+  if (databaseEnabled && (discord_id || steam_id || normalizedEmail || normalizedUsername)) {
+    const rows = await query(
+      `SELECT * FROM web_users
+       WHERE deleted_at IS NULL
+         AND (
+           (:discord_id <> '' AND discord_id = :discord_id) OR
+           (:steam_id <> '' AND steam_id = :steam_id) OR
+           (:email <> '' AND email = :email) OR
+           (:username <> '' AND LOWER(username) = :username)
+         )
+       LIMIT 1`,
+      { discord_id: String(discord_id || ""), steam_id: String(steam_id || ""), email: normalizedEmail, username: normalizedUsername }
+    );
+    if (rows?.[0]) return publicUser(rows[0]);
+  }
+
+  return [...users.values()].map(publicUser).find((user) => (
+    (discord_id && String(user.discord_id || "") === String(discord_id)) ||
+    (steam_id && String(user.steam_id || "") === String(steam_id)) ||
+    (normalizedEmail && String(user.email || "").toLowerCase() === normalizedEmail) ||
+    (normalizedUsername && String(user.username || "").toLowerCase() === normalizedUsername)
+  )) || null;
+}
+
+export async function resolveUserIdentity(reference = {}) {
+  const user = await findUserByIdentifiers(reference).catch(() => null);
+  return userIdentity(user, reference);
+}
+
 async function getInternalUserById(id) {
   if (!id) return null;
   if (databaseEnabled) {

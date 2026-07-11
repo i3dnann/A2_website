@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, getResource, listResource, updateResource } from "../services/repository.js";
+import { resolveUserIdentity } from "../services/users.js";
 
 const router = Router();
 
@@ -13,7 +14,8 @@ function published(row = {}) {
   return !row.deleted_at && !["hidden", "draft", "deleted", "unpublished"].includes(status);
 }
 
-function mapPost(row = {}) {
+async function mapPost(row = {}) {
+  const authorIdentity = row.author_name ? null : await resolveUserIdentity({ user_id: row.created_by || "" });
   return {
     id: String(row.id),
     title: row.title || "Untitled",
@@ -23,7 +25,7 @@ function mapPost(row = {}) {
     video_url: row.video_url || row.video || "",
     category: row.category || "News",
     tags: row.tags || "",
-    author: row.author_name || row.created_by || "Gotham City",
+    author: row.author_name || authorIdentity?.label || "Gotham City",
     pinned: truthy(row.is_featured || row.pinned),
     likes: Number(row.likes || 0),
     dislikes: Number(row.dislikes || 0),
@@ -60,7 +62,7 @@ router.get(
     ]);
     const counts = new Map();
     comments.rows.filter(commentVisible).forEach((comment) => counts.set(String(comment.news_id), (counts.get(String(comment.news_id)) || 0) + 1));
-    const data = news.rows.filter(published).map((row) => ({ ...mapPost(row), comment_count: counts.get(String(row.id)) || 0 }));
+    const data = await Promise.all(news.rows.filter(published).map(async (row) => ({ ...(await mapPost(row)), comment_count: counts.get(String(row.id)) || 0 })));
     res.json({ data });
   })
 );
@@ -72,7 +74,7 @@ router.get(
     if (!row || !published(row)) return res.status(404).json({ error: "news_not_found", message: "News post not found." });
     const comments = await listResource("newsComments", { q: req.params.id, limit: 100 });
     res.json({
-      post: mapPost(row),
+      post: await mapPost(row),
       comments: comments.rows.filter((comment) => String(comment.news_id) === String(row.id) && commentVisible(comment)).map(mapComment)
     });
   })

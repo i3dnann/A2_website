@@ -384,6 +384,14 @@ function formatAction(a: string) {
   return a.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function identityLabel(row: any, fallback = "Unknown user") {
+  return row?.user_identity?.label || row?.author_identity?.label || row?.admin_identity?.label || row?.user_label || row?.author_label || row?.admin_label || row?.username || row?.author_name || fallback;
+}
+
+function identitySecondary(row: any) {
+  return row?.user_identity?.secondary || row?.author_identity?.secondary || row?.admin_identity?.secondary || row?.user_secondary || "";
+}
+
 /* ─────────────────────────────────────────────────────────────── */
 /* COMMENTS ADMIN */
 /* ─────────────────────────────────────────────────────────────── */
@@ -496,7 +504,7 @@ function TicketsAdmin() {
   const addParticipant = async () => {
     if (!selectedId || !participant.trim()) return;
     const value = participant.trim();
-    const body = /^\d{15,22}$/.test(value) ? { discord_id: value } : { user_id: value };
+    const body = /^\d{15,22}$/.test(value) ? { discord_id: value } : { lookup: value };
     setSending(true);
     try {
       await api(`/api/admin/tickets/${selectedId}/participants`, { method: "POST", body });
@@ -559,6 +567,7 @@ function TicketsAdmin() {
                   <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wider text-white/55">{ticket.status || "Open"}</span>
                 </div>
                 <p className="mt-2 line-clamp-1 text-sm font-semibold text-white">{ticket.subject}</p>
+                <p className="mt-1 line-clamp-1 text-xs text-white/55">{identityLabel(ticket)}</p>
                 <p className="mt-1 line-clamp-1 text-xs text-white/40">{ticket.category} · {ticket.message_preview || "No preview"}</p>
               </button>
             ))}
@@ -571,6 +580,8 @@ function TicketsAdmin() {
                   <div>
                     <p className="text-[11px] font-mono text-white/35">{detail.ticket.ticket_number || detail.ticket.id}</p>
                     <h3 className="mt-1 font-serif text-xl text-white">{detail.ticket.subject}</h3>
+                    <p className="mt-2 text-sm font-semibold text-white/80">{identityLabel(detail.ticket)}</p>
+                    {identitySecondary(detail.ticket) && <p className="mt-0.5 text-xs text-white/40">{identitySecondary(detail.ticket)}</p>}
                     <p className="mt-1 text-xs text-white/45">{detail.ticket.category} · {detail.ticket.status}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -590,7 +601,7 @@ function TicketsAdmin() {
                   <div className="flex max-h-[460px] flex-col gap-3 overflow-auto">
                     {(detail.messages || []).map((message: any) => (
                       <div key={message.id} className={`max-w-[88%] rounded-2xl border p-3 ${message.author_type === "admin" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-white/[0.03]"}`}>
-                        <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "admin" ? "Admin" : "Player"}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "admin" ? "Admin" : "Player"} - {identityLabel(message)}</p>
                         <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
                       </div>
                     ))}
@@ -601,14 +612,14 @@ function TicketsAdmin() {
                       <div className="mt-2 flex flex-col gap-2">
                         {(detail.participants || []).map((p: any) => (
                           <div key={p.id} className="flex items-center justify-between gap-2 rounded-lg bg-black/25 px-2 py-1.5">
-                            <span className="truncate text-xs text-white/65">{p.user_id || p.discord_id || p.steam_id}</span>
+                            <span className="truncate text-xs text-white/65" title={identitySecondary(p)}>{identityLabel(p)}</span>
                             <button onClick={() => removeParticipant(p.id)} className="text-red-300 hover:text-red-200"><X size={12} /></button>
                           </div>
                         ))}
                         {(detail.participants || []).length === 0 && <p className="text-xs text-white/35">Only the owner can see it.</p>}
                       </div>
                       <div className="mt-3 flex gap-2">
-                        <input value={participant} onChange={(e) => setParticipant(e.target.value)} placeholder="User/Discord ID" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-orange-400/50" />
+                        <input value={participant} onChange={(e) => setParticipant(e.target.value)} placeholder="Username / Discord / Steam" className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-xs text-white outline-none focus:border-orange-400/50" />
                         <button onClick={addParticipant} disabled={sending || !participant.trim()} className="rounded-lg bg-orange-500/80 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">Add</button>
                       </div>
                     </div>
@@ -700,7 +711,7 @@ function CommentsAdmin() {
                   </div>
                 </div>
                 <p className="mt-2 text-sm text-white/80 whitespace-pre-wrap">{c.body}</p>
-                <p className="mt-1 text-[11px] text-white/35">User ID: {c.user_id}</p>
+                <p className="mt-1 text-[11px] text-white/35">User: {identityLabel(c)}{identitySecondary(c) ? ` - ${identitySecondary(c)}` : ""}</p>
               </div>
             ))}
           </div>
@@ -1038,7 +1049,7 @@ function ApplicationsAdmin() {
                 className={`rounded-xl border p-4 text-left transition ${selectedId === application.id ? "border-orange-400/40 bg-orange-500/10" : "border-white/10 bg-black/20 hover:border-white/20"}`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="line-clamp-1 text-xs font-mono text-white/35">{application.user_id}</span>
+                  <span className="line-clamp-1 text-xs font-semibold text-white/55">{identityLabel(application)}</span>
                   <span className={`rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-wider ${adminApplicationStatusClass(application.status)}`}>
                     {application.status || "Pending"}
                   </span>
@@ -1059,8 +1070,9 @@ function ApplicationsAdmin() {
                   <div>
                     <p className="text-[11px] uppercase tracking-wider text-white/35">{detail.job?.department || detail.application.job_id}</p>
                     <h3 className="mt-1 font-serif text-xl text-white">{detail.job?.title || detail.application.job_id || "Application"}</h3>
+                    <p className="mt-1 text-sm font-semibold text-white/75">{identityLabel(detail.application)}</p>
                     <p className="mt-1 text-xs text-white/45">
-                      User {detail.application.user_id} - {detail.application.discord_id || "No Discord"} - {detail.application.steam_id || "No Steam"}
+                      {identitySecondary(detail.application) || `${detail.application.discord_id || "No Discord"} - ${detail.application.steam_id || "No Steam"}`}
                     </p>
                   </div>
                   <span className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-wider ${adminApplicationStatusClass(detail.application.status)}`}>

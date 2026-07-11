@@ -7,7 +7,7 @@ import { upload } from "../middleware/security.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, deleteResource, getResource, getSettings, listResource, updateResource, updateSettings } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
-import { deactivateWebUser, listWebUsers, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
+import { deactivateWebUser, listWebUsers, resolveUserIdentity, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
 import { publicFileUrl } from "../utils/sanitize.js";
 import { sendWebhook } from "../services/webhook.js";
 import { getFiveMLiveState } from "../services/liveService.js";
@@ -48,8 +48,8 @@ router.get(
         { label: "Roster members", value: team.total },
         { label: "News articles", value: news.total }
       ],
-      recentTickets: tickets.rows,
-      recentApplications: applications.rows,
+      recentTickets: await Promise.all(tickets.rows.map(enrichOwner)),
+      recentApplications: await Promise.all(applications.rows.map(enrichOwner)),
       recentLogs: audit.rows,
       live
     });
@@ -244,6 +244,44 @@ function commentStatus(row) {
   return String(row?.status || (Number(row?.approved || 0) === 1 ? "approved" : "pending")).toLowerCase();
 }
 
+async function enrichOwner(row) {
+  const identity = await resolveUserIdentity({
+    user_id: row?.user_id || row?.created_by || "",
+    discord_id: row?.discord_id || "",
+    steam_id: row?.steam_id || "",
+    author_name: row?.author_name || ""
+  });
+  return { ...row, user_identity: identity, user_label: identity.label, user_secondary: identity.secondary };
+}
+
+async function enrichStaffField(row, field, outputPrefix) {
+  const identity = await resolveUserIdentity({ user_id: row?.[field] || "" });
+  return {
+    ...row,
+    [`${outputPrefix}_identity`]: identity,
+    [`${outputPrefix}_label`]: identity.label
+  };
+}
+
+async function enrichAdminResourceRows(resource, rows = []) {
+  if (["tickets", "careerApplications", "newsComments"].includes(resource)) {
+    return Promise.all(rows.map(enrichOwner));
+  }
+  if (resource === "ticketMessages") {
+    return Promise.all(rows.map(async (row) => enrichStaffField(row, "author_id", "author")));
+  }
+  if (resource === "ticketParticipants") {
+    return Promise.all(rows.map(enrichOwner));
+  }
+  if (resource === "ticketNotes") {
+    return Promise.all(rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")));
+  }
+  if (resource === "careerApplicationNotes") {
+    return Promise.all(rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")));
+  }
+  return rows;
+}
+
 router.get("/comments", requirePermission("manage_news"), asyncHandler(async (req, res) => {
   const status = String(req.query.status || "pending").toLowerCase();
   const { rows } = await listResource("newsComments", { q: req.query.q || "", limit: 200 });
@@ -253,7 +291,7 @@ router.get("/comments", requirePermission("manage_news"), asyncHandler(async (re
       ...comment,
       approved: commentStatus(comment) === "approved" ? 1 : commentStatus(comment) === "rejected" ? -1 : 0
     }));
-  res.json({ data: filtered });
+  res.json({ data: await Promise.all(filtered.map(enrichOwner)) });
 }));
 
 router.post("/comments/:id/approve", requirePermission("manage_news"), asyncHandler(async (req, res) => {
@@ -332,7 +370,7 @@ router.post(
     await sendWebhook("tickets_closed", {
       title: `Ticket closed: ${ticket.ticket_number || ticket.id}`,
       Ticket: ticket.ticket_number || ticket.id,
-      OpenedBy: ticket.user_id,
+      OpenedBy: (await enrichOwner(ticket)).user_label,
       ClosedBy: req.user.username,
       Category: ticket.category,
       Subject: ticket.subject,
@@ -358,11 +396,12 @@ router.get(
       listResource("careerApplicationNotes", { q: application.id, limit: 100 }),
       getResource("careerJobs", application.job_id)
     ]);
+    const enrichedNotes = await Promise.all(notes.rows.filter((note) => String(note.application_id) === String(application.id)).map((note) => enrichStaffField(note, "admin_id", "admin")));
     res.json({
-      application,
+      application: await enrichOwner(application),
       job,
       answers: answers.rows.filter((answer) => String(answer.application_id) === String(application.id)),
-      notes: notes.rows.filter((note) => String(note.application_id) === String(application.id))
+      notes: enrichedNotes
     });
   })
 );
@@ -448,7 +487,7 @@ router.get(
     if (!config) return res.status(404).json({ error: "resource_not_found" });
     if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
     const { rows, total } = await listResource(req.params.resource, { q: req.query.q || "", limit: req.query.limit || 25, offset: req.query.offset || 0 });
-    res.json({ rows, total, config, resources: RESOURCE_DEFINITIONS });
+    res.json({ rows: await enrichAdminResourceRows(req.params.resource, rows), total, config, resources: RESOURCE_DEFINITIONS });
   })
 );
 

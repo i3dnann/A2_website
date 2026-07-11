@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, deleteResource, getResource, listResource, updateResource } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
 import { sendWebhook } from "../services/webhook.js";
-import { getUserById } from "../services/users.js";
+import { findUserByIdentifiers, getUserById, resolveUserIdentity, userIdentity } from "../services/users.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -32,11 +32,58 @@ function snapshot(ticket, player) {
   };
 }
 
+async function enrichTicket(ticket) {
+  const identity = await resolveUserIdentity({
+    user_id: ticket?.user_id || ticket?.created_by || "",
+    discord_id: ticket?.discord_id || "",
+    steam_id: ticket?.steam_id || ""
+  });
+  return {
+    ...ticket,
+    user_identity: identity,
+    user_label: identity.label,
+    user_secondary: identity.secondary
+  };
+}
+
+async function enrichMessage(message) {
+  const identity = await resolveUserIdentity({ user_id: message?.author_id || "" });
+  return {
+    ...message,
+    author_identity: identity,
+    author_label: identity.label
+  };
+}
+
+async function enrichParticipant(participant) {
+  const identity = await resolveUserIdentity({
+    user_id: participant?.user_id || "",
+    discord_id: participant?.discord_id || "",
+    steam_id: participant?.steam_id || ""
+  });
+  return {
+    ...participant,
+    user_identity: identity,
+    user_label: identity.label,
+    user_secondary: identity.secondary
+  };
+}
+
+async function enrichNote(note) {
+  const identity = await resolveUserIdentity({ user_id: note?.admin_id || note?.created_by || "" });
+  return {
+    ...note,
+    admin_identity: identity,
+    admin_label: identity.label
+  };
+}
+
 router.get("/tickets", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
   const status = ["open", "closed", "all"].includes(req.query.status) ? req.query.status : "open";
   const { rows } = await listResource("tickets", { q: req.query.q || "", limit: 100 });
   const filtered = rows.filter((ticket) => status === "all" || (status === "closed" ? closed(ticket) : !closed(ticket)));
-  res.json({ rows: filtered, total: filtered.length, status });
+  const enriched = await Promise.all(filtered.map(enrichTicket));
+  res.json({ rows: enriched, total: enriched.length, status });
 }));
 
 router.get("/tickets/:id", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
@@ -48,13 +95,18 @@ router.get("/tickets/:id", requirePermission("manage_tickets"), asyncHandler(asy
     listResource("ticketNotes", { q: ticket.id, limit: 100 }),
     listResource("ticketParticipants", { q: ticket.id, limit: 100 }).catch(() => ({ rows: [] }))
   ]);
+  const enrichedMessages = await Promise.all(messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)).map(enrichMessage));
+  const enrichedNotes = await Promise.all(notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id)).map(enrichNote));
+  const enrichedParticipants = await Promise.all(participants.rows
+    .filter((participant) => String(participant.ticket_id) === String(ticket.id) && participant.is_active !== false && participant.is_active !== 0)
+    .map(enrichParticipant));
   res.json({
-    ticket,
+    ticket: await enrichTicket(ticket),
     player,
-    identifiers: snapshot(ticket, player),
-    messages: messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)),
-    notes: notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id)),
-    participants: participants.rows.filter((participant) => String(participant.ticket_id) === String(ticket.id) && participant.is_active !== false && participant.is_active !== 0)
+    identifiers: { ...snapshot(ticket, player), display: userIdentity(player, snapshot(ticket, player)) },
+    messages: enrichedMessages,
+    notes: enrichedNotes,
+    participants: enrichedParticipants
   });
 }));
 
@@ -93,18 +145,20 @@ router.post("/tickets/:id/participants", requirePermission("manage_tickets"), as
   const userId = String(req.body?.user_id || "").trim();
   const discordId = String(req.body?.discord_id || "").trim();
   const steamId = String(req.body?.steam_id || "").trim();
-  if (!userId && !discordId && !steamId) return res.status(422).json({ error: "participant_identifier_required", message: "Enter a user ID, Discord ID, or Steam ID." });
+  const lookup = String(req.body?.lookup || "").trim();
+  if (!userId && !discordId && !steamId && !lookup) return res.status(422).json({ error: "participant_identifier_required", message: "Enter a username, user ID, Discord ID, or Steam ID." });
+  const matchedUser = lookup ? await findUserByIdentifiers({ user_id: lookup, discord_id: lookup, steam_id: lookup, email: lookup, username: lookup }) : null;
   const participant = await createResource("ticketParticipants", {
     ticket_id: ticket.id,
-    user_id: userId,
-    discord_id: discordId,
-    steam_id: steamId,
+    user_id: userId || matchedUser?.id || "",
+    discord_id: discordId || matchedUser?.discord_id || "",
+    steam_id: steamId || matchedUser?.steam_id || "",
     added_by: req.user.id,
     role_name: req.body?.role_name || "Participant",
     is_active: true
   }, req.user);
   await auditAction({ req, action: "add_ticket_participant", targetType: "tickets", targetId: ticket.id, after: participant, reason: "ticket participant added", webhookCategory: "admin" });
-  res.status(201).json({ participant });
+  res.status(201).json({ participant: await enrichParticipant(participant) });
 }));
 
 router.delete("/tickets/:id/participants/:participantId", requirePermission("manage_tickets"), asyncHandler(async (req, res) => {
@@ -150,7 +204,7 @@ router.post("/tickets/:id/close", requirePermission("close_tickets"), asyncHandl
   await sendWebhook("tickets_closed", {
     title: `Ticket closed: ${ticket.ticket_number || ticket.id}`,
     Ticket: ticket.ticket_number || ticket.id,
-    OpenedBy: ticket.user_id,
+    OpenedBy: (await enrichTicket(ticket)).user_label,
     ClosedBy: req.user.username,
     Category: ticket.category,
     Subject: ticket.subject,
