@@ -19,7 +19,8 @@ export type RosterItem = {
   xUrl?: string;
 };
 export type JourneyItem = { year: string; title: string; desc: string };
-export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string; link?: string };
+export type FamousLink = { label: string; url: string };
+export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string; link?: string; links?: FamousLink[] };
 export type NewsItem = { icon: string; date: string; title: string; excerpt: string; id?: string };
 export type CareerItem = { role: string; type: string; dept: string; id?: string };
 export type FaqItem = { q: string; a: string };
@@ -152,18 +153,27 @@ type SiteContextType = {
 
 const SiteContext = createContext<SiteContextType | null>(null);
 
-function famousLinkFromJson(value: any): string {
-  if (!value) return "";
+function famousLinksFromJson(value: any): FamousLink[] {
+  if (!value) return [];
   if (typeof value === "string") {
     try {
-      return famousLinkFromJson(JSON.parse(value));
+      return famousLinksFromJson(JSON.parse(value));
     } catch {
-      return value;
+      return value.trim() ? [{ label: "Open profile", url: value.trim() }] : [];
     }
   }
-  if (Array.isArray(value)) return famousLinkFromJson(value[0]);
-  if (typeof value === "object") return String(value.link || value.url || value.href || value.website || value.profile || "");
-  return "";
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => famousLinksFromJson(item)).filter((link) => link.url);
+  }
+  if (typeof value === "object") {
+    return Object.entries(value)
+      .map(([key, raw]) => ({
+        label: key === "link" || key === "url" || key === "href" ? "Open profile" : key.replace(/_/g, " "),
+        url: String(raw || "").trim()
+      }))
+      .filter((link) => link.url);
+  }
+  return [];
 }
 
 export function SiteProvider({ children }: { children: ReactNode }) {
@@ -200,7 +210,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           tag: character.gang_business || character.role_name || "Featured",
           image: character.picture_url || "",
           bio: character.bio || character.description || "",
-          link: famousLinkFromJson(character.social_links_json),
+          links: famousLinksFromJson(character.social_links_json),
         }));
         const news = (homeResult.news || []).map((post) => ({
           id: String(post.id || ""),
@@ -238,7 +248,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           storeLink: settings.storeButtonLink || prev.storeLink,
           maintenanceMode: Boolean(settings.maintenanceMode),
           roster: team,
-          famousCharacters: famous,
+          famousCharacters: famous.length ? famous : merged.famousCharacters,
           news,
           journey: journey.length ? journey : merged.journey,
           careers,

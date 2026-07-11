@@ -1262,23 +1262,31 @@ function isUploadableUrlField(field: string) {
   return ["image", "picture", "photo", "avatar", "banner", "logo", "favicon", "video", "audio", "file", "document"].some((token) => field.includes(token));
 }
 
-function linkFromSocialJson(value: any) {
-  if (!value) return "";
+function linksObjectFromSocialJson(value: any): Record<string, string> {
+  if (!value) return {};
   if (typeof value === "string") {
     try {
-      return linkFromSocialJson(JSON.parse(value));
+      return linksObjectFromSocialJson(JSON.parse(value));
     } catch {
-      return value;
+      return value.trim() ? { profile: value.trim() } : {};
     }
   }
-  if (Array.isArray(value)) return linkFromSocialJson(value[0]);
-  if (typeof value === "object") return String(value.link || value.url || value.href || value.website || value.profile || "");
-  return "";
+  if (Array.isArray(value)) {
+    return value.reduce((acc, item) => ({ ...acc, ...linksObjectFromSocialJson(item) }), {});
+  }
+  if (typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .map(([key, raw]) => [key === "link" || key === "url" || key === "href" ? "profile" : key, String(raw || "").trim()])
+        .filter(([, url]) => url)
+    );
+  }
+  return {};
 }
 
-function socialJsonFromLink(value: string) {
-  const link = value.trim();
-  return link ? JSON.stringify({ link }) : "";
+function socialJsonFromLinks(value: Record<string, string>) {
+  const clean = Object.fromEntries(Object.entries(value).map(([key, url]) => [key, url.trim()]).filter(([, url]) => url));
+  return Object.keys(clean).length ? JSON.stringify(clean) : "";
 }
 
 function FieldEditor({ field, value, onChange }: { field: string; value: any; onChange: (value: any) => void }) {
@@ -1309,7 +1317,25 @@ function FieldEditor({ field, value, onChange }: { field: string; value: any; on
     return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{t(label)}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
   }
   if (field === "social_links_json") {
-    return <div><label className={stClass}>{t("Profile link")}</label><input className={inpClass} type="text" value={linkFromSocialJson(value)} onChange={(e) => onChange(socialJsonFromLink(e.target.value))} placeholder="https://..." /></div>;
+    const links = linksObjectFromSocialJson(value);
+    const setLink = (key: string, url: string) => onChange(socialJsonFromLinks({ ...links, [key]: url }));
+    return (
+      <div className="md:col-span-2">
+        <label className={stClass}>{t("Character links")}</label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {[
+            ["profile", "Profile link"],
+            ["discord", "Discord link"],
+            ["twitch", "Twitch link"],
+            ["youtube", "YouTube link"],
+            ["instagram", "Instagram link"],
+            ["x", "X link"],
+          ].map(([key, linkLabel]) => (
+            <input key={key} className={inpClass} type="text" value={links[key] || ""} onChange={(e) => setLink(key, e.target.value)} placeholder={t(linkLabel)} />
+          ))}
+        </div>
+      </div>
+    );
   }
   const uploadable = isUploadableUrlField(field);
   return (
@@ -1789,9 +1815,10 @@ function JourneyEditor({ content, update }: any) {
             </div>
           </div>
           <div className="sm:col-span-2"><label className={stClass}>Profile link</label><input className={inpClass} value={c.link || ""} onChange={(e) => setCharacter(i, { link: e.target.value })} placeholder="https://..." /></div>
+          <div className="sm:col-span-4"><label className={stClass}>Character bio</label><textarea className={`${inpClass} resize-none`} rows={4} value={c.bio || ""} onChange={(e) => setCharacter(i, { bio: e.target.value })} placeholder="Write the full character story shown in the popup." /></div>
         </div>
       ))}
-      <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising", image: "", link: "" }] })}
+      <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising", image: "", link: "", bio: "" }] })}
         className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Character</button>
     </EditableSection>
   </div>;

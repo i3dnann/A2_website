@@ -9,7 +9,8 @@ const state = {
   settingsLoaded: false,
   secretSettingsLoaded: false,
   resources: new Map(Object.entries(SEED_DATA).map(([key, rows]) => [key, rows.map((row) => addTimestamps(row))])),
-  tableColumns: new Map()
+  tableColumns: new Map(),
+  famousSchemaChecked: false
 };
 
 function safeTableName(table) {
@@ -20,12 +21,70 @@ function safeTableName(table) {
 async function getTableColumns(table) {
   if (!databaseEnabled) return null;
   const safeTable = safeTableName(table);
+  if (safeTable === "famous_characters") await ensureFamousCharactersSchema();
   if (state.tableColumns.has(safeTable)) return state.tableColumns.get(safeTable);
   const rows = await query(`SHOW COLUMNS FROM ${safeTable}`);
   if (!rows) return null;
   const columns = new Set(rows.map((row) => row.Field));
   state.tableColumns.set(safeTable, columns);
   return columns;
+}
+
+async function ensureFamousCharactersSchema() {
+  if (!databaseEnabled || state.famousSchemaChecked) return;
+  state.famousSchemaChecked = true;
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS famous_characters (
+      id VARCHAR(64) PRIMARY KEY,
+      character_name VARCHAR(160) NOT NULL,
+      header VARCHAR(190),
+      picture_url TEXT,
+      bio TEXT,
+      description MEDIUMTEXT,
+      role_name VARCHAR(120),
+      gang_business VARCHAR(160),
+      social_links_json JSON,
+      is_featured TINYINT(1) DEFAULT 0,
+      sort_order INT DEFAULT 9999,
+      is_visible TINYINT(1) DEFAULT 1,
+      created_by VARCHAR(64),
+      updated_by VARCHAR(64),
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      deleted_at DATETIME NULL,
+      INDEX idx_famous_name (character_name),
+      INDEX idx_famous_featured (is_featured),
+      INDEX idx_famous_visible (is_visible),
+      INDEX idx_famous_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+
+  const rows = await query("SHOW COLUMNS FROM famous_characters");
+  if (!rows) return;
+  const columns = new Map(rows.map((row) => [row.Field, row]));
+  const addColumn = async (name, definition) => {
+    if (!columns.has(name)) await query(`ALTER TABLE famous_characters ADD COLUMN ${name} ${definition}`);
+  };
+
+  const idType = String(columns.get("id")?.Type || "").toLowerCase();
+  if (idType && !idType.includes("varchar")) await query("ALTER TABLE famous_characters MODIFY COLUMN id VARCHAR(64) NOT NULL");
+  await addColumn("character_name", "VARCHAR(160) NOT NULL DEFAULT 'Character'");
+  await addColumn("header", "VARCHAR(190) NULL");
+  await addColumn("picture_url", "TEXT NULL");
+  await addColumn("bio", "TEXT NULL");
+  await addColumn("description", "MEDIUMTEXT NULL");
+  await addColumn("role_name", "VARCHAR(120) NULL");
+  await addColumn("gang_business", "VARCHAR(160) NULL");
+  await addColumn("social_links_json", "JSON NULL");
+  await addColumn("is_featured", "TINYINT(1) DEFAULT 0");
+  await addColumn("sort_order", "INT DEFAULT 9999");
+  await addColumn("is_visible", "TINYINT(1) DEFAULT 1");
+  await addColumn("created_by", "VARCHAR(64) NULL");
+  await addColumn("updated_by", "VARCHAR(64) NULL");
+  await addColumn("created_at", "DATETIME DEFAULT CURRENT_TIMESTAMP");
+  await addColumn("updated_at", "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+  await addColumn("deleted_at", "DATETIME NULL");
 }
 
 async function filterExistingColumns(table, data) {
