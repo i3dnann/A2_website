@@ -1,4 +1,6 @@
+import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
+import { pipeline } from "node:stream/promises";
 import { v2 as cloudinary } from "cloudinary";
 import { env } from "../config/env.js";
 
@@ -22,12 +24,27 @@ function cloudinaryError(error) {
   });
 }
 
+async function uploadStream(filePath, options) {
+  let result;
+  const uploadPromise = new Promise((resolve, reject) => {
+    const cloudinaryStream = cloudinary.uploader.upload_stream(options, (error, uploaded) => {
+      if (error) return reject(error);
+      result = uploaded;
+      return resolve(uploaded);
+    });
+    pipeline(createReadStream(filePath), cloudinaryStream).catch(reject);
+  });
+
+  await uploadPromise;
+  return result;
+}
+
 export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
   if (!file?.path) throw Object.assign(new Error("file_required"), { status: 422 });
 
   try {
     if (!cloudinaryConfigured()) throw Object.assign(new Error("cloudinary_not_configured"), { status: 503 });
-    const result = await cloudinary.uploader.upload(file.path, {
+    const result = await uploadStream(file.path, {
       folder,
       resource_type: "auto",
       use_filename: true,
