@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 
-const RIPPLE_COUNT = 9;
+const RIPPLE_COUNT = 4;
 
 export default function AnimatedBackground() {
   const reducedMotion = useReducedMotion();
@@ -17,13 +17,13 @@ export default function AnimatedBackground() {
 
   const staticMode = lightweight || reducedMotion;
   const ripples = useMemo(() => {
-    const count = lightweight ? 6 : RIPPLE_COUNT;
+    const count = lightweight ? 2 : RIPPLE_COUNT;
     return Array.from({ length: count }).map((_, index) => ({
       id: index,
-      size: 28 + index * (lightweight ? 15 : 13),
-      delay: index * 0.8,
-      opacity: Math.max(0.05, 0.2 - index * 0.014),
-      duration: lightweight ? 15 : 12,
+      size: 34 + index * 20,
+      delay: index * 1.4,
+      opacity: Math.max(0.04, 0.14 - index * 0.02),
+      duration: 16,
     }));
   }, [lightweight]);
 
