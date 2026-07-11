@@ -133,6 +133,12 @@ function normalizeDbRow(row) {
   };
 }
 
+function withoutLegacyManagedContent(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const { famousCharacters: _legacyFamousCharacters, ...content } = value;
+  return content;
+}
+
 function resourceSearchWhere(config, q, publicOnly, columns = null) {
   const clauses = hasColumn(columns, "deleted_at") ? ["deleted_at IS NULL"] : ["1 = 1"];
   const params = {};
@@ -187,7 +193,8 @@ export async function getSettings({ includeSecrets = false } = {}) {
       const dbSettings = {};
       rows.forEach((row) => {
         if (row.is_secret && !includeSecrets) return;
-        dbSettings[row.setting_key] = safeJson(row.setting_value, row.setting_value);
+        const value = safeJson(row.setting_value, row.setting_value);
+        dbSettings[row.setting_key] = row.setting_key === "siteContent" ? withoutLegacyManagedContent(value) : value;
       });
       state.settings = { ...state.settings, ...dbSettings };
       state.settingsLoaded = true;
@@ -204,6 +211,7 @@ export async function getSettings({ includeSecrets = false } = {}) {
 export async function updateSettings(patch, actor, { secretKeys = [] } = {}) {
   const before = await getSettings({ includeSecrets: true });
   const safePatch = { ...(patch || {}) };
+  if ("siteContent" in safePatch) safePatch.siteContent = withoutLegacyManagedContent(safePatch.siteContent);
   state.settings = {
     ...state.settings,
     ...safePatch,

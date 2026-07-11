@@ -18,8 +18,6 @@ import {
   Clock,
   Menu,
   Heart,
-  Package,
-  ArrowUpRight,
   Briefcase,
   Search,
   Send,
@@ -386,7 +384,7 @@ function Characters({
   onLinkSteam: () => void;
   linking: boolean;
 }) {
-  const { t, isArabic } = useLanguage();
+  const { t } = useLanguage();
   if (!steamLinked) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-20 text-center">
@@ -450,16 +448,6 @@ function Characters({
           </motion.div>
         ))}
       </div>
-
-      <Link
-        to="/characters"
-        className="group flex items-center justify-between rounded-2xl border border-dashed border-orange-400/25 bg-orange-500/5 px-6 py-4 text-sm font-medium text-orange-200 transition hover:border-orange-400/50 hover:bg-orange-500/10"
-      >
-        <span className="flex items-center gap-2">
-          <Package size={16} /> {t("View full health, armor & inventory details")}
-        </span>
-        <ArrowUpRight size={16} className={`transition-transform group-hover:-translate-y-1 ${isArabic ? "rotate-[-90deg] group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
-      </Link>
     </div>
   );
 }

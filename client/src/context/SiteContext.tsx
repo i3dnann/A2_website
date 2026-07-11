@@ -248,7 +248,10 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           storeLink: settings.storeButtonLink || prev.storeLink,
           maintenanceMode: Boolean(settings.maintenanceMode),
           roster: team,
-          famousCharacters: famous.length ? famous : merged.famousCharacters,
+          // The database-backed Famous Characters manager is the source of truth.
+          // Keeping the legacy siteContent value when the table is empty caused an
+          // old placeholder character to remain visible after all records were removed.
+          famousCharacters: famous,
           news,
           journey: journey.length ? journey : merged.journey,
           careers,

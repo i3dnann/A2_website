@@ -90,12 +90,6 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link
-                  to="/characters"
-                  className={`hidden items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white sm:inline-flex ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
-                >
-                  {t("Characters")}
-                </Link>
-                <Link
                   to="/dashboard"
                   className={`inline-flex items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
                 >

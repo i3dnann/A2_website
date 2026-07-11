@@ -128,7 +128,8 @@ export default function AdminPanel() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api("/api/admin/settings", { method: "PATCH", body: { siteContent: content } });
+      const { famousCharacters: _legacyFamousCharacters, ...siteContent } = content;
+      await api("/api/admin/settings", { method: "PATCH", body: { siteContent } });
       push({ kind: "success", message: "All changes saved to the website" });
     } catch (error: any) {
       push({ kind: "error", message: error?.message || "Failed to save website changes" });
