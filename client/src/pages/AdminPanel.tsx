@@ -1235,16 +1235,78 @@ function ResourceAdmin({ title, resource, fields, blank }: { title: string; reso
   );
 }
 
+const externalUrlFields = new Set([
+  "discord_url",
+  "twitch_url",
+  "kick_url",
+  "youtube_url",
+  "tiktok_url",
+  "instagram_url",
+  "x_url",
+  "website_url",
+  "store_url",
+  "social_url",
+]);
+
+function uploadAcceptForField(field: string) {
+  if (field.includes("video")) return "video/mp4,video/webm,video/quicktime,video/x-m4v";
+  if (field.includes("audio") || field.includes("sound")) return "audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/aac,audio/flac";
+  if (field.includes("file") || field.includes("document")) return "image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm,video/quicktime,application/pdf";
+  if (field.includes("favicon")) return "image/png,image/jpeg,image/webp,image/gif,image/avif,image/x-icon";
+  return "image/png,image/jpeg,image/webp,image/gif,image/avif";
+}
+
+function isUploadableUrlField(field: string) {
+  if (externalUrlFields.has(field)) return false;
+  if (!field.includes("url") && !field.toLowerCase().includes("image")) return false;
+  return ["image", "picture", "photo", "avatar", "banner", "logo", "favicon", "video", "audio", "file", "document"].some((token) => field.includes(token));
+}
+
 function FieldEditor({ field, value, onChange }: { field: string; value: any; onChange: (value: any) => void }) {
   const { t } = useLanguage();
+  const { push } = useToast();
+  const [uploading, setUploading] = useState(false);
   const label = field.replace(/_/g, " ");
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await upload("/api/admin/uploads", body);
+      onChange(result.data?.url || "");
+      push({ kind: "success", message: `${t(label)} uploaded` });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || `Failed to upload ${label}` });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (field.startsWith("is_")) {
     return <label className="flex items-center gap-2 text-sm text-white/70"><input type="checkbox" checked={flagOn(value)} onChange={(e) => onChange(e.target.checked)} className="accent-orange-500" /> {t(label)}</label>;
   }
   if (field.includes("bio") || field.includes("description") || field === "content") {
     return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{t(label)}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
   }
-  return <div><label className={stClass}>{t(label)}</label><input className={inpClass} type={field === "sort_order" ? "number" : field.includes("date") ? "date" : "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+  const uploadable = isUploadableUrlField(field);
+  return (
+    <div className={uploadable ? "md:col-span-2" : ""}>
+      <label className={stClass}>{t(label)}</label>
+      <input className={inpClass} type={field === "sort_order" ? "number" : field.includes("date") ? "date" : "text"} value={value || ""} onChange={(e) => onChange(e.target.value)} />
+      {uploadable && (
+        <div className="mt-2">
+          <FileUpload
+            label={`Upload ${t(label)}`}
+            accept={uploadAcceptForField(field)}
+            uploading={uploading}
+            value={value || ""}
+            onFile={handleUpload}
+          />
+        </div>
+      )}
+    </div>
+  );
 }
 
 function CareersAdmin() {
