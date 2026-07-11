@@ -60,6 +60,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 type ProviderRow = {
   provider: string;
   provider_user_id?: string;
+  avatar_url?: string;
 };
 
 type BackendUser = Partial<AppUser> & {
@@ -91,6 +92,7 @@ function formatJoinDate(value?: string | null) {
 
 function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser {
   const providerNames = new Set(providers.map((provider) => provider.provider));
+  const discordAvatar = providers.find((provider) => provider.provider === "discord")?.avatar_url || "";
   return {
     id: raw.id,
     username: raw.username || raw.email || "Gotham Player",
@@ -101,7 +103,7 @@ function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser
     banned: Boolean(raw.banned || (raw.account_status && raw.account_status !== "active")),
     role: roleFromBackend(raw),
     roles: raw.roles || [roleFromBackend(raw)],
-    avatarUrl: raw.avatarUrl || raw.avatar_url || "",
+    avatarUrl: raw.avatarUrl || raw.avatar_url || discordAvatar,
   };
 }
 

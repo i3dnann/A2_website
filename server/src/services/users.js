@@ -239,7 +239,7 @@ async function getInternalUserByProvider(provider, providerUserId) {
 
 export async function listProvidersForUser(userId) {
   if (databaseEnabled) {
-    const rows = await query("SELECT provider, provider_user_id, username, metadata_json, created_at, updated_at FROM web_auth_providers WHERE user_id = :user_id", { user_id: userId });
+    const rows = await query("SELECT provider, provider_user_id, username, avatar_url, metadata_json, created_at, updated_at FROM web_auth_providers WHERE user_id = :user_id", { user_id: userId });
     if (rows) return rows;
   }
   return [...providers.values()].filter((provider) => provider.user_id === userId);
@@ -390,7 +390,8 @@ export async function linkProvider(userId, provider, providerUserId, profile = {
 export async function loginOrCreateProviderUser(provider, providerUserId, profile = {}, preferredLanguage = "en") {
   const existing = await getInternalUserByProvider(provider, providerUserId);
   if (existing) {
-    const user = await upsertUser({ ...existing, last_login_at: nowIso() });
+    const refreshed = await linkProvider(existing.id, provider, providerUserId, profile);
+    const user = await upsertUser({ ...refreshed, last_login_at: nowIso() });
     if (!accountCanLogin(user)) throw Object.assign(new Error("account_disabled_or_frozen"), { status: 403 });
     return user;
   }
