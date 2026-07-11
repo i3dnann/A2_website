@@ -239,10 +239,11 @@ export async function listProvidersForUser(userId) {
 }
 
 async function upsertUser(row) {
+  const normalizedEmail = String(row.email || "").trim().toLowerCase();
   const user = {
     id: row.id || randomUUID(),
     username: row.username || row.email || row.discord_username || row.steam_persona || "A2 Player",
-    email: String(row.email || "").trim().toLowerCase(),
+    email: normalizedEmail || null,
     password_hash: row.password_hash || "",
     email_verified_at: row.email_verified_at || null,
     avatar_url: row.avatar_url || "",
@@ -468,6 +469,23 @@ export async function resetUserPassword(id, password, actor) {
   if (!existing) return null;
   const password_hash = await bcrypt.hash(String(password || ""), 12);
   return upsertUser({ ...existing, password_hash, updated_by: actor?.id || null });
+}
+
+export async function updateOwnEmail(userId, email, actor) {
+  const existing = await getInternalUserById(userId);
+  if (!existing) throw Object.assign(new Error("user_not_found"), { status: 404 });
+  const normalized = String(email || "").trim().toLowerCase();
+  if (!normalized) throw Object.assign(new Error("email_required"), { status: 422 });
+  const taken = await getInternalUserByEmail(normalized);
+  if (taken && String(taken.id) !== String(userId)) {
+    throw Object.assign(new Error("email_already_registered"), { status: 409 });
+  }
+  return upsertUser({
+    ...existing,
+    email: normalized,
+    email_verified_at: null,
+    updated_by: actor?.id || userId
+  });
 }
 
 export async function deactivateWebUser(id, actor) {

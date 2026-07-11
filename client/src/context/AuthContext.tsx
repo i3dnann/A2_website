@@ -51,6 +51,7 @@ type AuthContextType = {
   completeOAuth: (token: string) => Promise<void>;
   linkDiscord: () => Promise<void>;
   linkSteam: () => Promise<void>;
+  updateEmail: (email: string) => Promise<void>;
   createTicket: (subject: string, category: string, message?: string) => Promise<void>;
 };
 
@@ -258,6 +259,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = r.url;
   };
 
+  const updateEmail = async (email: string) => {
+    const r = await api<{ user: BackendUser }>("/api/account/email", { method: "PATCH", body: { email } });
+    setUser((current) => current ? normalizeUser({ ...current, ...r.user }) : normalizeUser(r.user));
+  };
+
   const createTicket = async (subject: string, category: string, message = "Created from the player dashboard.") => {
     const r = await api<{ ticket: any }>("/api/player/tickets", { method: "POST", body: { subject, category, message } });
     setTickets((t) => [normalizeTicket(r.ticket), ...t]);
@@ -265,7 +271,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";
 
-  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, createTicket };
+  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, updateEmail, createTicket };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

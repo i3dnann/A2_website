@@ -6,7 +6,7 @@ import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
-import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordMemberRoles, getDiscordUser } from "../services/discord.js";
+import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordUser } from "../services/discord.js";
 import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, verifyUserToken } from "../services/users.js";
 import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks.js";
 import { env } from "../config/env.js";
@@ -152,14 +152,13 @@ router.get(
     }
 
     const token = await exchangeDiscordCode(code);
-    const [discordUser, roles] = await Promise.all([getDiscordUser(token.access_token), getDiscordMemberRoles(token.access_token)]);
+    const discordUser = await getDiscordUser(token.access_token);
     const profile = {
       username: discordUser.global_name || discordUser.username,
-      email: discordUser.email || "",
       avatar_url: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : "",
-      roles
+      roles: []
     };
-    await assertAccountNotBlocked({ provider: "discord", providerUserId: discordUser.id, email: profile.email, ipAddress: req.ip });
+    await assertAccountNotBlocked({ provider: "discord", providerUserId: discordUser.id, ipAddress: req.ip });
 
     if (oauthState.mode === "link") {
       const user = await linkProvider(oauthState.userId, "discord", discordUser.id, profile);

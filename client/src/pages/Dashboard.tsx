@@ -782,23 +782,70 @@ function ProviderCard({
 }
 
 function Account({ user }: { user: any }) {
+  const { updateEmail } = useAuth();
+  const { push } = useToast();
+  const { t } = useLanguage();
+  const [email, setEmail] = useState(user.email || "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setEmail(user.email || "");
+  }, [user.email]);
+
+  const submitEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setSaving(true);
+    try {
+      await updateEmail(email.trim());
+      push({ kind: "success", message: t("Email updated") });
+    } catch (error: any) {
+      push({ kind: "error", message: error?.message || t("Could not update email") });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-5">
-      <h3 className="font-serif text-xl text-white">Account Details</h3>
+      <h3 className="font-serif text-xl text-white">{t("Account Details")}</h3>
       <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:grid-cols-2">
-        <Field label="Username" value={user.username} />
-        <Field label="Email Address" value={user.email} />
-        <Field label="Member Since" value={user.joinDate} />
-        <Field label="Role" value={user.role} />
+        <Field label={t("Username")} value={user.username} />
+        <Field label={t("Member Since")} value={user.joinDate} />
+        <Field label={t("Role")} value={user.role} />
+        <Field label={t("Email Address")} value={user.email || t("Not added yet")} />
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h4 className="font-serif text-base text-white">Danger Zone</h4>
+      <form onSubmit={submitEmail} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <h4 className="font-serif text-base text-white">{t("Email Address")}</h4>
         <p className="mt-1 text-sm text-white/45">
-          Deleting your account is permanent and will remove your linked
-          characters, tickets, and identifiers.
+          {t("Discord login only uses your Discord username. Add or change your email here manually.")}
+        </p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50"
+          />
+          <button
+            type="submit"
+            disabled={saving || !email.trim()}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-5 py-3 text-sm font-semibold text-white transition disabled:opacity-60"
+          >
+            {saving ? <Loader2 size={15} className="animate-spin" /> : null}
+            {saving ? t("Saving...") : t("Save Email")}
+          </button>
+        </div>
+      </form>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+        <h4 className="font-serif text-base text-white">{t("Danger Zone")}</h4>
+        <p className="mt-1 text-sm text-white/45">
+          {t("Deleting your account is permanent and will remove your linked characters, tickets, and identifiers.")}
         </p>
         <button className="mt-4 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/10">
-          Delete Account
+          {t("Delete Account")}
         </button>
       </div>
     </div>

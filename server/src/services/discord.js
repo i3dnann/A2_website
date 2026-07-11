@@ -12,8 +12,7 @@ export function discordAuthorizeUrl(state) {
     client_id: env.DISCORD_CLIENT_ID,
     redirect_uri: env.DISCORD_REDIRECT_URI,
     response_type: "code",
-    scope: "identify email guilds.members.read",
-    prompt: "consent",
+    scope: "identify",
     state
   });
   return `${DISCORD_API}/oauth2/authorize?${params.toString()}`;
