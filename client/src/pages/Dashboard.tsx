@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import UserAvatar from "../components/UserAvatar";
 import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 import { useToast } from "../components/Toast";
@@ -130,9 +131,7 @@ export default function Dashboard() {
               >
                 <div className="sticky top-28 flex flex-col gap-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-orange-600 to-orange-400 font-serif text-lg text-white">
-                      {user.username.charAt(0).toUpperCase()}
-                    </div>
+                    <UserAvatar src={user.avatarUrl} name={user.username} />
                     <div className="min-w-0">
                       <p className="truncate font-serif text-base text-white">{user.username}</p>
                       <p className="truncate text-xs text-white/40">{user.role}</p>

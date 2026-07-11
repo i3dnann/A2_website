@@ -1,13 +1,16 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { ShieldCheck, Sparkles, Users } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import { api } from "../api/client";
+import AvatarCircles from "./AvatarCircles";
 
 const PERKS = [
   { icon: ShieldCheck, text: "Secure account with linked Discord & Steam" },
-  { icon: Users, text: "Join 15,000+ active roleplay community members" },
+  { icon: Users, text: "Join a community built for memorable roleplay stories" },
   { icon: Sparkles, text: "Access your dashboard, characters & tickets" },
 ];
 
@@ -22,6 +25,8 @@ export default function AuthShell({
 }) {
   const { content } = useSite();
   const { t } = useLanguage();
+  const [avatars, setAvatars] = useState<string[]>([]);
+  useEffect(() => { api<{ avatars: string[] }>("/api/public/community-avatars").then((result) => setAvatars(result.avatars || [])).catch(() => setAvatars([])); }, []);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-24">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-[0_0_80px_rgba(0,0,0,0.5)] backdrop-blur-xl lg:grid-cols-2">
@@ -68,6 +73,7 @@ export default function AuthShell({
                 </div>
               ))}
             </div>
+            <div className="mt-8 flex items-center gap-4"><AvatarCircles avatars={avatars} /><p className="text-xs leading-5 text-white/45">{t("Real players. Shared stories. One city.")}</p></div>
           </div>
         </motion.div>
 
@@ -86,6 +92,7 @@ export default function AuthShell({
           </Link>
           <h1 className="font-serif text-2xl text-white sm:text-3xl">{t(title)}</h1>
           <p className="mt-2 text-sm text-white/50">{t(subtitle)}</p>
+          <div className="mt-5 flex items-center gap-3 lg:hidden"><AvatarCircles avatars={avatars} /><span className="text-xs text-white/40">{t("Real players. Shared stories. One city.")}</span></div>
           <div className="mt-8">{children}</div>
         </motion.div>
       </div>

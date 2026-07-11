@@ -4,8 +4,14 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { getResource, getSettings, listResource } from "../services/repository.js";
 import { listGalleryPhotos } from "../services/galleryService.js";
 import { enrichStreamers } from "../services/streamStatusService.js";
+import { listCommunityAvatars } from "../services/users.js";
 
 const router = Router();
+
+router.get("/community-avatars", asyncHandler(async (_req, res) => {
+  res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+  res.json({ avatars: await listCommunityAvatars(6) });
+}));
 
 function eventStatus(event) {
   if (event.status_override) return event.status_override;
