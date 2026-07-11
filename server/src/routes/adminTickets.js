@@ -95,7 +95,16 @@ router.get("/tickets/:id", requirePermission("manage_tickets"), asyncHandler(asy
     listResource("ticketNotes", { q: ticket.id, limit: 100 }),
     listResource("ticketParticipants", { q: ticket.id, limit: 100 }).catch(() => ({ rows: [] }))
   ]);
-  const enrichedMessages = await Promise.all(messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)).map(enrichMessage));
+  const ticketMessages = messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id));
+  const readAt = new Date().toISOString();
+  const refreshedMessages = await Promise.all(ticketMessages.map(async (message) => {
+    if (message.author_type === "player" && !message.read_at) {
+      const result = await updateResource("ticketMessages", message.id, { read_at: readAt, read_by: req.user.id }, req.user);
+      return result.after;
+    }
+    return message;
+  }));
+  const enrichedMessages = await Promise.all(refreshedMessages.map(enrichMessage));
   const enrichedNotes = await Promise.all(notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id)).map(enrichNote));
   const enrichedParticipants = await Promise.all(participants.rows
     .filter((participant) => String(participant.ticket_id) === String(ticket.id) && participant.is_active !== false && participant.is_active !== 0)

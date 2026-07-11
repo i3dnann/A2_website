@@ -662,12 +662,15 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
   author_type VARCHAR(40),
   message MEDIUMTEXT,
   internal_only TINYINT(1) DEFAULT 0,
+  read_at DATETIME NULL,
+  read_by VARCHAR(64),
   created_by VARCHAR(64),
   updated_by VARCHAR(64),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   deleted_at DATETIME NULL,
   INDEX idx_ticket_messages_ticket (ticket_id),
+  INDEX idx_ticket_messages_read_at (read_at),
   INDEX idx_ticket_messages_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
