@@ -9,6 +9,13 @@ import { safeJson } from "../utils/sanitize.js";
 const users = new Map();
 const providers = new Map();
 
+export async function listCommunityAvatars(limit = 6) {
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 6, 6));
+  const rows = await query(`SELECT avatar_url FROM web_users WHERE avatar_url IS NOT NULL AND avatar_url <> '' AND account_status = 'active' AND deleted_at IS NULL ORDER BY last_login_at DESC LIMIT ${safeLimit}`);
+  if (rows) return rows.map((row) => row.avatar_url).filter(Boolean);
+  return [...users.values()].filter((user) => user.account_status === "active" && user.avatar_url).sort((a, b) => String(b.last_login_at || "").localeCompare(String(a.last_login_at || ""))).slice(0, safeLimit).map((user) => user.avatar_url);
+}
+
 function nowIso() {
   return new Date().toISOString();
 }

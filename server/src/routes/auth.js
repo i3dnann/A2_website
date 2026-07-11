@@ -155,7 +155,7 @@ router.get(
     const discordUser = await getDiscordUser(token.access_token);
     const profile = {
       username: discordUser.global_name || discordUser.username,
-      avatar_url: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png` : "",
+      avatar_url: discordUser.avatar ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.${discordUser.avatar.startsWith("a_") ? "gif" : "webp"}?size=128` : "",
       roles: []
     };
     await assertAccountNotBlocked({ provider: "discord", providerUserId: discordUser.id, ipAddress: req.ip });
