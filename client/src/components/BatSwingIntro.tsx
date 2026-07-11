@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-type BatSwingIntroProps = {
-  replayKey: string;
-  delay?: number;
-};
-
-export default function BatSwingIntro({ replayKey, delay = 0 }: BatSwingIntroProps) {
+export default function BatSwingIntro({ delay = 0 }: { delay?: number }) {
   const reducedMotion = useReducedMotion();
   const [mobile, setMobile] = useState(false);
+  const [played] = useState(() => sessionStorage.getItem("a2_intro_played") === "1");
 
   useEffect(() => {
     const update = () => setMobile(window.innerWidth < 768);
@@ -17,13 +13,16 @@ export default function BatSwingIntro({ replayKey, delay = 0 }: BatSwingIntroPro
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  if (reducedMotion || mobile) {
+  useEffect(() => {
+    if (!played) sessionStorage.setItem("a2_intro_played", "1");
+  }, [played]);
+
+  if (reducedMotion || mobile || played) {
     return null;
   }
 
   return (
     <motion.div
-      key={replayKey}
       className="pointer-events-none fixed inset-0 z-[120] overflow-hidden"
       aria-hidden="true"
       initial={{ opacity: 1 }}

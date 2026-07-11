@@ -49,7 +49,7 @@ function AppShell() {
   return (
     <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
       <AnimatedBackground />
-      <BatSwingIntro replayKey={location.pathname} />
+      <BatSwingIntro />
       <Navbar />
       <StickyBanner />
       <AnimatePresence mode="wait">

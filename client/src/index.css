@@ -109,12 +109,13 @@ body::before {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  opacity: 0.68;
-  animation: site-button-shimmer var(--site-shimmer-duration) linear infinite;
+  opacity: 0;
+  animation: none;
 }
 
 :where(button, a[href][class*="rounded"]):not(:disabled):not([aria-disabled="true"]):hover::after {
   opacity: 1;
+  animation: site-button-shimmer 1.4s linear infinite;
 }
 
 :where(button[class*="bg-gradient"], a[href][class*="bg-gradient"]) {
@@ -145,9 +146,7 @@ body::before {
   height: var(--ripple-size);
   border: 1px solid rgba(138, 122, 196, var(--ripple-opacity));
   border-radius: 9999px;
-  box-shadow:
-    0 0 22px rgba(96, 81, 155, calc(var(--ripple-opacity) * 0.42)),
-    inset 0 0 18px rgba(199, 184, 255, calc(var(--ripple-opacity) * 0.22));
+  box-shadow: none;
   opacity: 0;
   transform: translate3d(-50%, -50%, 0) scale(0.82);
   animation: site-ripple-pulse var(--ripple-duration) linear infinite;
@@ -180,8 +179,10 @@ body::before {
 
 @media (max-width: 767px) {
   .site-ripple-ring {
-    box-shadow: 0 0 14px rgba(96, 81, 155, calc(var(--ripple-opacity) * 0.25));
+    display: none;
   }
+
+  .partner-marquee-row { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

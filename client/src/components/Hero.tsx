@@ -103,11 +103,7 @@ export default function Hero() {
           transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="relative hidden lg:block"
         >
-          <motion.div
-            animate={{ y: [0, -16, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/60 p-2 shadow-[0_24px_90px_rgba(0,0,0,0.65),0_0_45px_rgba(96,81,155,0.16)] backdrop-blur"
-          >
+          <div className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/80 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55)]">
             <img
               src={content.logoUrl === "/assets/gotham-logo.png" ? "/assets/gotham-logo-512.webp" : content.logoUrl || "/images/gotham-emblem-static.jpg"}
               alt="Gotham City emblem"
@@ -121,16 +117,16 @@ export default function Hero() {
               <p className="text-xs uppercase tracking-widest text-orange-300">{t("Now Live")}</p>
               <p className="mt-1 font-serif text-lg text-white">{t("Season 4: Gotham Nights")}</p>
             </div>
-          </motion.div>
+          </div>
           <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-orange-600/30 blur-3xl" />
           <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-orange-500/20 blur-3xl" />
         </motion.div>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="absolute bottom-8 left-1/2 -translate-x-1/2">
-        <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 1.8, repeat: Infinity }} className="flex h-9 w-6 items-start justify-center rounded-full border border-white/20 p-1">
+        <div className="flex h-9 w-6 items-start justify-center rounded-full border border-white/20 p-1">
           <div className="h-1.5 w-1.5 rounded-full bg-white/60" />
-        </motion.div>
+        </div>
       </motion.div>
     </section>
   );
