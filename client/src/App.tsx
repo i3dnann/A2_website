@@ -26,7 +26,6 @@ import CharactersPage from "./pages/CharactersPage";
 import TermsPage from "./pages/TermsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider, useSite } from "./context/SiteContext";
-import { ThemeProvider } from "./context/ThemeContext";
 import { useAuth } from "./context/AuthContext";
 import MaintenancePage from "./pages/MaintenancePage";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
@@ -82,8 +81,7 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-     <LanguageProvider>
+    <LanguageProvider>
       <SiteProvider>
         <AuthProvider>
           <ToastProvider>
@@ -93,7 +91,6 @@ export default function App() {
           </ToastProvider>
         </AuthProvider>
       </SiteProvider>
-     </LanguageProvider>
-    </ThemeProvider>
+    </LanguageProvider>
   );
 }
