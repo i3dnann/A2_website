@@ -21,6 +21,9 @@ import {
   Package,
   ArrowUpRight,
   Briefcase,
+  Search,
+  Send,
+  CheckCheck,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -469,6 +472,8 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [query, setQuery] = useState("");
+  const visibleTickets = tickets.filter((ticket) => `${ticket.subject} ${ticket.category} ${ticket.ticketNumber || ticket.id}`.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     if (!selectedId && tickets[0]?.id) setSelectedId(tickets[0].id);
@@ -533,7 +538,8 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
       ) : (
         <div className="grid gap-4 lg:grid-cols-[330px_1fr]">
           <div className="flex flex-col gap-3">
-            {tickets.map((t) => (
+            <div className="relative"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search tickets" className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-orange-400/40" /></div>
+            {visibleTickets.map((t) => (
           <button
             key={t.id}
             onClick={() => setSelectedId(t.id)}
@@ -565,18 +571,19 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
                 </div>
                 <div className="mt-5 flex flex-1 flex-col gap-3">
                   {(detail.messages || []).map((message: any) => (
-                    <div key={message.id} className={`max-w-[85%] rounded-2xl border p-3 ${message.author_type === "player" ? "self-end border-orange-400/20 bg-orange-500/10" : "self-start border-white/10 bg-black/25"}`}>
-                      <p className="text-[10px] uppercase tracking-wider text-white/35">{message.author_type === "player" ? "You" : "Staff"}</p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-white/75">{message.message}</p>
+                    <div key={message.id} className={`max-w-[88%] ${message.author_type === "player" ? "self-end" : "self-start"}`}>
+                      <div className="mb-1 flex items-center gap-2 px-1 text-[10px] text-white/35"><span>{message.author_type === "player" ? "You" : "Gotham Support"}</span><span>{message.created_at ? new Date(message.created_at).toLocaleString() : ""}</span></div>
+                      <div className={`rounded-2xl border p-3 ${message.author_type === "player" ? "rounded-br-md border-orange-400/20 bg-orange-500/10" : "rounded-bl-md border-white/10 bg-black/25"}`}><p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/75">{message.message}</p></div>
+                      {message.author_type === "player" && <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-white/30"><CheckCheck size={12} /> Sent</div>}
                     </div>
                   ))}
                 </div>
-                <form onSubmit={submitReply} className="mt-5 flex gap-2">
-                  <input value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Message staff..." className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-orange-400/50" />
-                  <button disabled={sending || !reply.trim()} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                <form onSubmit={submitReply} className="mt-5 rounded-2xl border border-white/10 bg-black/30 p-2.5 focus-within:border-orange-400/40">
+                  <textarea value={reply} onChange={(e) => setReply(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }} rows={3} placeholder="Write a reply…" className="max-h-72 min-h-20 w-full resize-y bg-transparent px-2 py-1 text-sm leading-6 text-white outline-none placeholder:text-white/25" />
+                  <div className="flex items-center justify-between gap-3 border-t border-white/10 pt-2"><span className="text-[11px] text-white/30">Enter to send · Shift + Enter for new line</span><button disabled={sending || !reply.trim()} className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
                     {sending ? <Loader2 size={15} className="animate-spin" /> : null}
-                    Send
-                  </button>
+                    Send <Send size={14} />
+                  </button></div>
                 </form>
               </div>
             ) : (
@@ -677,9 +684,9 @@ function NewTicketModal({
                   required
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  rows={5}
+                  rows={8}
                   placeholder="Describe your issue..."
-                  className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50"
+                  className="max-h-[50vh] min-h-48 w-full resize-y rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-white placeholder:text-white/25 outline-none focus:border-orange-400/50"
                 />
               </div>
               <button
