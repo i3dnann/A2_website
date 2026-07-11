@@ -11,7 +11,16 @@ const providers = new Map();
 
 export async function listCommunityAvatars(limit = 6) {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 6, 6));
-  const rows = await query(`SELECT avatar_url FROM web_users WHERE avatar_url IS NOT NULL AND avatar_url <> '' AND account_status = 'active' AND deleted_at IS NULL ORDER BY last_login_at DESC LIMIT ${safeLimit}`);
+  const rows = await query(`
+    SELECT COALESCE(NULLIF(u.avatar_url, ''), NULLIF(p.avatar_url, '')) AS avatar_url
+    FROM web_users u
+    LEFT JOIN web_auth_providers p ON p.user_id = u.id AND p.provider = 'discord'
+    WHERE u.account_status = 'active'
+      AND u.deleted_at IS NULL
+      AND COALESCE(NULLIF(u.avatar_url, ''), NULLIF(p.avatar_url, '')) IS NOT NULL
+    ORDER BY u.last_login_at DESC
+    LIMIT ${safeLimit}
+  `);
   if (rows) return rows.map((row) => row.avatar_url).filter(Boolean);
   return [...users.values()].filter((user) => user.account_status === "active" && user.avatar_url).sort((a, b) => String(b.last_login_at || "").localeCompare(String(a.last_login_at || ""))).slice(0, safeLimit).map((user) => user.avatar_url);
 }
