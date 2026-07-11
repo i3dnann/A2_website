@@ -15,11 +15,11 @@ router.use(requireAuth, requirePermission("view_player_portal"));
 const ticketSchema = z.object({
   category: z.string().min(2).max(80),
   subject: z.string().min(4).max(190),
-  message: z.string().min(10).max(5000)
+  message: z.string().min(10)
 });
 
 const ticketReplySchema = z.object({
-  message: z.string().min(1).max(5000)
+  message: z.string().min(1)
 });
 
 async function ownedApplications(user) {
