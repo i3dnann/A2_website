@@ -8,6 +8,7 @@ import News from "../components/News";
 import Careers from "../components/Careers";
 import Faq from "../components/Faq";
 import CtaSection from "../components/CtaSection";
+import HomeLiveStats from "../components/HomeLiveStats";
 
 function DeferredHomeSections() {
   const markerRef = useRef<HTMLDivElement | null>(null);
@@ -50,6 +51,7 @@ export default function Home() {
   return (
     <main>
       <Hero />
+      <HomeLiveStats />
       <PartnerBar />
       <DeferredHomeSections />
     </main>
