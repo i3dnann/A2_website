@@ -72,6 +72,8 @@ export type SiteContent = {
   stickyBannerText: string;
   stickyBannerLink: string;
   stickyBannerButton: string;
+  stickyBannerColor: string;
+  stickyBannerTextColor: string;
   primaryHex: string;
   accentHex: string;
   darkBgHex: string;
@@ -133,6 +135,8 @@ const DEFAULT_CONTENT: SiteContent = {
   stickyBannerText: "New city update is live. Read the latest announcement.",
   stickyBannerLink: "/news",
   stickyBannerButton: "View Update",
+  stickyBannerColor: "#60519b",
+  stickyBannerTextColor: "#ffffff",
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",

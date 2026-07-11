@@ -1548,7 +1548,23 @@ function HomeEditor({ content, update }: any) {
         <EField label="Banner Link" value={content.stickyBannerLink || ""} onChange={(v) => update({ stickyBannerLink: v })} />
         <EField label="Button Label" value={content.stickyBannerButton || ""} onChange={(v) => update({ stickyBannerButton: v })} />
       </div>
-      <div className="rounded-full border border-[#8a7ac4]/35 bg-[#60519b]/10 px-4 py-2 text-center text-sm text-white/75">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label className={stClass}>Banner Background Color</label>
+          <div className="flex items-center gap-3">
+            <input className={`${inpClass} flex-1`} value={content.stickyBannerColor || "#60519b"} onChange={(e) => update({ stickyBannerColor: e.target.value })} />
+            <input type="color" value={content.stickyBannerColor || "#60519b"} onChange={(e) => update({ stickyBannerColor: e.target.value })} className="h-10 w-12 cursor-pointer rounded-lg border border-white/10 bg-black/30 p-1" />
+          </div>
+        </div>
+        <div>
+          <label className={stClass}>Banner Text Color</label>
+          <div className="flex items-center gap-3">
+            <input className={`${inpClass} flex-1`} value={content.stickyBannerTextColor || "#ffffff"} onChange={(e) => update({ stickyBannerTextColor: e.target.value })} />
+            <input type="color" value={content.stickyBannerTextColor || "#ffffff"} onChange={(e) => update({ stickyBannerTextColor: e.target.value })} className="h-10 w-12 cursor-pointer rounded-lg border border-white/10 bg-black/30 p-1" />
+          </div>
+        </div>
+      </div>
+      <div className="rounded-lg border border-white/10 px-4 py-2 text-center text-sm font-semibold" style={{ background: content.stickyBannerColor || "#60519b", color: content.stickyBannerTextColor || "#ffffff" }}>
         {content.stickyBannerText || "Sticky banner preview"}
       </div>
     </EditableSection>

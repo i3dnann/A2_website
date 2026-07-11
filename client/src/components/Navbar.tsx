@@ -24,6 +24,7 @@ export default function Navbar() {
   const { content } = useSite();
   const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
+  const stickyBannerActive = Boolean(content.stickyBannerEnabled && content.stickyBannerText);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -37,6 +38,7 @@ export default function Navbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+      style={{ top: stickyBannerActive ? 40 : 0 }}
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
         scrolled ? "py-2" : "py-4"
       }`}
