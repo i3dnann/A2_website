@@ -15,7 +15,7 @@ import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.
 import { pingDatabase } from "./config/db.js";
 import { createResource, deleteResource, listResource } from "./services/repository.js";
 import { getFiveMLiveState } from "./services/liveService.js";
-import { publicFileUrl } from "./utils/sanitize.js";
+import { uploadToCloudinary, deleteFromCloudinary } from "./services/cloudinaryService.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
 import adminTicketsRouter from "./routes/adminTickets.js";
@@ -134,17 +134,18 @@ app.get("/api/media/list", requireAuth, requirePermission("manage_home"), async 
 
 app.post("/api/media/upload", requireAuth, requirePermission("manage_home"), upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(422).json({ error: "file_required" });
-  const url = publicFileUrl(req, req.file);
+  const uploaded = await uploadToCloudinary(req.file, "gotham-city/media");
+  const url = uploaded.url;
   const file = await createResource("files", {
     owner_user_id: req.user.id,
     original_name: req.file.originalname,
-    stored_name: req.file.filename,
+    stored_name: uploaded.publicId,
     mime_type: req.file.mimetype,
-    size_bytes: req.file.size,
+    size_bytes: uploaded.bytes,
     url,
-    storage_driver: "local"
+    storage_driver: "cloudinary"
   }, req.user);
-  res.status(201).json({ ...file, size: file.size_bytes || req.file.size, url, blob_key: req.file.filename });
+  res.status(201).json({ ...file, size: file.size_bytes || uploaded.bytes, url, blob_key: uploaded.publicId });
 });
 
 app.delete("/api/media/delete", requireAuth, requirePermission("manage_home"), async (req, res) => {
@@ -152,6 +153,7 @@ app.delete("/api/media/delete", requireAuth, requirePermission("manage_home"), a
   if (!id) return res.status(400).json({ error: "id_required" });
   const before = await deleteResource("files", id, req.user);
   if (!before) return res.status(404).json({ error: "file_not_found" });
+  if (before.storage_driver === "cloudinary") await deleteFromCloudinary(before.stored_name || before.blob_key, before.mime_type);
   res.json({ ok: true });
 });
 
@@ -167,7 +169,7 @@ app.get(`/api/public${photoPath}/:id`, async (req, res) => {
 });
 
 app.post(`/api/public${photoPath}`, requireAuth, upload.single("file"), requireGalleryImage, async (req, res) => {
-  const imageUrl = req.file ? publicFileUrl(req, req.file) : req.body.image_url;
+  const imageUrl = req.file ? (await uploadToCloudinary(req.file, "gotham-city/gallery")).url : req.body.image_url;
   const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, "Pending");
   res.status(201).json({ row, message: "Image sent for admin review." });
 });
@@ -178,7 +180,7 @@ app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (re
 });
 
 app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireGalleryImage, async (req, res) => {
-  const imageUrl = req.file ? publicFileUrl(req, req.file) : req.body.image_url;
+  const imageUrl = req.file ? (await uploadToCloudinary(req.file, "gotham-city/gallery")).url : req.body.image_url;
   const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, req.body?.status || "Approved");
   res.status(201).json({ row });
 });

@@ -62,6 +62,10 @@ const schema = z.object({
   KICK_CLIENT_SECRET: z.string().default(""),
   KICK_ACCESS_TOKEN: z.string().default(""),
 
+  CLOUDINARY_CLOUD_NAME: z.string().default(""),
+  CLOUDINARY_API_KEY: z.string().default(""),
+  CLOUDINARY_API_SECRET: z.string().default(""),
+
   FIVEM_PLAYERS_URL: z.string().default(""),
   FIVEM_DYNAMIC_URL: z.string().default(""),
   FIVEM_INFO_URL: z.string().default(""),

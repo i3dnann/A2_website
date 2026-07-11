@@ -4,7 +4,7 @@ import { upload } from "../middleware/security.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, getSettings, updateSettings } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
-import { publicFileUrl } from "../utils/sanitize.js";
+import { uploadToCloudinary } from "../services/cloudinaryService.js";
 
 const router = Router();
 
@@ -15,15 +15,16 @@ async function saveUploadedMaintenanceMedia(req, res, { type, settingKeys, actio
   const mime = String(req.file.mimetype || "");
   if (!mime.startsWith(`${type}/`)) return res.status(400).json({ error: `only_${type}_allowed`, message: `Upload a valid ${type} file.` });
 
-  const url = publicFileUrl(req, req.file);
+  const uploaded = await uploadToCloudinary(req.file, `gotham-city/maintenance/${type}`);
+  const url = uploaded.url;
   const file = await createResource("files", {
     owner_user_id: req.user.id,
     original_name: req.file.originalname,
-    stored_name: req.file.filename,
+    stored_name: uploaded.publicId,
     mime_type: req.file.mimetype,
-    size_bytes: req.file.size,
+    size_bytes: uploaded.bytes,
     url,
-    storage_driver: "local"
+    storage_driver: "cloudinary"
   }, req.user);
 
   const patch = Object.fromEntries(settingKeys.map((key) => [key, url]));

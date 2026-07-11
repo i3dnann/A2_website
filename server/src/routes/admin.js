@@ -8,7 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, deleteResource, getResource, getSettings, listResource, updateResource, updateSettings } from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
 import { deactivateWebUser, listWebUsers, resolveUserIdentity, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
-import { publicFileUrl } from "../utils/sanitize.js";
+import { uploadToCloudinary } from "../services/cloudinaryService.js";
 import { sendWebhook } from "../services/webhook.js";
 import { getFiveMLiveState } from "../services/liveService.js";
 
@@ -223,17 +223,18 @@ router.delete(
 );
 
 router.post("/uploads", requirePermission("manage_files"), upload.single("file"), asyncHandler(async (req, res) => {
-  const url = publicFileUrl(req, req.file);
+  const uploaded = await uploadToCloudinary(req.file, "gotham-city/admin");
+  const url = uploaded.url;
   const file = await createResource(
     "files",
     {
       owner_user_id: req.user.id,
       original_name: req.file?.originalname,
-      stored_name: req.file?.filename,
+      stored_name: uploaded.publicId,
       mime_type: req.file?.mimetype,
-      size_bytes: req.file?.size,
+      size_bytes: uploaded.bytes,
       url,
-      storage_driver: "local"
+      storage_driver: "cloudinary"
     },
     req.user
   );

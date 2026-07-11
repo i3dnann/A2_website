@@ -1,5 +1,12 @@
 import { getDatabase } from "@netlify/database";
-import { getStore } from "@netlify/blobs";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 export default async (req) => {
   const headers = {
@@ -28,17 +35,19 @@ export default async (req) => {
     return Response.json({ error: "No file provided" }, { status: 400, headers });
   }
 
-  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const blobKey = `uploads/${crypto.randomUUID()}-${safeFilename}`;
   const arrayBuffer = await file.arrayBuffer();
-
-  const store = getStore("media");
-  await store.set(blobKey, arrayBuffer);
+  const dataUri = `data:${file.type || "application/octet-stream"};base64,${Buffer.from(arrayBuffer).toString("base64")}`;
+  const uploaded = await cloudinary.uploader.upload(dataUri, {
+    folder: "gotham-city/media",
+    resource_type: "auto",
+    use_filename: true,
+    unique_filename: true,
+  });
 
   const db = getDatabase();
   const rows = await db.sql`
-    INSERT INTO files (original_name, mime_type, size, blob_key)
-    VALUES (${file.name}, ${file.type || "application/octet-stream"}, ${file.size}, ${blobKey})
+    INSERT INTO files (original_name, mime_type, size, blob_key, url, storage_driver)
+    VALUES (${file.name}, ${file.type || "application/octet-stream"}, ${uploaded.bytes || file.size}, ${uploaded.public_id}, ${uploaded.secure_url}, 'cloudinary')
     RETURNING *
   `;
 

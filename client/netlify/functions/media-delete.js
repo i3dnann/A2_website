@@ -1,5 +1,12 @@
 import { getDatabase } from "@netlify/database";
-import { getStore } from "@netlify/blobs";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+});
 
 export default async (req) => {
   const headers = {
@@ -30,15 +37,16 @@ export default async (req) => {
   }
 
   const db = getDatabase();
-  const rows = await db.sql`SELECT blob_key FROM files WHERE id = ${id}`;
+  const rows = await db.sql`SELECT blob_key, mime_type, storage_driver FROM files WHERE id = ${id}`;
   if (rows.length === 0) {
     return Response.json({ error: "File not found" }, { status: 404, headers });
   }
 
-  const { blob_key } = rows[0];
-
-  const store = getStore("media");
-  await store.delete(blob_key);
+  const { blob_key, mime_type, storage_driver } = rows[0];
+  if (storage_driver === "cloudinary") {
+    const resourceType = String(mime_type).startsWith("image/") ? "image" : "video";
+    await cloudinary.uploader.destroy(blob_key, { resource_type: resourceType, invalidate: true });
+  }
 
   await db.sql`DELETE FROM files WHERE id = ${id}`;
 

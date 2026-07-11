@@ -1,0 +1,2 @@
+ALTER TABLE files ADD COLUMN IF NOT EXISTS url TEXT;
+ALTER TABLE files ADD COLUMN IF NOT EXISTS storage_driver TEXT DEFAULT 'netlify_blobs';
