@@ -28,7 +28,7 @@ export default function AnimatedBackground() {
   }, [lightweight]);
 
   return (
-    <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#080808]">
+    <div className="site-background pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#080808]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_38%,rgba(96,81,155,0.16),transparent_36rem)]" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(8,8,8,0.2),rgba(8,8,8,0.9))]" />
 

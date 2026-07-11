@@ -38,7 +38,7 @@ export default function Hero() {
   };
 
   return (
-    <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
+    <section id="home" className="theme-dark-media relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
       <div className="absolute inset-0 -z-10">
         <img src={content.heroBackgroundImage || "/images/gotham-banner-static.jpg"} alt="Gotham City" className="h-full w-full object-cover opacity-70" fetchPriority="high" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(96,81,155,0.12),transparent_34rem)]" />
