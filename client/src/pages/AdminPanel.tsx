@@ -151,8 +151,8 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="relative min-h-screen pt-24 pb-10">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="admin-panel relative min-h-screen pt-24 pb-10">
+      <div className="w-full px-4 sm:px-6 2xl:px-10">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-3xl text-white">{t("Admin Panel")}</h1>

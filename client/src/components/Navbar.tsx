@@ -22,7 +22,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, isAdmin } = useAuth();
   const { content } = useSite();
-  const { t, language, toggleLanguage } = useLanguage();
+  const { t, language, isArabic, toggleLanguage } = useLanguage();
   const location = useLocation();
   const stickyBannerActive = Boolean(content.stickyBannerEnabled && content.stickyBannerText);
 
@@ -43,28 +43,28 @@ export default function Navbar() {
         scrolled ? "py-2" : "py-4"
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isArabic ? "max-w-[96rem]" : "max-w-7xl"}`}>
         <div
-          className={`flex items-center justify-between rounded-2xl border px-4 py-3 backdrop-blur-xl transition-all duration-500 ${
+          className={`flex items-center justify-between rounded-2xl border px-3 py-3 backdrop-blur-xl transition-all duration-500 sm:px-4 ${
             scrolled
               ? "border-orange-500/20 bg-black/60 shadow-[0_0_40px_rgba(0,0,0,0.5)]"
               : "border-white/5 bg-black/20"
           }`}
         >
-          <Link to="/" onClick={() => setOpen(false)} className="flex shrink-0 items-center gap-3">
+          <Link to="/" onClick={() => setOpen(false)} className={`flex shrink-0 items-center ${isArabic ? "gap-2" : "gap-3"}`}>
             <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
-            <span className="font-serif text-base tracking-[0.2em] text-white sm:text-lg">
+            <span className={`font-serif text-base text-white sm:text-lg ${isArabic ? "tracking-normal" : "tracking-[0.2em]"}`}>
               {t(content.siteName)}
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-1 xl:flex">
+          <nav className={`hidden items-center xl:flex ${isArabic ? "gap-0" : "gap-1"}`}>
             {NAV_ROUTES.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setOpen(false)}
-                className="relative px-3 py-2 text-sm font-medium text-white/60 transition-colors hover:text-white"
+                className={`relative py-2 font-medium text-white/60 transition-colors hover:text-white ${isArabic ? "px-2 text-xs" : "px-3 text-sm"}`}
               >
                 {t(link.label)}
                 {location.pathname === link.path && (
@@ -78,11 +78,11 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 sm:gap-3 xl:flex">
+          <div className={`hidden items-center xl:flex ${isArabic ? "gap-2" : "gap-2 sm:gap-3"}`}>
             {isAdmin && (
               <Link
                 to="/admin"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-400/10 px-3 py-2 text-xs font-medium text-orange-200 transition hover:border-orange-400/50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-400/10 px-2.5 py-2 text-xs font-medium text-orange-200 transition hover:border-orange-400/50"
               >
                 <ShieldCheck size={14} /> {t("Admin")}
               </Link>
@@ -91,13 +91,13 @@ export default function Navbar() {
               <>
                 <Link
                   to="/characters"
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
+                  className={`hidden items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white sm:inline-flex ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
                 >
                   {t("Characters")}
                 </Link>
                 <Link
                   to="/dashboard"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-sm font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white"
+                  className={`inline-flex items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
                 >
                   <LayoutDashboard size={15} />
                   {t("Dashboard")}
@@ -106,7 +106,7 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:border-orange-400/40 hover:text-white"
+                className={`rounded-xl border border-white/10 py-2 font-medium text-white/80 transition hover:border-orange-400/40 hover:text-white ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
               >
                 {t("Login")}
               </Link>
@@ -124,7 +124,7 @@ export default function Navbar() {
               href={content.discordLink || "/"}
               target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
               rel="noreferrer"
-              className="group relative overflow-hidden rounded-xl bg-[#60519b] px-4 py-2 text-sm font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)]"
+              className={`group relative overflow-hidden rounded-xl bg-[#60519b] py-2 font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)] ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
             >
               <span className="relative z-10 whitespace-nowrap">{t("Join Discord")}</span>
               <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0" />

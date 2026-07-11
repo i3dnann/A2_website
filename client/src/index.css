@@ -122,6 +122,15 @@ body::before {
   --site-shimmer-glow: rgba(223, 217, 245, 0.72);
 }
 
+.admin-panel :where(button, a[href][class*="rounded"])::after {
+  content: none !important;
+  animation: none !important;
+}
+
+.admin-panel :where(button, a[href][class*="rounded"]) {
+  isolation: auto;
+}
+
 @keyframes site-button-shimmer {
   to {
     transform: rotate(1turn);

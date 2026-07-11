@@ -3,6 +3,7 @@ import { ArrowRight, Copy, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import AceternityTextHover from "./AceternityTextHover";
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
   const [display, setDisplay] = useState(0);
@@ -58,9 +59,9 @@ export default function Hero() {
           </div>
 
           <h1 className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            {t(content.heroTitle1)}
-            <span className="block bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
-              {t(content.heroTitle2)}
+            <AceternityTextHover>{t(content.heroTitle1)}</AceternityTextHover>
+            <span className="block">
+              <AceternityTextHover gradient>{t(content.heroTitle2)}</AceternityTextHover>
             </span>
           </h1>
 
