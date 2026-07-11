@@ -1,0 +1,40 @@
+-- One vote per account per news post. Run once on the website database.
+
+SET NAMES utf8mb4;
+
+DROP PROCEDURE IF EXISTS a2_add_col;
+DELIMITER //
+CREATE PROCEDURE a2_add_col(IN p_table VARCHAR(64), IN p_column VARCHAR(64), IN p_definition TEXT)
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = DATABASE() AND table_name = p_table
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = p_table AND column_name = p_column
+  ) THEN
+    SET @a2_sql = CONCAT('ALTER TABLE `', p_table, '` ADD COLUMN ', p_definition);
+    PREPARE a2_stmt FROM @a2_sql;
+    EXECUTE a2_stmt;
+    DEALLOCATE PREPARE a2_stmt;
+  END IF;
+END//
+DELIMITER ;
+
+CALL a2_add_col('news_articles', 'likes', 'likes INT DEFAULT 0 AFTER is_featured');
+CALL a2_add_col('news_articles', 'dislikes', 'dislikes INT DEFAULT 0 AFTER likes');
+
+CREATE TABLE IF NOT EXISTS news_votes (
+  id VARCHAR(96) PRIMARY KEY,
+  news_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NOT NULL,
+  vote_type VARCHAR(16) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_news_vote_user (news_id, user_id),
+  INDEX idx_news_votes_news (news_id),
+  INDEX idx_news_votes_user (user_id),
+  INDEX idx_news_votes_type (vote_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP PROCEDURE IF EXISTS a2_add_col;

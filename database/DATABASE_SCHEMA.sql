@@ -786,6 +786,19 @@ CREATE TABLE IF NOT EXISTS news_comments (
   INDEX idx_news_comments_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS news_votes (
+  id VARCHAR(96) PRIMARY KEY,
+  news_id VARCHAR(64) NOT NULL,
+  user_id VARCHAR(64) NOT NULL,
+  vote_type VARCHAR(16) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_news_vote_user (news_id, user_id),
+  INDEX idx_news_votes_news (news_id),
+  INDEX idx_news_votes_user (user_id),
+  INDEX idx_news_votes_type (vote_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS map_zones (
   id VARCHAR(64) PRIMARY KEY,
   zone_name VARCHAR(160),

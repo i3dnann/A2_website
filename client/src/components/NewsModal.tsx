@@ -19,6 +19,7 @@ export type NewsPost = {
   pinned: boolean;
   likes: number;
   dislikes: number;
+  user_vote?: "like" | "dislike" | null;
   comment_count: number;
   published_at: string;
 };
@@ -46,7 +47,12 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
     let cancel = false;
     setLoading(true);
     api<{ post: NewsPost; comments: NewsComment[] }>(`/api/news/${post.id}`)
-      .then((d) => { if (!cancel) setData(d); })
+      .then((d) => {
+        if (!cancel) {
+          setData(d);
+          setVoted(d.post?.user_vote || null);
+        }
+      })
       .catch((e: any) => push({ kind: "error", message: e?.message || t("Failed") }))
       .finally(() => { if (!cancel) setLoading(false); });
     return () => { cancel = true; };
@@ -57,8 +63,8 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
   const doVote = async (kind: "like" | "dislike") => {
     if (!user) { push({ kind: "info", message: t("Login to vote") }); return; }
     try {
-      const r = await api<{ liked: boolean; disliked: boolean; likes: number; dislikes: number }>(`/api/news/${post.id}/${kind}`, { method: "POST" });
-      setVoted(r.liked ? "like" : r.disliked ? "dislike" : null);
+      const r = await api<{ liked: boolean; disliked: boolean; user_vote?: "like" | "dislike" | null; likes: number; dislikes: number }>(`/api/news/${post.id}/${kind}`, { method: "POST" });
+      setVoted(r.user_vote || (r.liked ? "like" : r.disliked ? "dislike" : null));
       setData((current) => current ? {
         ...current,
         post: {
