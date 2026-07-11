@@ -13,6 +13,15 @@ export function cloudinaryConfigured() {
   return Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
 }
 
+function cloudinaryError(error) {
+  const status = Number(error?.http_code || error?.statusCode || error?.status || 502);
+  const message = String(error?.message || "Cloudinary upload failed.");
+  return Object.assign(new Error(message), {
+    status: status >= 400 && status < 600 ? status : 502,
+    code: error?.code || "cloudinary_upload_failed"
+  });
+}
+
 export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
   if (!file?.path) throw Object.assign(new Error("file_required"), { status: 422 });
 
@@ -32,6 +41,9 @@ export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
       bytes: result.bytes || file.size || 0,
       format: result.format || "",
     };
+  } catch (error) {
+    if (error?.message === "cloudinary_not_configured") throw error;
+    throw cloudinaryError(error);
   } finally {
     await fs.unlink(file.path).catch(() => {});
   }

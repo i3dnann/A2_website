@@ -15,7 +15,7 @@ import { optionalAuth, requireAuth, requirePermission } from "./middleware/auth.
 import { pingDatabase } from "./config/db.js";
 import { createResource, deleteResource, listResource } from "./services/repository.js";
 import { getFiveMLiveState } from "./services/liveService.js";
-import { uploadToCloudinary, deleteFromCloudinary } from "./services/cloudinaryService.js";
+import { uploadToCloudinary, deleteFromCloudinary, cloudinaryConfigured } from "./services/cloudinaryService.js";
 import authRouter from "./routes/auth.js";
 import publicRouter from "./routes/public.js";
 import adminTicketsRouter from "./routes/adminTickets.js";
@@ -113,6 +113,9 @@ app.get("/health", async (_req, res) => {
         infoUrlSet: Boolean(env.FIVEM_INFO_URL),
         serverIpSet: Boolean(env.FIVEM_SERVER_IP),
         serverPort: env.FIVEM_SERVER_PORT
+      },
+      uploads: {
+        cloudinaryConfigured: cloudinaryConfigured()
       }
     }
   });
