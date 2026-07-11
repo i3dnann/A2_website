@@ -22,7 +22,7 @@ const ADMIN_TABS = [
   { id: "streamers", label: "Streamers", icon: Radio },
   { id: "roster", label: "Roster", icon: Users },
   { id: "famous", label: "Famous Chars", icon: Star },
-  { id: "journey", label: "Journey & Chars", icon: Clock },
+  { id: "journey", label: "Journey", icon: Clock },
   { id: "news", label: "News", icon: FileText },
   { id: "careers", label: "Careers", icon: Briefcase },
   { id: "applications", label: "Applications", icon: CheckCircle2 },
@@ -1759,28 +1759,6 @@ function RosterEditor({ content, update }: any) {
 }
 
 function JourneyEditor({ content, update }: any) {
-  const { push } = useToast();
-  const [uploadingCharacter, setUploadingCharacter] = useState("");
-  const setCharacter = (index: number, patch: any) => {
-    const next = [...content.famousCharacters];
-    next[index] = { ...next[index], ...patch };
-    update({ famousCharacters: next });
-  };
-  const uploadCharacterImage = async (file: File, index: number) => {
-    setUploadingCharacter(String(index));
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const result = await upload("/api/admin/uploads", body);
-      setCharacter(index, { image: result.data?.url || "" });
-      push({ kind: "success", message: "Character image uploaded" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message || "Failed to upload character image" });
-    } finally {
-      setUploadingCharacter("");
-    }
-  };
-
   return <div className="flex flex-col gap-1">
     <EditableSection title="Journey Header">
       <EField label="Subtitle" value={content.journeySubtitle} onChange={(v) => update({ journeySubtitle: v })} />
@@ -1797,29 +1775,6 @@ function JourneyEditor({ content, update }: any) {
       ))}
       <button onClick={() => update({ journey: [...content.journey, { year: "2027", title: "New Milestone", desc: "Description" }] })}
         className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Milestone</button>
-    </EditableSection>
-    <EditableSection title="Famous Characters">
-      {content.famousCharacters.map((c: any, i: number) => (
-        <div key={i} className="rounded-xl border border-white/10 p-4 grid gap-3 sm:grid-cols-4 items-end">
-          <div><label className={stClass}>Name</label><input className={inpClass} value={c.name} onChange={(e) => setCharacter(i, { name: e.target.value })} /></div>
-          <div className="sm:col-span-2"><label className={stClass}>Title/Role</label><input className={inpClass} value={c.title} onChange={(e) => setCharacter(i, { title: e.target.value })} /></div>
-          <div className="flex items-center gap-2">
-            <input className={inpClass} value={c.tag} onChange={(e) => setCharacter(i, { tag: e.target.value })} placeholder="Tag" />
-            <button onClick={() => update({ famousCharacters: content.famousCharacters.filter((_: any, k: number) => k !== i) })} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
-          </div>
-          <div className="sm:col-span-2">
-            <label className={stClass}>Picture URL or upload</label>
-            <input className={inpClass} value={c.image || ""} onChange={(e) => setCharacter(i, { image: e.target.value })} placeholder="https://..." />
-            <div className="mt-2">
-              <FileUpload label="Upload character picture" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" uploading={uploadingCharacter === String(i)} value={c.image || ""} onFile={(file) => uploadCharacterImage(file, i)} />
-            </div>
-          </div>
-          <div className="sm:col-span-2"><label className={stClass}>Profile link</label><input className={inpClass} value={c.link || ""} onChange={(e) => setCharacter(i, { link: e.target.value })} placeholder="https://..." /></div>
-          <div className="sm:col-span-4"><label className={stClass}>Character bio</label><textarea className={`${inpClass} resize-none`} rows={4} value={c.bio || ""} onChange={(e) => setCharacter(i, { bio: e.target.value })} placeholder="Write the full character story shown in the popup." /></div>
-        </div>
-      ))}
-      <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising", image: "", link: "", bio: "" }] })}
-        className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Character</button>
     </EditableSection>
   </div>;
 }
