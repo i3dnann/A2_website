@@ -12,6 +12,7 @@ import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
+import FileUpload from "../components/FileUpload";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -103,6 +104,7 @@ export default function AdminPanel() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -171,12 +173,12 @@ export default function AdminPanel() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
           {/* Mobile overlay */}
           {sidebarOpen && (
             <div className="fixed inset-0 z-50 bg-[#080808]/95 backdrop-blur-xl p-6 flex flex-col lg:hidden">
               <button onClick={() => setSidebarOpen(false)} className="mb-4 self-end text-white/60 hover:text-white"><X size={20} /></button>
-              <SidebarNav tab={tab} setTab={(id: string) => { setTab(id); setSidebarOpen(false); }} />
+              <SidebarNav tab={tab} setTab={(id: string) => { setTab(id); setSidebarOpen(false); }} compact={false} />
               <button onClick={handleLogout} className="mt-4 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-400 hover:bg-red-500/10 transition">
                 <LogOut size={16} /> {t("Logout")}
               </button>
@@ -185,12 +187,30 @@ export default function AdminPanel() {
 
           {/* Desktop sidebar */}
           <aside className="hidden lg:block">
-            <div className="sticky top-28 flex flex-col gap-1">
-              <SidebarNav tab={tab} setTab={setTab} />
-              <button onClick={handleLogout} className="mt-4 flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-white/55 hover:bg-white/5 hover:text-white transition">
-                <LogOut size={16} /> {t("Logout")}
+            <motion.div
+              onMouseEnter={() => setSidebarExpanded(true)}
+              onMouseLeave={() => setSidebarExpanded(false)}
+              animate={{ width: sidebarExpanded ? 268 : 78 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+              className="sticky top-28 flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#08050d]/72 p-3 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl"
+            >
+              <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#60519b]/25 text-[#cfc5ff]">
+                  <Shield size={17} />
+                </div>
+                <motion.div animate={{ opacity: sidebarExpanded ? 1 : 0 }} className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">Command Center</p>
+                  <p className="truncate text-[11px] text-white/40">{user.role}</p>
+                </motion.div>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-1">
+                <SidebarNav tab={tab} setTab={setTab} compact={!sidebarExpanded} />
+              </div>
+              <button onClick={handleLogout} className={`mt-3 flex h-11 items-center gap-2.5 rounded-xl px-3 text-left text-sm font-medium text-white/55 transition hover:bg-red-500/10 hover:text-red-300 ${sidebarExpanded ? "justify-start" : "justify-center"}`}>
+                <LogOut size={16} />
+                <span className={`${sidebarExpanded ? "inline" : "sr-only"}`}>{t("Logout")}</span>
               </button>
-            </div>
+            </motion.div>
           </aside>
 
           {/* Mobile tab selector */}
@@ -236,15 +256,19 @@ export default function AdminPanel() {
   );
 }
 
-function SidebarNav({ tab, setTab }: any) {
+function SidebarNav({ tab, setTab, compact = false }: any) {
   const { t } = useLanguage();
   return <>
     {ADMIN_TABS.map((item) => (
       <button key={item.id} onClick={() => setTab(item.id)}
-        className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
-          tab === item.id ? "bg-orange-500/15 text-orange-200" : "text-white/55 hover:bg-white/5 hover:text-white"
+        title={compact ? t(item.label) : undefined}
+        className={`group flex h-11 items-center gap-2.5 rounded-xl px-3 text-left text-sm font-medium transition ${
+          compact ? "justify-center" : "justify-start"
+        } ${
+          tab === item.id ? "bg-[#60519b]/22 text-[#d7ceff] shadow-[inset_0_0_0_1px_rgba(138,122,196,0.35)]" : "text-white/55 hover:bg-white/5 hover:text-white"
         }`}>
-        <item.icon size={16} /> {t(item.label)}
+        <item.icon size={16} className="shrink-0" />
+        <span className={`${compact ? "sr-only" : "truncate"}`}>{t(item.label)}</span>
       </button>
     ))}
   </>;
@@ -848,18 +872,28 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
             <div>
               <label className={stClass}>Image URL or upload</label>
               <input className={inpClass} value={form.image_url || form.image || ""} onChange={(e) => { setField("image_url", e.target.value); setField("image", e.target.value); }} />
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5">
-                {uploading === "image_url" && <Loader2 size={13} className="animate-spin" />} Upload image
-                <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], "image_url")} />
-              </label>
+              <div className="mt-2">
+                <FileUpload
+                  label="Upload image"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+                  uploading={uploading === "image_url"}
+                  value={form.image_url || form.image || ""}
+                  onFile={(file) => uploadMedia(file, "image_url")}
+                />
+              </div>
             </div>
             <div>
               <label className={stClass}>Video URL or upload</label>
               <input className={inpClass} value={form.video_url || ""} onChange={(e) => setField("video_url", e.target.value)} />
-              <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-white/70 hover:bg-white/5">
-                {uploading === "video_url" && <Loader2 size={13} className="animate-spin" />} Upload video
-                <input type="file" accept="video/mp4,video/webm,video/quicktime" className="hidden" onChange={(e) => uploadMedia(e.target.files?.[0], "video_url")} />
-              </label>
+              <div className="mt-2">
+                <FileUpload
+                  label="Upload video"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  uploading={uploading === "video_url"}
+                  value={form.video_url || ""}
+                  onFile={(file) => uploadMedia(file, "video_url")}
+                />
+              </div>
             </div>
           </div>
           {(form.image_url || form.image || form.video_url) && (
@@ -1499,6 +1533,25 @@ function HomeEditor({ content, update }: any) {
         <EField label="Store Link" value={content.storeLink} onChange={(v) => update({ storeLink: v })} />
       </div>
     </EditableSection>
+    <EditableSection title="Sticky Banner">
+      <label className="flex items-center gap-2 text-sm text-white/70">
+        <input
+          type="checkbox"
+          checked={Boolean(content.stickyBannerEnabled)}
+          onChange={(e) => update({ stickyBannerEnabled: e.target.checked })}
+          className="accent-orange-500"
+        />
+        Enable sticky banner on the website
+      </label>
+      <EField label="Banner Text" value={content.stickyBannerText || ""} onChange={(v) => update({ stickyBannerText: v })} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <EField label="Banner Link" value={content.stickyBannerLink || ""} onChange={(v) => update({ stickyBannerLink: v })} />
+        <EField label="Button Label" value={content.stickyBannerButton || ""} onChange={(v) => update({ stickyBannerButton: v })} />
+      </div>
+      <div className="rounded-full border border-[#8a7ac4]/35 bg-[#60519b]/10 px-4 py-2 text-center text-sm text-white/75">
+        {content.stickyBannerText || "Sticky banner preview"}
+      </div>
+    </EditableSection>
     <EditableSection title="Stats">
       <div className="grid gap-4 sm:grid-cols-2">
         {content.stats.map((s: any, i: number) => (
@@ -1694,6 +1747,7 @@ function SettingsEditor({ content, update }: any) {
     storeButtonLink: content.storeLink,
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingAsset, setUploadingAsset] = useState("");
 
   useEffect(() => {
     let cancel = false;
@@ -1710,6 +1764,21 @@ function SettingsEditor({ content, update }: any) {
   }, []);
 
   const change = (key: string, value: any) => setSettings((current: any) => ({ ...current, [key]: value }));
+
+  const uploadAsset = async (file: File, key: "logoUrl" | "faviconUrl" | "heroBackgroundImage") => {
+    setUploadingAsset(key);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await upload("/api/admin/uploads", body);
+      change(key, result.data?.url || "");
+      push({ kind: "success", message: "File uploaded" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Upload failed" });
+    } finally {
+      setUploadingAsset("");
+    }
+  };
 
   const save = async () => {
     setSaving(true);
@@ -1758,9 +1827,18 @@ function SettingsEditor({ content, update }: any) {
       <div className="mt-2 grid gap-4 sm:grid-cols-2">
         <EField label="Website Name" value={settings.websiteName || ""} onChange={(v) => change("websiteName", v)} />
         <EField label="Hero Subtitle" value={settings.heroSubtitle || ""} onChange={(v) => change("heroSubtitle", v)} />
-        <EField label="Website Logo URL" value={settings.logoUrl || ""} onChange={(v) => change("logoUrl", v)} />
-        <EField label="Favicon URL" value={settings.faviconUrl || ""} onChange={(v) => change("faviconUrl", v)} />
-        <EField label="Hero Background URL" value={settings.heroBackgroundImage || ""} onChange={(v) => change("heroBackgroundImage", v)} />
+        <div>
+          <EField label="Website Logo URL" value={settings.logoUrl || ""} onChange={(v) => change("logoUrl", v)} />
+          <div className="mt-2"><FileUpload label="Upload logo" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/x-icon" uploading={uploadingAsset === "logoUrl"} value={settings.logoUrl || ""} onFile={(file) => uploadAsset(file, "logoUrl")} /></div>
+        </div>
+        <div>
+          <EField label="Favicon URL" value={settings.faviconUrl || ""} onChange={(v) => change("faviconUrl", v)} />
+          <div className="mt-2"><FileUpload label="Upload favicon" accept="image/png,image/jpeg,image/webp,image/gif,image/avif,image/x-icon" uploading={uploadingAsset === "faviconUrl"} value={settings.faviconUrl || ""} onFile={(file) => uploadAsset(file, "faviconUrl")} /></div>
+        </div>
+        <div className="sm:col-span-2">
+          <EField label="Hero Background URL" value={settings.heroBackgroundImage || ""} onChange={(v) => change("heroBackgroundImage", v)} />
+          <div className="mt-2"><FileUpload label="Upload hero background" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" uploading={uploadingAsset === "heroBackgroundImage"} value={settings.heroBackgroundImage || ""} onFile={(file) => uploadAsset(file, "heroBackgroundImage")} /></div>
+        </div>
         <EField label="Join Discord Link" value={settings.heroPrimaryButtonLink || ""} onChange={(v) => change("heroPrimaryButtonLink", v)} />
         <EField label="FiveM Connect Link" value={settings.heroSecondaryButtonLink || ""} onChange={(v) => change("heroSecondaryButtonLink", v)} />
         <EField label="Store Link" value={settings.storeButtonLink || ""} onChange={(v) => change("storeButtonLink", v)} />

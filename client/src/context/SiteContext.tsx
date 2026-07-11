@@ -68,6 +68,10 @@ export type SiteContent = {
   ctaTitle: string;
   ctaDesc: string;
   ctaBackgroundImage?: string;
+  stickyBannerEnabled: boolean;
+  stickyBannerText: string;
+  stickyBannerLink: string;
+  stickyBannerButton: string;
   primaryHex: string;
   accentHex: string;
   darkBgHex: string;
@@ -125,6 +129,10 @@ const DEFAULT_CONTENT: SiteContent = {
   ctaTitle: "Your Story in Gotham City Starts Tonight",
   ctaDesc: "Create your account, link Steam and Discord, and step into the city.",
   ctaBackgroundImage: "/images/cta-street.jpg",
+  stickyBannerEnabled: true,
+  stickyBannerText: "New city update is live. Read the latest announcement.",
+  stickyBannerLink: "/news",
+  stickyBannerButton: "View Update",
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",

@@ -20,8 +20,8 @@ export default function NewsPage() {
     let cancel = false;
     const load = async () => {
       try {
-        const r = await api<{ data: NewsPost[] }>("/api/news");
-        if (!cancel) setPosts(r.data);
+        const r = await api<{ data?: NewsPost[]; rows?: NewsPost[] }>("/api/news");
+        if (!cancel) setPosts(r.data || r.rows || []);
       } catch {
         // Keep the public page calm if the API is unavailable.
       } finally {
@@ -45,7 +45,7 @@ export default function NewsPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {posts.map((post) => {
-            const localIconName = content.news.find((item) => item.title === post.title)?.icon || "Newspaper";
+            const localIconName = (content.news || []).find((item) => item.title === post.title)?.icon || "Newspaper";
             const Icon = getIcon(localIconName);
             return (
               <motion.button

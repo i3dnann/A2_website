@@ -5,6 +5,7 @@ import AnimatedBackground from "./components/AnimatedBackground";
 import BatSwingIntro from "./components/BatSwingIntro";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import StickyBanner from "./components/StickyBanner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import Home from "./pages/Home";
@@ -43,6 +44,7 @@ function AppShell() {
       <AnimatedBackground />
       <BatSwingIntro replayKey={location.pathname} />
       <Navbar />
+      <StickyBanner />
       <AnimatePresence mode="wait">
         <RouteErrorBoundary routeKey={location.pathname}>
           <Routes location={location} key={location.pathname}>
