@@ -77,6 +77,7 @@ export type SiteContent = {
   primaryHex: string;
   accentHex: string;
   darkBgHex: string;
+  maintenanceMode: boolean;
 };
 
 const DEFAULT_CONTENT: SiteContent = {
@@ -140,6 +141,7 @@ const DEFAULT_CONTENT: SiteContent = {
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",
+  maintenanceMode: false,
 };
 
 type SiteContextType = {
@@ -219,6 +221,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           discordLink: settings.heroPrimaryButtonLink || prev.discordLink,
           fivemLink: settings.heroSecondaryButtonLink || prev.fivemLink,
           storeLink: settings.storeButtonLink || prev.storeLink,
+          maintenanceMode: Boolean(settings.maintenanceMode),
           roster: team,
           famousCharacters: famous,
           news,

@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV_ROUTES = [
   { path: "/", label: "Home" },
@@ -79,6 +80,7 @@ export default function Navbar() {
           </nav>
 
           <div className={`hidden items-center xl:flex ${isArabic ? "gap-2" : "gap-2 sm:gap-3"}`}>
+            <ThemeToggle />
             {isAdmin && (
               <Link
                 to="/admin"
@@ -132,6 +134,7 @@ export default function Navbar() {
           </div>
 
           <div className="ml-auto flex items-center gap-2 xl:hidden">
+            <ThemeToggle />
             <button
               type="button"
               onClick={toggleLanguage}

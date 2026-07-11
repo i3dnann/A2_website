@@ -32,6 +32,24 @@ body {
   color: #f5f5f5;
 }
 
+html[data-theme="light"] {
+  --bg: #f5f4fa;
+  --surface: #ffffff;
+  --border: #ddd9eb;
+  --muted: #625f70;
+}
+
+html[data-theme="light"] body { color: #191622; }
+html[data-theme="light"] .text-white { color: #191622 !important; }
+html[data-theme="light"] [class*="text-white/"] { color: rgba(25, 22, 34, .68) !important; }
+html[data-theme="light"] [class*="bg-black/"] { background-color: rgba(255, 255, 255, .82) !important; }
+html[data-theme="light"] [class*="bg-white/5"] { background-color: rgba(255, 255, 255, .72) !important; }
+html[data-theme="light"] [class*="border-white/"] { border-color: rgba(40, 32, 62, .14) !important; }
+html[data-theme="light"] .maintenance-page { background: #f5f4fa; color: #191622; }
+html[data-theme="light"] .theme-toggle { background: rgba(255,255,255,.8); color: #332b50; border-color: rgba(50,40,75,.18); }
+html[data-theme="light"] main:not(.maintenance-page) .text-white { color: #fff !important; }
+html[data-theme="light"] main:not(.maintenance-page) [class*="text-white/"] { color: rgba(255,255,255,.68) !important; }
+
 body::before {
   content: "";
   position: fixed;
