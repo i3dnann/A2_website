@@ -1,6 +1,6 @@
 export const DEFAULT_SETTINGS = {
   websiteName: "A2 Studio",
-  logoUrl: "/assets/gotham-logo.png",
+  logoUrl: "/assets/gotham-logo-512.webp",
   faviconUrl: "/assets/gotham-logo.png",
   primaryColor: "#8b5cf6",
   backgroundColor: "#000000",

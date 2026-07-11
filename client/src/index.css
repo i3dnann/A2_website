@@ -32,39 +32,6 @@ body {
   color: #f5f5f5;
 }
 
-html[data-theme="light"] {
-  --bg: #f5f4fa;
-  --surface: #ffffff;
-  --border: #ddd9eb;
-  --muted: #625f70;
-}
-
-html[data-theme="light"] body { color: #191622; }
-html[data-theme="light"] .site-background { background: #f5f4fa !important; }
-html[data-theme="light"] .site-background > div:not(:nth-child(3)):not(:nth-child(4)) { opacity: 0; }
-html[data-theme="light"] .site-background > div:nth-child(3) { opacity: .2; }
-html[data-theme="light"] .site-ripple-ring { border-color: rgba(96, 81, 155, .18); }
-
-html[data-theme="light"] .text-white:not(.theme-dark-media *):not(.admin-panel *) { color: #191622 !important; }
-html[data-theme="light"] [class*="text-white/"]:not(.theme-dark-media *):not(.admin-panel *) { color: rgba(25, 22, 34, .64) !important; }
-html[data-theme="light"] [class*="border-white/"]:not(.theme-dark-media *):not(.admin-panel *) { border-color: rgba(40, 32, 62, .14) !important; }
-html[data-theme="light"] [class*="bg-white/"]:not(.theme-dark-media *):not(.admin-panel *) { background-color: rgba(255, 255, 255, .88) !important; }
-html[data-theme="light"] [class*="bg-black/"]:not(.theme-dark-media *):not(.admin-panel *) { background-color: rgba(255, 255, 255, .92) !important; }
-html[data-theme="light"] [class*="bg-[#0"]:not(.theme-dark-media *):not(.admin-panel *) { background-color: #fff !important; }
-html[data-theme="light"] footer { background: rgba(255,255,255,.72); border-color: rgba(40,32,62,.12); }
-
-html[data-theme="light"] header [class*="bg-black/"] { background-color: rgba(255,255,255,.88) !important; }
-html[data-theme="light"] header .text-white,
-html[data-theme="light"] header [class*="text-white/"] { color: #211c2c !important; }
-html[data-theme="light"] header [class*="border-white/"] { border-color: rgba(40,32,62,.14) !important; }
-html[data-theme="light"] .maintenance-page { background: #f5f4fa; color: #191622; }
-html[data-theme="light"] .theme-toggle { background: rgba(255,255,255,.8); color: #332b50; border-color: rgba(50,40,75,.18); }
-html[data-theme="light"] .theme-dark-media .text-white { color: #fff !important; }
-html[data-theme="light"] .theme-dark-media [class*="text-white/"] { color: rgba(255,255,255,.7) !important; }
-html[data-theme="light"] .theme-dark-media [class*="border-white/"] { border-color: rgba(255,255,255,.18) !important; }
-html[data-theme="light"] :where(a, button)[class*="bg-gradient"],
-html[data-theme="light"] :where(a, button)[class*="bg-[#60519b]"] { color: #fff !important; }
-
 body::before {
   content: "";
   position: fixed;
