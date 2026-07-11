@@ -574,7 +574,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
                     <div key={message.id} className={`max-w-[88%] ${message.author_type === "player" ? "self-end" : "self-start"}`}>
                       <div className="mb-1 flex items-center gap-2 px-1 text-[10px] text-white/35"><span>{message.author_type === "player" ? "You" : "Gotham Support"}</span><span>{message.created_at ? new Date(message.created_at).toLocaleString() : ""}</span></div>
                       <div className={`rounded-2xl border p-3 ${message.author_type === "player" ? "rounded-br-md border-orange-400/20 bg-orange-500/10" : "rounded-bl-md border-white/10 bg-black/25"}`}><p className="whitespace-pre-wrap break-words text-sm leading-6 text-white/75">{message.message}</p></div>
-                      {message.author_type === "player" && <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-white/30"><CheckCheck size={12} /> Sent</div>}
+                      {message.author_type === "player" && <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${message.read_at ? "text-sky-400" : "text-white/30"}`}><CheckCheck size={12} /> {message.read_at ? "Seen" : "Sent"}</div>}
                     </div>
                   ))}
                 </div>

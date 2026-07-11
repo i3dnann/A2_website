@@ -180,7 +180,7 @@ export const RESOURCE_DEFINITIONS = [
     public: false,
     permission: "manage_tickets",
     searchFields: ["ticket_id", "message"],
-    fields: ["ticket_id", "author_id", "author_type", "message", "internal_only"]
+    fields: ["ticket_id", "author_id", "author_type", "message", "internal_only", "read_at", "read_by"]
   },
   {
     key: "ticketAttachments",
