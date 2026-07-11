@@ -19,7 +19,7 @@ export type RosterItem = {
   xUrl?: string;
 };
 export type JourneyItem = { year: string; title: string; desc: string };
-export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string };
+export type FamousChar = { name: string; title: string; tag: string; image?: string; bio?: string; link?: string };
 export type NewsItem = { icon: string; date: string; title: string; excerpt: string; id?: string };
 export type CareerItem = { role: string; type: string; dept: string; id?: string };
 export type FaqItem = { q: string; a: string };
@@ -152,6 +152,20 @@ type SiteContextType = {
 
 const SiteContext = createContext<SiteContextType | null>(null);
 
+function famousLinkFromJson(value: any): string {
+  if (!value) return "";
+  if (typeof value === "string") {
+    try {
+      return famousLinkFromJson(JSON.parse(value));
+    } catch {
+      return value;
+    }
+  }
+  if (Array.isArray(value)) return famousLinkFromJson(value[0]);
+  if (typeof value === "object") return String(value.link || value.url || value.href || value.website || value.profile || "");
+  return "";
+}
+
 export function SiteProvider({ children }: { children: ReactNode }) {
   const [content, setContent] = useState<SiteContent>(DEFAULT_CONTENT);
 
@@ -186,6 +200,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           tag: character.gang_business || character.role_name || "Featured",
           image: character.picture_url || "",
           bio: character.bio || character.description || "",
+          link: famousLinkFromJson(character.social_links_json),
         }));
         const news = (homeResult.news || []).map((post) => ({
           id: String(post.id || ""),

@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 import RoadmapTimeline from "./RoadmapTimeline";
@@ -30,6 +31,11 @@ export default function Journey() {
                   <h3 className="mt-4 font-serif text-lg text-white">{t(c.name)}</h3>
                   <p className="mt-1 text-sm text-white/50">{t(c.title)}</p>
                   {c.bio && <p className="mt-3 line-clamp-3 text-xs text-white/40">{t(c.bio)}</p>}
+                  {c.link && (
+                    <a href={externalUrl(c.link)} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-white/70 transition hover:border-[#8a7ac4]/50 hover:text-white">
+                      <ExternalLink size={13} /> {t("Open profile")}
+                    </a>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -38,4 +44,11 @@ export default function Journey() {
       </div>
     </section>
   );
+}
+
+function externalUrl(value?: string) {
+  const url = String(value || "").trim();
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url.replace(/^\/+/, "")}`;
 }

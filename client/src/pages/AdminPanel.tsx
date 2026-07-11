@@ -233,7 +233,7 @@ export default function AdminPanel() {
                 {tab === "server" && <ServerEditor content={content} update={updateContent} />}
                 {tab === "streamers" && <ResourceAdmin title="Live Streamers" resource="streamers" blank={{ display_name: "New Streamer", profile_image_url: "", avatar_url: "", banner_url: "", bio: "", discord_username: "", character_name: "", category: "Gotham City Roleplay", twitch_username: "", kick_username: "", youtube_url: "", discord_url: "", is_featured: false, is_approved: true, is_hidden: false, sort_order: 50 }} fields={["display_name", "profile_image_url", "avatar_url", "banner_url", "bio", "discord_username", "character_name", "category", "twitch_username", "kick_username", "youtube_url", "discord_url", "is_featured", "is_approved", "is_hidden", "sort_order"]} />}
                 {tab === "roster" && <ResourceAdmin title="Roster Members" resource="team" blank={{ name: "New Member", role_title: "Staff", category: "Staff", profile_image_url: "", banner_url: "", bio: "", discord_url: "", twitch_url: "", kick_url: "", youtube_url: "", instagram_url: "", x_url: "", sort_order: 50, is_visible: true }} fields={["name", "role_title", "category", "profile_image_url", "banner_url", "bio", "discord_url", "twitch_url", "kick_url", "youtube_url", "instagram_url", "x_url", "sort_order", "is_visible"]} />}
-                {tab === "famous" && <ResourceAdmin title="Famous Characters" resource="famous" blank={{ character_name: "New Character", header: "", picture_url: "", bio: "", description: "", role_name: "", gang_business: "", is_featured: false, sort_order: 50, is_visible: true }} fields={["character_name", "header", "picture_url", "bio", "description", "role_name", "gang_business", "is_featured", "sort_order", "is_visible"]} />}
+                {tab === "famous" && <ResourceAdmin title="Famous Characters" resource="famous" blank={{ character_name: "New Character", header: "", picture_url: "", bio: "", description: "", role_name: "", gang_business: "", social_links_json: "", is_featured: false, sort_order: 50, is_visible: true }} fields={["character_name", "header", "picture_url", "social_links_json", "bio", "description", "role_name", "gang_business", "is_featured", "sort_order", "is_visible"]} />}
                 {tab === "journey" && <JourneyEditor content={content} update={updateContent} />}
                 {tab === "news" && <NewsAdmin />}
                 {tab === "careers" && <CareersAdmin />}
@@ -1262,6 +1262,25 @@ function isUploadableUrlField(field: string) {
   return ["image", "picture", "photo", "avatar", "banner", "logo", "favicon", "video", "audio", "file", "document"].some((token) => field.includes(token));
 }
 
+function linkFromSocialJson(value: any) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    try {
+      return linkFromSocialJson(JSON.parse(value));
+    } catch {
+      return value;
+    }
+  }
+  if (Array.isArray(value)) return linkFromSocialJson(value[0]);
+  if (typeof value === "object") return String(value.link || value.url || value.href || value.website || value.profile || "");
+  return "";
+}
+
+function socialJsonFromLink(value: string) {
+  const link = value.trim();
+  return link ? JSON.stringify({ link }) : "";
+}
+
 function FieldEditor({ field, value, onChange }: { field: string; value: any; onChange: (value: any) => void }) {
   const { t } = useLanguage();
   const { push } = useToast();
@@ -1288,6 +1307,9 @@ function FieldEditor({ field, value, onChange }: { field: string; value: any; on
   }
   if (field.includes("bio") || field.includes("description") || field === "content") {
     return <div className={field === "content" ? "md:col-span-2" : ""}><label className={stClass}>{t(label)}</label><textarea className={`${inpClass} resize-none`} rows={field === "content" ? 10 : 3} value={value || ""} onChange={(e) => onChange(e.target.value)} /></div>;
+  }
+  if (field === "social_links_json") {
+    return <div><label className={stClass}>{t("Profile link")}</label><input className={inpClass} type="text" value={linkFromSocialJson(value)} onChange={(e) => onChange(socialJsonFromLink(e.target.value))} placeholder="https://..." /></div>;
   }
   const uploadable = isUploadableUrlField(field);
   return (
@@ -1711,6 +1733,28 @@ function RosterEditor({ content, update }: any) {
 }
 
 function JourneyEditor({ content, update }: any) {
+  const { push } = useToast();
+  const [uploadingCharacter, setUploadingCharacter] = useState("");
+  const setCharacter = (index: number, patch: any) => {
+    const next = [...content.famousCharacters];
+    next[index] = { ...next[index], ...patch };
+    update({ famousCharacters: next });
+  };
+  const uploadCharacterImage = async (file: File, index: number) => {
+    setUploadingCharacter(String(index));
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await upload("/api/admin/uploads", body);
+      setCharacter(index, { image: result.data?.url || "" });
+      push({ kind: "success", message: "Character image uploaded" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to upload character image" });
+    } finally {
+      setUploadingCharacter("");
+    }
+  };
+
   return <div className="flex flex-col gap-1">
     <EditableSection title="Journey Header">
       <EField label="Subtitle" value={content.journeySubtitle} onChange={(v) => update({ journeySubtitle: v })} />
@@ -1731,15 +1775,23 @@ function JourneyEditor({ content, update }: any) {
     <EditableSection title="Famous Characters">
       {content.famousCharacters.map((c: any, i: number) => (
         <div key={i} className="rounded-xl border border-white/10 p-4 grid gap-3 sm:grid-cols-4 items-end">
-          <div><label className={stClass}>Name</label><input className={inpClass} value={c.name} onChange={(e) => { const n = [...content.famousCharacters]; n[i] = { ...n[i], name: e.target.value }; update({ famousCharacters: n }); }} /></div>
-          <div className="sm:col-span-2"><label className={stClass}>Title/Role</label><input className={inpClass} value={c.title} onChange={(e) => { const n = [...content.famousCharacters]; n[i] = { ...n[i], title: e.target.value }; update({ famousCharacters: n }); }} /></div>
+          <div><label className={stClass}>Name</label><input className={inpClass} value={c.name} onChange={(e) => setCharacter(i, { name: e.target.value })} /></div>
+          <div className="sm:col-span-2"><label className={stClass}>Title/Role</label><input className={inpClass} value={c.title} onChange={(e) => setCharacter(i, { title: e.target.value })} /></div>
           <div className="flex items-center gap-2">
-            <input className={inpClass} value={c.tag} onChange={(e) => { const n = [...content.famousCharacters]; n[i] = { ...n[i], tag: e.target.value }; update({ famousCharacters: n }); }} placeholder="Tag" />
+            <input className={inpClass} value={c.tag} onChange={(e) => setCharacter(i, { tag: e.target.value })} placeholder="Tag" />
             <button onClick={() => update({ famousCharacters: content.famousCharacters.filter((_: any, k: number) => k !== i) })} className="text-red-400 hover:text-red-300"><Trash2 size={14} /></button>
           </div>
+          <div className="sm:col-span-2">
+            <label className={stClass}>Picture URL or upload</label>
+            <input className={inpClass} value={c.image || ""} onChange={(e) => setCharacter(i, { image: e.target.value })} placeholder="https://..." />
+            <div className="mt-2">
+              <FileUpload label="Upload character picture" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" uploading={uploadingCharacter === String(i)} value={c.image || ""} onFile={(file) => uploadCharacterImage(file, i)} />
+            </div>
+          </div>
+          <div className="sm:col-span-2"><label className={stClass}>Profile link</label><input className={inpClass} value={c.link || ""} onChange={(e) => setCharacter(i, { link: e.target.value })} placeholder="https://..." /></div>
         </div>
       ))}
-      <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising" }] })}
+      <button onClick={() => update({ famousCharacters: [...content.famousCharacters, { name: "New Character", title: "Their Role", tag: "Rising", image: "", link: "" }] })}
         className="mt-2 flex items-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-2.5 text-sm text-white/60 hover:border-orange-400/40 hover:text-white transition"><Plus size={14} /> Add Character</button>
     </EditableSection>
   </div>;
