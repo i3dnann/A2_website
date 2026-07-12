@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { getUserById, listWebUsers, deactivateWebUser, resetUserPassword, upsertWebUserFromAdmin } from "../services/users.js";
+import { getUserById, listWebUsers, deactivateWebUser, resetUserPassword, unlinkProviderForUser, upsertWebUserFromAdmin } from "../services/users.js";
 import { blockUserIdentity, unblockUserIdentity } from "../services/accountBlocks.js";
 import { auditAction } from "../services/audit.js";
 import { listVerificationRequests, setUserVerified } from "../services/verificationService.js";
@@ -48,6 +48,16 @@ router.post("/users/:id/unverify", asyncHandler(async (req, res) => {
   const result = await setUserVerified(req.params.id, false, req.user, { note: req.body?.note || "verified badge removed", status: "removed" });
   await auditAction({ req, action: "remove_verified_badge", targetType: "web_users", targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.note || "verified badge removed", webhookCategory: "security" });
   res.json({ user: result.after });
+}));
+
+router.post("/users/:id/unlink/:provider", asyncHandler(async (req, res) => {
+  const provider = String(req.params.provider || "").toLowerCase();
+  if (!["discord", "steam"].includes(provider)) return res.status(422).json({ error: "unsupported_provider" });
+  const before = await getUserById(req.params.id);
+  if (!before) return res.status(404).json({ error: "user_not_found" });
+  const user = await unlinkProviderForUser(req.params.id, provider, req.user);
+  await auditAction({ req, action: `unlink_${provider}_account`, targetType: "web_users", targetId: req.params.id, before, after: user, reason: req.body?.reason || `${provider} disconnected by admin`, webhookCategory: "security" });
+  res.json({ user });
 }));
 
 router.post("/users/:id/ban", asyncHandler(async (req, res) => {

@@ -1658,6 +1658,22 @@ function UsersAdmin() {
     }
   };
 
+  const unlinkProvider = async (user: any, provider: "discord" | "steam") => {
+    const ok = await confirm({
+      title: `Disconnect ${provider === "discord" ? "Discord" : "Steam"}?`,
+      message: `This removes the saved ${provider === "discord" ? "Discord" : "Steam"} connection for ${user.username || user.email || "this user"}. They can reconnect it later from their dashboard.`,
+      confirmText: "Disconnect",
+    });
+    if (!ok) return;
+    try {
+      await api(`/api/admin/users/${user.id}/unlink/${provider}`, { method: "POST" });
+      await load();
+      push({ kind: "success", message: `${provider === "discord" ? "Discord" : "Steam"} disconnected` });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || `Failed to disconnect ${provider}` });
+    }
+  };
+
   return (
     <EditableSection title="Website Users">
       <div className="flex gap-2">
@@ -1677,12 +1693,18 @@ function UsersAdmin() {
                   <p className="mt-1 text-xs text-white/40">{user.email || "No email"} - Discord {user.discord_id || "not linked"} - Steam {user.steam_id || "not linked"}</p>
                   <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Verification {user.verified_badge ? "verified" : user.verification_status || "none"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {user.verified_badge ? (
                     <button onClick={() => setVerified(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Remove Badge</button>
                   ) : (
                     <button onClick={() => setVerified(user, true)} className="rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-3 py-2 text-xs text-[#d7ceff]">Add Badge (Bypass)</button>
                   )}
+                  {user.discord_id ? (
+                    <button onClick={() => unlinkProvider(user, "discord")} className="rounded-lg border border-indigo-400/30 bg-indigo-500/5 px-3 py-2 text-xs text-indigo-200">Disconnect Discord</button>
+                  ) : null}
+                  {user.steam_id ? (
+                    <button onClick={() => unlinkProvider(user, "steam")} className="rounded-lg border border-sky-400/30 bg-sky-500/5 px-3 py-2 text-xs text-sky-200">Disconnect Steam</button>
+                  ) : null}
                   <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
                   <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
                   <button onClick={() => deleteUser(user)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={13} /></button>

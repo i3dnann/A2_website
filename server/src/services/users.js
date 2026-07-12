@@ -423,10 +423,49 @@ export async function linkProvider(userId, provider, providerUserId, profile = {
   return updated;
 }
 
+export async function unlinkProviderForUser(userId, provider, actor) {
+  if (!["discord", "steam"].includes(provider)) {
+    throw Object.assign(new Error("unsupported_provider"), { status: 422 });
+  }
+
+  const existing = await getInternalUserById(userId);
+  if (!existing) throw Object.assign(new Error("user_not_found"), { status: 404 });
+  const user = publicUser(existing);
+  const linked_identifiers = (user.linked_identifiers || []).filter((identifier) => !String(identifier).startsWith(`${provider}:`));
+  const patch = {
+    ...existing,
+    linked_identifiers,
+    updated_by: actor?.id || null,
+    ...(provider === "discord" ? { discord_id: "", discord_username: "" } : {}),
+    ...(provider === "steam" ? { steam_id: "", steam_persona: "" } : {})
+  };
+
+  if (databaseEnabled) {
+    await query("DELETE FROM web_auth_providers WHERE user_id = :user_id AND provider = :provider", { user_id: userId, provider });
+  }
+
+  for (const [key, value] of providers.entries()) {
+    if (value.user_id === userId && value.provider === provider) providers.delete(key);
+  }
+
+  return upsertUser(patch);
+}
+
 export async function loginOrCreateProviderUser(provider, providerUserId, profile = {}, preferredLanguage = "en") {
   const existing = await getInternalUserByProvider(provider, providerUserId);
   if (existing) {
     const refreshed = await linkProvider(existing.id, provider, providerUserId, profile);
+    const user = await upsertUser({ ...refreshed, last_login_at: nowIso() });
+    if (!accountCanLogin(user)) throw Object.assign(new Error("account_disabled_or_frozen"), { status: 403 });
+    return user;
+  }
+
+  const existingByDirectIdentifier = await findUserByIdentifiers({
+    discord_id: provider === "discord" ? providerUserId : "",
+    steam_id: provider === "steam" ? providerUserId : ""
+  });
+  if (existingByDirectIdentifier) {
+    const refreshed = await linkProvider(existingByDirectIdentifier.id, provider, providerUserId, profile);
     const user = await upsertUser({ ...refreshed, last_login_at: nowIso() });
     if (!accountCanLogin(user)) throw Object.assign(new Error("account_disabled_or_frozen"), { status: 403 });
     return user;
