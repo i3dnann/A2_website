@@ -5,6 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyDOCAbC123dEf456GhI789jKl012-MnO"
 
 [[redirects]]
   from = "/api/*"
