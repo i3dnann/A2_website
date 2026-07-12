@@ -13,6 +13,7 @@ const NAV_ROUTES = [
   { path: "/live", label: "Live" },
   { path: "/journey", label: "Journey" },
   { path: "/news", label: "News" },
+  { path: "/departments", label: "Departments" },
   { path: "/careers", label: "Careers" },
   { path: "/faq", label: "FAQ" },
 ];

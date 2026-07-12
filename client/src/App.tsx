@@ -22,6 +22,7 @@ import JourneyPage from "./pages/JourneyPage";
 import NewsPage from "./pages/NewsPage";
 import CareersPage from "./pages/CareersPage";
 import CareerApplyPage from "./pages/CareerApplyPage";
+import DepartmentsPage from "./pages/DepartmentsPage";
 import FaqPage from "./pages/FaqPage";
 import CharactersPage from "./pages/CharactersPage";
 import TermsPage from "./pages/TermsPage";
@@ -65,6 +66,9 @@ function AppShell() {
             <Route path="/news" element={<NewsPage />} />
             <Route path="/careers" element={<CareersPage />} />
             <Route path="/careers/:id" element={<CareerApplyPage />} />
+            <Route path="/departments" element={<DepartmentsPage />} />
+            <Route path="/departments/:department" element={<DepartmentsPage />} />
+            <Route path="/departments/:department/manage" element={<DepartmentsPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />

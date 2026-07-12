@@ -5,6 +5,7 @@ Professional FiveM CFW Roleplay community website for A2 Studio. The frontend is
 ## Features
 
 - Public pages: home, roster, live server status, team, careers, tickets, news, snapshots, map, FAQ, terms, events, journey, famous characters.
+- Department portals: public EMS, Police, and FIB pages with directories, ranks, wings, uniform galleries, vehicle galleries, and protected department-management tools.
 - Account system: email/password, Discord OAuth2, Steam OpenID, linked providers per user.
 - Player dashboard: account status, linked identifiers, ban status, tickets, and CFW character data after Steam is connected.
 - Admin panel: settings, homepage, theme/colors, performance mode, journey, famous characters, roster, team, careers/questions/applications, tickets, news, map zones, FAQ, terms, events, users, admins, permissions, webhooks, audit logs, uploads.
@@ -79,6 +80,7 @@ Discord:
 - `DISCORD_CLIENT_SECRET`
 - `DISCORD_REDIRECT_URI=http://your-api-domain/api/auth/discord/callback`
 - Optional: `DISCORD_GUILD_ID`
+- Optional future department role sync: `DISCORD_EMS_MEMBER_ROLE_ID`, `DISCORD_EMS_MANAGEMENT_ROLE_ID`, `DISCORD_POLICE_MEMBER_ROLE_ID`, `DISCORD_POLICE_MANAGEMENT_ROLE_ID`, `DISCORD_FIB_MEMBER_ROLE_ID`, `DISCORD_FIB_MANAGEMENT_ROLE_ID`
 
 Steam:
 
@@ -124,3 +126,5 @@ The default settings use those files as the hero background, site logo, and favi
 Frontend deploys from `/client` to Netlify. Backend runs separately on a VPS with Node.js and MySQL access. See [INSTALL.md](INSTALL.md) and [DEPLOY_NETLIFY.md](DEPLOY_NETLIFY.md).
 
 For a Windows Server VPS, use [docs/WINDOWS_VPS_INSTALL.md](docs/WINDOWS_VPS_INSTALL.md). The backend can serve the built React frontend directly after `npm run build --prefix client`.
+
+Department setup and migration notes: [docs/DEPARTMENT_PORTALS.md](docs/DEPARTMENT_PORTALS.md).

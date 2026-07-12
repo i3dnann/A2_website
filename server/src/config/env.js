@@ -49,6 +49,12 @@ const schema = z.object({
   DISCORD_REDIRECT_URI: z.string().default(""),
   DISCORD_BOT_TOKEN: z.string().default(""),
   DISCORD_GUILD_ID: z.string().default(""),
+  DISCORD_EMS_MEMBER_ROLE_ID: z.string().default(""),
+  DISCORD_EMS_MANAGEMENT_ROLE_ID: z.string().default(""),
+  DISCORD_POLICE_MEMBER_ROLE_ID: z.string().default(""),
+  DISCORD_POLICE_MANAGEMENT_ROLE_ID: z.string().default(""),
+  DISCORD_FIB_MEMBER_ROLE_ID: z.string().default(""),
+  DISCORD_FIB_MANAGEMENT_ROLE_ID: z.string().default(""),
 
   STEAM_API_KEY: z.string().default(""),
   STEAM_REALM: z.string().default("http://localhost:3001"),
