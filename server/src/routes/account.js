@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { auditAction } from "../services/audit.js";
 import { changeOwnPassword } from "../services/passwordService.js";
 import { updateOwnEmail } from "../services/users.js";
+import { createVerificationRequest, getVerificationEligibility } from "../services/verificationService.js";
 
 const router = Router();
 router.use(requireAuth, requirePermission("view_player_portal"));
@@ -40,6 +41,29 @@ router.patch(
       webhookCategory: "security"
     });
     res.json({ user });
+  })
+);
+
+router.get(
+  "/verification",
+  asyncHandler(async (req, res) => {
+    res.json({ verification: await getVerificationEligibility(req.user) });
+  })
+);
+
+router.post(
+  "/verification",
+  asyncHandler(async (req, res) => {
+    const request = await createVerificationRequest(req.user, req.body?.reason || "");
+    await auditAction({
+      req,
+      action: "request_account_verification",
+      targetType: "verification_requests",
+      targetId: request.id,
+      after: request,
+      webhookCategory: "security"
+    });
+    res.status(201).json({ request });
   })
 );
 

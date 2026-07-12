@@ -37,6 +37,9 @@ export type AppUser = {
   role: "Citizen" | "Support" | "Moderator" | "Admin" | "Master Admin";
   roles?: string[];
   avatarUrl?: string;
+  verifiedBadge?: boolean;
+  verifiedAt?: string | null;
+  verificationStatus?: string;
 };
 
 type AuthContextType = {
@@ -74,6 +77,9 @@ type BackendUser = Partial<AppUser> & {
   discord_id?: string;
   steam_id?: string;
   avatar_url?: string;
+  verified_badge?: boolean | number | string;
+  verified_at?: string | null;
+  verification_status?: string;
 };
 
 function roleFromBackend(raw: BackendUser): AppUser["role"] {
@@ -107,6 +113,9 @@ function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser
     role: roleFromBackend(raw),
     roles: raw.roles || [roleFromBackend(raw)],
     avatarUrl: raw.avatarUrl || raw.avatar_url || discordAvatar,
+    verifiedBadge: Boolean(raw.verifiedBadge || raw.verified_badge === true || raw.verified_badge === 1 || raw.verified_badge === "1"),
+    verifiedAt: raw.verifiedAt || raw.verified_at || null,
+    verificationStatus: raw.verificationStatus || raw.verification_status || "none",
   };
 }
 

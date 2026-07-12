@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS web_users (
   password_hash VARCHAR(255),
   email_verified_at DATETIME NULL,
   avatar_url TEXT,
+  verified_badge TINYINT(1) DEFAULT 0,
+  verified_at DATETIME NULL,
+  verified_by VARCHAR(64),
+  verification_status VARCHAR(40) DEFAULT 'none',
   roles_json JSON,
   permissions_json JSON,
   account_status VARCHAR(32) DEFAULT 'active',
@@ -773,6 +777,7 @@ CREATE TABLE IF NOT EXISTS news_comments (
   news_id VARCHAR(64) NOT NULL,
   user_id VARCHAR(64),
   author_name VARCHAR(120),
+  author_verified TINYINT(1) DEFAULT 0,
   body TEXT,
   status VARCHAR(40) DEFAULT 'pending',
   approved TINYINT DEFAULT 0,
@@ -787,6 +792,25 @@ CREATE TABLE IF NOT EXISTS news_comments (
   INDEX idx_news_comments_status (status),
   INDEX idx_news_comments_user (user_id),
   INDEX idx_news_comments_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS verification_requests (
+  id VARCHAR(64) PRIMARY KEY,
+  user_id VARCHAR(64) NOT NULL,
+  status VARCHAR(40) DEFAULT 'pending',
+  reason TEXT,
+  eligibility_json JSON,
+  reviewed_by VARCHAR(64),
+  reviewed_at DATETIME NULL,
+  review_note TEXT,
+  created_by VARCHAR(64),
+  updated_by VARCHAR(64),
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  INDEX idx_verification_requests_user (user_id),
+  INDEX idx_verification_requests_status (status),
+  INDEX idx_verification_requests_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS news_votes (

@@ -22,6 +22,7 @@ import {
   Search,
   Send,
   CheckCheck,
+  Star,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -29,12 +30,14 @@ import UserAvatar from "../components/UserAvatar";
 import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 import { useToast } from "../components/Toast";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "characters", label: "Characters", icon: Gamepad2 },
   { id: "applications", label: "Applications", icon: Briefcase },
   { id: "tickets", label: "Tickets", icon: TicketIcon },
+  { id: "verification", label: "Verify Badge", icon: Star },
   { id: "linked", label: "Linked Accounts", icon: Link2 },
   { id: "account", label: "Account", icon: UserCircle },
 ];
@@ -134,7 +137,10 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3">
                     <UserAvatar src={user.avatarUrl} name={user.username} />
                     <div className="min-w-0">
-                      <p className="truncate font-serif text-base text-white">{user.username}</p>
+                      <p className="flex items-center gap-1.5 truncate font-serif text-base text-white">
+                        <span className="truncate">{user.username}</span>
+                        {user.verifiedBadge && <VerifiedBadge />}
+                      </p>
                       <p className="truncate text-xs text-white/40">{user.role}</p>
                     </div>
                   </div>
@@ -200,6 +206,7 @@ export default function Dashboard() {
                 {tab === "tickets" && (
                   <Tickets tickets={tickets} onNewTicket={() => setTicketModalOpen(true)} />
                 )}
+                {tab === "verification" && <Verification user={user} characters={characters} />}
                 {tab === "linked" && (
                   <LinkedAccounts
                     discordLinked={user.discordLinked}
@@ -266,7 +273,10 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
           {t("Welcome back")}
         </p>
-        <h2 className="mt-2 font-serif text-3xl text-white">{user.username}</h2>
+        <h2 className="mt-2 flex items-center gap-2 font-serif text-3xl text-white">
+          {user.username}
+          {user.verifiedBadge && <VerifiedBadge className="h-5 w-5" />}
+        </h2>
         <p className="mt-2 max-w-lg text-sm text-white/55">
           {t("Here's a snapshot of your Gotham City account. Keep your identifiers linked to unlock in-game character syncing and faster support.")}
         </p>
@@ -280,6 +290,7 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
           tone={user.banned ? "bg-orange-500/10 text-orange-300" : "bg-emerald-500/10 text-emerald-300"}
         />
         <StatCard icon={Link2} label="Linked Providers" value={`${(user.discordLinked ? 1 : 0) + (user.steamLinked ? 1 : 0)}/2`} tone="bg-orange-500/10 text-orange-300" />
+        <StatCard icon={Star} label="Verified Badge" value={user.verifiedBadge ? "Active" : "Not verified"} tone={user.verifiedBadge ? "bg-[#60519b]/20 text-[#d7ceff]" : "bg-orange-500/10 text-orange-300"} />
         <StatCard icon={TicketIcon} label="Open Tickets" value={String(openTickets)} tone="bg-orange-500/10 text-orange-300" />
         <StatCard icon={Gamepad2} label="Characters" value={String(characters.length)} tone="bg-orange-500/10 text-orange-300" />
         <StatCard icon={Briefcase} label="Applications" value={String(applications.length)} tone="bg-orange-500/10 text-orange-300" />
@@ -293,6 +304,137 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
           <TimelineRow label="Steam linked" value={user.steamLinked ? "Connected" : "Not connected"} good={user.steamLinked} />
         </div>
       </div>
+    </div>
+  );
+}
+
+function Verification({ user, characters }: { user: any; characters: any[] }) {
+  const { t } = useLanguage();
+  const { push } = useToast();
+  const [state, setState] = useState<any>(null);
+  const [reason, setReason] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [applying, setApplying] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = await api<{ verification: any }>("/api/account/verification");
+      setState(result.verification);
+    } catch (error: any) {
+      push({ kind: "error", message: error?.message || "Could not load verification status." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const apply = async () => {
+    setApplying(true);
+    try {
+      await api("/api/account/verification", { method: "POST", body: { reason } });
+      setReason("");
+      push({ kind: "success", message: "Verification request sent to admins." });
+      await load();
+    } catch (error: any) {
+      push({ kind: "error", message: error?.message || "You cannot apply yet." });
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const checks = state?.checks || {
+    discordLinked: user.discordLinked,
+    steamLinked: user.steamLinked,
+    hasCharacter: characters.length > 0,
+    registeredSevenDays: false,
+  };
+  const latest = state?.latestRequest;
+  const alreadyPending = latest?.status === "pending";
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="spotlight-card rounded-2xl border border-white/10 bg-gradient-to-br from-[#60519b]/20 via-white/[0.03] to-transparent p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <VerifiedBadge className="h-6 w-6" />
+              <h3 className="font-serif text-2xl text-white">{t("Account verification")}</h3>
+            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">
+              {t("Apply for a verified badge after linking Discord and Steam, creating a server character, and keeping your website account for at least 7 days.")}
+            </p>
+          </div>
+          {user.verifiedBadge && (
+            <span className="rounded-full border border-[#c9c0ea]/35 bg-[#60519b]/20 px-4 py-2 text-sm font-semibold text-[#eee9ff]">
+              {t("Verified")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/50">
+          <Loader2 size={16} className="mr-2 inline animate-spin" /> {t("Checking requirements...")}
+        </div>
+      ) : (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Requirement label="Discord connected" ok={checks.discordLinked} />
+            <Requirement label="Steam connected" ok={checks.steamLinked} />
+            <Requirement label="Server character found" ok={checks.hasCharacter} />
+            <Requirement label="Registered for 7 days" ok={checks.registeredSevenDays} detail={`${state?.accountAgeDays ?? 0}/${state?.requiredAccountAgeDays ?? 7} days`} />
+          </div>
+
+          {latest && (
+            <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/35">{t("Latest request")}</p>
+              <p className="mt-2 text-sm text-white/75">{t("Status")}: <span className="font-semibold text-orange-200">{latest.status}</span></p>
+              {latest.review_note && <p className="mt-2 text-sm text-white/50">{latest.review_note}</p>}
+            </div>
+          )}
+
+          {!user.verifiedBadge && (
+            <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={4}
+                maxLength={1000}
+                placeholder={t("Optional note to admins...")}
+                className="w-full resize-none rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-orange-400/50"
+              />
+              <button
+                onClick={apply}
+                disabled={applying || !state?.eligible || alreadyPending}
+                className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#60519b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#7868b8] disabled:cursor-not-allowed disabled:opacity-55"
+              >
+                {applying ? <Loader2 size={15} className="animate-spin" /> : <Star size={15} />}
+                {alreadyPending ? t("Request pending") : t("Apply for verification")}
+              </button>
+              {!state?.eligible && state?.missing?.length > 0 && (
+                <p className="mt-3 text-xs text-white/45">{t("Missing")}: {state.missing.join(", ")}</p>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function Requirement({ label, ok, detail = "" }: { label: string; ok: boolean; detail?: string }) {
+  const { t } = useLanguage();
+  return (
+    <div className={`spotlight-card rounded-2xl border p-4 ${ok ? "border-emerald-400/25 bg-emerald-400/10" : "border-white/10 bg-white/[0.03]"}`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm font-semibold text-white">{t(label)}</span>
+        <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${ok ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-orange-400/30 bg-orange-400/10 text-orange-300"}`}>
+          {ok ? t("Complete") : t("Required")}
+        </span>
+      </div>
+      {detail && <p className="mt-2 text-xs text-white/40">{detail}</p>}
     </div>
   );
 }

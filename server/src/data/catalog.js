@@ -234,7 +234,7 @@ export const RESOURCE_DEFINITIONS = [
     public: false,
     permission: "manage_news",
     searchFields: ["news_id", "author_name", "body", "status", "user_id"],
-    fields: ["news_id", "user_id", "author_name", "body", "status", "approved", "is_hidden", "sort_order"]
+    fields: ["news_id", "user_id", "author_name", "author_verified", "body", "status", "approved", "is_hidden", "sort_order"]
   },
   {
     key: "mapZones",

@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, Skeleton } from "./Toast";
+import VerifiedBadge from "./VerifiedBadge";
 
 export type NewsPost = {
   id: string;
@@ -27,6 +28,7 @@ export type NewsPost = {
 export type NewsComment = {
   id: string;
   author_name: string;
+  author_verified?: boolean;
   body: string;
   created_at: string;
 };
@@ -82,8 +84,15 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
     if (!body.trim()) return;
     setSubmitting(true);
     try {
-      const r = await api<{ pending: boolean }>(`/api/news/${post.id}/comments`, { method: "POST", body: { author_name: name || user.username, body } });
+      const r = await api<{ pending: boolean; comment: NewsComment }>(`/api/news/${post.id}/comments`, { method: "POST", body: { author_name: name || user.username, body } });
       setBody(""); setName("");
+      if (!r.pending) {
+        setData((current) => current ? {
+          ...current,
+          post: { ...current.post, comment_count: Number(current.post.comment_count || 0) + 1 },
+          comments: [...current.comments, r.comment],
+        } : current);
+      }
       push({ kind: "success", message: r.pending ? t("Comment submitted for approval") : t("Comment posted") });
     } catch (e: any) { push({ kind: "error", message: e?.message || t("Failed") }); }
     finally { setSubmitting(false); }
@@ -194,7 +203,10 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
                     {data?.comments.map((c) => (
                       <div key={c.id} className="spotlight-card rounded-lg border border-white/10 bg-white/[0.02] p-3">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-medium text-white">{c.author_name}</span>
+                          <span className="flex items-center gap-1.5 font-medium text-white">
+                            {c.author_name}
+                            {c.author_verified && <VerifiedBadge />}
+                          </span>
                           <span className="text-white/30">{new Date(c.created_at).toLocaleString()}</span>
                         </div>
                         <p className="mt-1.5 text-sm text-white/75 whitespace-pre-wrap">{t(c.body)}</p>

@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { createResource, getResource, listResource, updateResource } from "../services/repository.js";
 import { resolveUserIdentity } from "../services/users.js";
 import { query } from "../config/db.js";
+import { userIsVerified } from "../services/verificationService.js";
 
 const router = Router();
 const memoryVotes = new Map();
@@ -123,6 +124,7 @@ function mapComment(row = {}) {
     news_id: row.news_id,
     user_id: row.user_id || "",
     author_name: row.author_name || "Community Member",
+    author_verified: truthy(row.author_verified),
     body: row.body || "",
     status: row.status || (truthy(row.approved) ? "approved" : "pending"),
     approved: truthy(row.approved) ? 1 : 0,
@@ -165,20 +167,22 @@ router.post(
     if (!post || !published(post)) return res.status(404).json({ error: "news_not_found", message: "News post not found." });
     const body = String(req.body?.body || "").trim();
     if (body.length < 2) return res.status(422).json({ error: "comment_required", message: "Write a comment first." });
+    const verified = userIsVerified(req.user);
     const comment = await createResource(
       "newsComments",
       {
         news_id: post.id,
         user_id: req.user.id,
         author_name: String(req.body?.author_name || req.user.username || "Community Member").slice(0, 80),
+        author_verified: verified ? 1 : 0,
         body: body.slice(0, 1000),
-        status: "pending",
-        approved: 0,
+        status: verified ? "approved" : "pending",
+        approved: verified ? 1 : 0,
         is_hidden: 0
       },
       req.user
     );
-    res.status(201).json({ pending: true, comment: mapComment(comment) });
+    res.status(201).json({ pending: !verified, comment: mapComment(comment) });
   })
 );
 

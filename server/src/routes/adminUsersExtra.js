@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { getUserById, listWebUsers, deactivateWebUser, resetUserPassword, upsertWebUserFromAdmin } from "../services/users.js";
 import { blockUserIdentity, unblockUserIdentity } from "../services/accountBlocks.js";
 import { auditAction } from "../services/audit.js";
+import { listVerificationRequests, setUserVerified } from "../services/verificationService.js";
 
 const router = Router();
 
@@ -12,6 +13,41 @@ router.use(requireAuth, requirePermission("manage_users"));
 router.get("/users", asyncHandler(async (req, res) => {
   const rows = await listWebUsers({ q: req.query.q || "", limit: req.query.limit || 200 });
   res.json({ rows, total: rows.length });
+}));
+
+router.get("/verification-requests", asyncHandler(async (req, res) => {
+  const rows = await listVerificationRequests({ status: req.query.status || "pending", q: req.query.q || "", limit: req.query.limit || 200 });
+  res.json({ rows, total: rows.length });
+}));
+
+router.post("/verification-requests/:id/approve", asyncHandler(async (req, res) => {
+  const rows = await listVerificationRequests({ status: "all", limit: 300 });
+  const request = rows.find((row) => String(row.id) === String(req.params.id));
+  if (!request) return res.status(404).json({ error: "verification_request_not_found" });
+  const result = await setUserVerified(request.user_id, true, req.user, { requestId: request.id, note: req.body?.note || "", status: "approved" });
+  await auditAction({ req, action: "approve_account_verification", targetType: "web_users", targetId: request.user_id, before: result.before, after: result.after, reason: req.body?.note || "verification approved", webhookCategory: "security" });
+  res.json({ user: result.after });
+}));
+
+router.post("/verification-requests/:id/reject", asyncHandler(async (req, res) => {
+  const rows = await listVerificationRequests({ status: "all", limit: 300 });
+  const request = rows.find((row) => String(row.id) === String(req.params.id));
+  if (!request) return res.status(404).json({ error: "verification_request_not_found" });
+  const result = await setUserVerified(request.user_id, false, req.user, { requestId: request.id, note: req.body?.note || "", status: "rejected" });
+  await auditAction({ req, action: "reject_account_verification", targetType: "web_users", targetId: request.user_id, before: result.before, after: result.after, reason: req.body?.note || "verification rejected", webhookCategory: "security" });
+  res.json({ user: result.after });
+}));
+
+router.post("/users/:id/verify", asyncHandler(async (req, res) => {
+  const result = await setUserVerified(req.params.id, true, req.user, { note: req.body?.note || "manual verification", status: "approved" });
+  await auditAction({ req, action: "grant_verified_badge", targetType: "web_users", targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.note || "manual verification", webhookCategory: "security" });
+  res.json({ user: result.after });
+}));
+
+router.post("/users/:id/unverify", asyncHandler(async (req, res) => {
+  const result = await setUserVerified(req.params.id, false, req.user, { note: req.body?.note || "verified badge removed", status: "removed" });
+  await auditAction({ req, action: "remove_verified_badge", targetType: "web_users", targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.note || "verified badge removed", webhookCategory: "security" });
+  res.json({ user: result.after });
 }));
 
 router.post("/users/:id/ban", asyncHandler(async (req, res) => {

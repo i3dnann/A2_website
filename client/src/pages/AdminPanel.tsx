@@ -13,6 +13,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
 import FileUpload from "../components/FileUpload";
+import VerifiedBadge from "../components/VerifiedBadge";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,6 +30,7 @@ const ADMIN_TABS = [
   { id: "faq", label: "FAQ", icon: HelpCircle },
   { id: "tickets", label: "Tickets", icon: TicketIcon },
   { id: "comments", label: "Comments", icon: MessageCircle },
+  { id: "verification", label: "Verification", icon: Star },
   { id: "theme", label: "Theme & Brand", icon: Palette },
   { id: "terms", label: "Terms", icon: FileText },
   { id: "users", label: "Users", icon: Users },
@@ -242,6 +244,7 @@ export default function AdminPanel() {
                 {tab === "faq" && <FaqEditor content={content} update={updateContent} />}
                 {tab === "tickets" && <TicketsAdmin />}
                 {tab === "comments" && <CommentsAdmin />}
+                {tab === "verification" && <VerificationAdmin />}
                 {tab === "theme" && <ThemeEditor content={content} update={updateContent} />}
                 {tab === "terms" && <ResourceAdmin title="Terms of Service" resource="terms" blank={{ title: "Terms of Service", content: "", version: "1.0.0", effective_date: new Date().toISOString().slice(0, 10), is_visible: true, sort_order: 1 }} fields={["title", "content", "version", "effective_date", "is_visible", "sort_order"]} />}
                 {tab === "users" && <UsersAdmin />}
@@ -702,7 +705,10 @@ function CommentsAdmin() {
                     <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
                       c.approved === 0 ? "border-orange-400/30 bg-orange-400/10 text-orange-300" : c.approved === 1 ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"
                     }`}>{c.approved === 0 ? "Pending" : c.approved === 1 ? "Approved" : "Rejected"}</span>
-                    <span className="text-xs font-semibold text-white">{c.author_name}</span>
+                    <span className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                      {c.author_name}
+                      {c.author_verified ? <VerifiedBadge /> : null}
+                    </span>
                     <span className="text-[11px] text-white/35">{new Date(c.created_at).toLocaleString()}</span>
                   </div>
                   <div className="flex gap-1.5">
@@ -929,6 +935,81 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+function VerificationAdmin() {
+  const { push, confirm } = useToast();
+  const [filter, setFilter] = useState<"pending" | "all">("pending");
+  const [q, setQ] = useState("");
+  const [rows, setRows] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const result = await api<{ rows: any[] }>("/api/admin/verification-requests", { params: { status: filter, q, limit: 200 } });
+      setRows(result.rows || []);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to load verification requests" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, [filter]);
+
+  const act = async (id: string, action: "approve" | "reject") => {
+    const ok = action === "approve" || await confirm({ title: "Reject verification?", message: "The user can apply again later after fixing issues.", confirmText: "Reject" });
+    if (!ok) return;
+    try {
+      await api(`/api/admin/verification-requests/${id}/${action}`, { method: "POST" });
+      push({ kind: "success", message: `Verification ${action}d` });
+      await load();
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Action failed" });
+    }
+  };
+
+  return (
+    <EditableSection title="Account Verification">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users, Discord, Steam..." className={inpClass} />
+        <button onClick={load} className="rounded-lg border border-white/10 px-4 text-sm text-white/70">Search</button>
+      </div>
+      <div className="flex items-center gap-2">
+        <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>Pending</FilterPill>
+        <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>All</FilterPill>
+      </div>
+      {loading ? (
+        <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
+      ) : rows.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No verification requests found.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {rows.map((row) => (
+            <div key={row.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-white">{row.username || row.email || row.user_id}</p>
+                    {row.verified_badge ? <VerifiedBadge /> : null}
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${row.status === "pending" ? "border-orange-400/30 bg-orange-400/10 text-orange-300" : row.status === "approved" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"}`}>{row.status}</span>
+                  </div>
+                  <p className="mt-1 text-xs text-white/40">Discord {row.discord_id || "not linked"} - Steam {row.steam_id || "not linked"}</p>
+                  <p className="mt-1 text-xs text-white/35">Requested {row.created_at ? new Date(row.created_at).toLocaleString() : "unknown"}</p>
+                  {row.reason && <p className="mt-3 whitespace-pre-wrap text-sm text-white/65">{row.reason}</p>}
+                </div>
+                <div className="flex gap-1.5">
+                  {row.status !== "approved" && <button onClick={() => act(row.id, "approve")} className="flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/5 px-2.5 py-1.5 text-[11px] text-emerald-300"><CheckCircle2 size={11} /> Approve</button>}
+                  {row.status !== "rejected" && <button onClick={() => act(row.id, "reject")} className="flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-400/5 px-2.5 py-1.5 text-[11px] text-red-300"><XCircle size={11} /> Reject</button>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </EditableSection>
   );
 }
 
@@ -1471,6 +1552,16 @@ function UsersAdmin() {
     }
   };
 
+  const setVerified = async (user: any, verified: boolean) => {
+    try {
+      await api(`/api/admin/users/${user.id}/${verified ? "verify" : "unverify"}`, { method: "POST" });
+      await load();
+      push({ kind: "success", message: verified ? "Verified badge granted" : "Verified badge removed" });
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update verified badge" });
+    }
+  };
+
   return (
     <EditableSection title="Website Users">
       <div className="flex gap-2">
@@ -1483,11 +1574,19 @@ function UsersAdmin() {
             <div key={user.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-white">{user.username || user.email || user.id}</p>
+                  <p className="flex items-center gap-1.5 font-semibold text-white">
+                    {user.username || user.email || user.id}
+                    {user.verified_badge ? <VerifiedBadge /> : null}
+                  </p>
                   <p className="mt-1 text-xs text-white/40">{user.email || "No email"} - Discord {user.discord_id || "not linked"} - Steam {user.steam_id || "not linked"}</p>
-                  <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
+                  <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Verification {user.verified_badge ? "verified" : user.verification_status || "none"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
                 </div>
                 <div className="flex gap-2">
+                  {user.verified_badge ? (
+                    <button onClick={() => setVerified(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Remove Badge</button>
+                  ) : (
+                    <button onClick={() => setVerified(user, true)} className="rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-3 py-2 text-xs text-[#d7ceff]">Add Badge</button>
+                  )}
                   <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
                   <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
                   <button onClick={() => deleteUser(user)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={13} /></button>
