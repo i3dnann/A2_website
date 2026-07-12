@@ -944,6 +944,11 @@ function VerificationAdmin() {
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [manualQ, setManualQ] = useState("");
+  const [manualUsers, setManualUsers] = useState<any[]>([]);
+  const [manualUserId, setManualUserId] = useState("");
+  const [manualLoading, setManualLoading] = useState(false);
+  const [manualSaving, setManualSaving] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -959,6 +964,40 @@ function VerificationAdmin() {
 
   useEffect(() => { load(); }, [filter]);
 
+  const searchManualUsers = async () => {
+    setManualLoading(true);
+    try {
+      const result = await api<{ rows: any[] }>("/api/admin/users", { params: { q: manualQ, limit: 25 } });
+      const nextUsers = result.rows || [];
+      setManualUsers(nextUsers);
+      setManualUserId((current) => nextUsers.some((user) => String(user.id) === String(current)) ? current : nextUsers[0]?.id || "");
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to search users" });
+    } finally {
+      setManualLoading(false);
+    }
+  };
+
+  const setManualVerified = async (verified: boolean) => {
+    if (!manualUserId) {
+      push({ kind: "info", message: "Choose a user first." });
+      return;
+    }
+    setManualSaving(true);
+    try {
+      await api(`/api/admin/users/${manualUserId}/${verified ? "verify" : "unverify"}`, {
+        method: "POST",
+        body: { note: "Admin bypass from verification panel" },
+      });
+      push({ kind: "success", message: verified ? "Verified badge granted with requirement bypass." : "Verified badge removed." });
+      await Promise.all([load(), searchManualUsers()]);
+    } catch (e: any) {
+      push({ kind: "error", message: e?.message || "Failed to update verified badge" });
+    } finally {
+      setManualSaving(false);
+    }
+  };
+
   const act = async (id: string, action: "approve" | "reject") => {
     const ok = action === "approve" || await confirm({ title: "Reject verification?", message: "The user can apply again later after fixing issues.", confirmText: "Reject" });
     if (!ok) return;
@@ -972,44 +1011,101 @@ function VerificationAdmin() {
   };
 
   return (
-    <EditableSection title="Account Verification">
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users, Discord, Steam..." className={inpClass} />
-        <button onClick={load} className="rounded-lg border border-white/10 px-4 text-sm text-white/70">Search</button>
-      </div>
-      <div className="flex items-center gap-2">
-        <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>Pending</FilterPill>
-        <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>All</FilterPill>
-      </div>
-      {loading ? (
-        <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
-      ) : rows.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No verification requests found.</p>
-      ) : (
-        <div className="flex flex-col gap-2">
-          {rows.map((row) => (
-            <div key={row.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-white">{row.username || row.email || row.user_id}</p>
-                    {row.verified_badge ? <VerifiedBadge /> : null}
-                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${row.status === "pending" ? "border-orange-400/30 bg-orange-400/10 text-orange-300" : row.status === "approved" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"}`}>{row.status}</span>
+    <div className="flex flex-col gap-4">
+      <EditableSection title="Manual Verified Badge Bypass">
+        <p className="text-sm text-white/55">
+          Choose any website user and give the verified badge from admin, even if Discord, Steam, character, or 7-day requirements are not complete.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input
+            value={manualQ}
+            onChange={(e) => setManualQ(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void searchManualUsers(); }}
+            placeholder="Search username, email, Discord, Steam..."
+            className={inpClass}
+          />
+          <button onClick={searchManualUsers} disabled={manualLoading} className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/10 px-4 text-sm text-white/70 disabled:opacity-60">
+            {manualLoading && <Loader2 size={13} className="animate-spin" />} Search User
+          </button>
+        </div>
+        {manualUsers.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {manualUsers.map((user) => {
+              const selected = String(manualUserId) === String(user.id);
+              return (
+                <button
+                  key={user.id}
+                  onClick={() => setManualUserId(user.id)}
+                  className={`rounded-xl border p-4 text-left transition ${selected ? "border-[#8a7ac4]/60 bg-[#60519b]/15" : "border-white/10 bg-black/20 hover:border-white/20"}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="flex items-center gap-1.5 font-semibold text-white">
+                        {user.username || user.email || user.id}
+                        {user.verified_badge ? <VerifiedBadge /> : null}
+                      </p>
+                      <p className="mt-1 text-xs text-white/40">{user.email || "No email"} - Discord {user.discord_id || "not linked"} - Steam {user.steam_id || "not linked"}</p>
+                    </div>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${user.verified_badge ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-white/10 bg-white/5 text-white/45"}`}>
+                      {user.verified_badge ? "Verified" : "Not verified"}
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs text-white/40">Discord {row.discord_id || "not linked"} - Steam {row.steam_id || "not linked"}</p>
-                  <p className="mt-1 text-xs text-white/35">Requested {row.created_at ? new Date(row.created_at).toLocaleString() : "unknown"}</p>
-                  {row.reason && <p className="mt-3 whitespace-pre-wrap text-sm text-white/65">{row.reason}</p>}
-                </div>
-                <div className="flex gap-1.5">
-                  {row.status !== "approved" && <button onClick={() => act(row.id, "approve")} className="flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/5 px-2.5 py-1.5 text-[11px] text-emerald-300"><CheckCircle2 size={11} /> Approve</button>}
-                  {row.status !== "rejected" && <button onClick={() => act(row.id, "reject")} className="flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-400/5 px-2.5 py-1.5 text-[11px] text-red-300"><XCircle size={11} /> Reject</button>}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-white/10 p-6 text-center text-sm text-white/40">Search for a user to manually add or remove the verified badge.</p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => setManualVerified(true)} disabled={!manualUserId || manualSaving} className="inline-flex items-center gap-2 rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-4 py-2 text-sm font-semibold text-[#d7ceff] disabled:opacity-50">
+            {manualSaving && <Loader2 size={13} className="animate-spin" />} Give Verified Badge
+          </button>
+          <button onClick={() => setManualVerified(false)} disabled={!manualUserId || manualSaving} className="rounded-lg border border-red-400/30 bg-red-500/5 px-4 py-2 text-sm font-semibold text-red-300 disabled:opacity-50">
+            Remove Badge
+          </button>
+        </div>
+      </EditableSection>
+
+      <EditableSection title="Account Verification Requests">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search users, Discord, Steam..." className={inpClass} />
+          <button onClick={load} className="rounded-lg border border-white/10 px-4 text-sm text-white/70">Search</button>
+        </div>
+        <div className="flex items-center gap-2">
+          <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>Pending</FilterPill>
+          <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>All</FilterPill>
+        </div>
+        {loading ? (
+          <div className="flex flex-col gap-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20" />)}</div>
+        ) : rows.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-white/40">No verification requests found.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {rows.map((row) => (
+              <div key={row.id} className="rounded-xl border border-white/10 bg-black/20 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-white">{row.username || row.email || row.user_id}</p>
+                      {row.verified_badge ? <VerifiedBadge /> : null}
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${row.status === "pending" ? "border-orange-400/30 bg-orange-400/10 text-orange-300" : row.status === "approved" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300" : "border-red-400/30 bg-red-400/10 text-red-300"}`}>{row.status}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/40">Discord {row.discord_id || "not linked"} - Steam {row.steam_id || "not linked"}</p>
+                    <p className="mt-1 text-xs text-white/35">Requested {row.created_at ? new Date(row.created_at).toLocaleString() : "unknown"}</p>
+                    {row.reason && <p className="mt-3 whitespace-pre-wrap text-sm text-white/65">{row.reason}</p>}
+                  </div>
+                  <div className="flex gap-1.5">
+                    {row.status !== "approved" && <button onClick={() => act(row.id, "approve")} className="flex items-center gap-1 rounded-lg border border-emerald-400/30 bg-emerald-400/5 px-2.5 py-1.5 text-[11px] text-emerald-300"><CheckCircle2 size={11} /> Approve</button>}
+                    {row.status !== "rejected" && <button onClick={() => act(row.id, "reject")} className="flex items-center gap-1 rounded-lg border border-red-400/30 bg-red-400/5 px-2.5 py-1.5 text-[11px] text-red-300"><XCircle size={11} /> Reject</button>}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </EditableSection>
+            ))}
+          </div>
+        )}
+      </EditableSection>
+    </div>
   );
 }
 
@@ -1585,7 +1681,7 @@ function UsersAdmin() {
                   {user.verified_badge ? (
                     <button onClick={() => setVerified(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Remove Badge</button>
                   ) : (
-                    <button onClick={() => setVerified(user, true)} className="rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-3 py-2 text-xs text-[#d7ceff]">Add Badge</button>
+                    <button onClick={() => setVerified(user, true)} className="rounded-lg border border-[#8a7ac4]/40 bg-[#60519b]/15 px-3 py-2 text-xs text-[#d7ceff]">Add Badge (Bypass)</button>
                   )}
                   <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
                   <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
