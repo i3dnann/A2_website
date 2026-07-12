@@ -22,6 +22,7 @@ import NewsPage from "./pages/NewsPage";
 import CareersPage from "./pages/CareersPage";
 import CareerApplyPage from "./pages/CareerApplyPage";
 import FaqPage from "./pages/FaqPage";
+import CharactersPage from "./pages/CharactersPage";
 import TermsPage from "./pages/TermsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider, useSite } from "./context/SiteContext";
@@ -64,6 +65,7 @@ function AppShell() {
             <Route path="/careers/:id" element={<CareerApplyPage />} />
             <Route path="/faq" element={<FaqPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/characters" element={<ProtectedRoute><CharactersPage /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/auth/complete" element={<AuthComplete />} />
