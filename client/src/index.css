@@ -68,28 +68,35 @@ body::before {
 }
 
 .spotlight-card::before {
-  inset: 0;
-  z-index: 0;
-  opacity: 0.76;
+  inset: -1px;
+  z-index: 2;
+  padding: 1px;
+  opacity: 0.26;
   background:
     radial-gradient(
-      360px circle at var(--spotlight-x) var(--spotlight-y),
-      color-mix(in srgb, var(--spotlight-card-color) 22%, transparent),
-      transparent 48%
+      320px circle at var(--spotlight-x) var(--spotlight-y),
+      color-mix(in srgb, var(--spotlight-card-color) 68%, transparent),
+      transparent 58%
     );
   background-attachment: fixed;
+  filter: blur(6px);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
 }
 
 .spotlight-card::after {
   inset: 0;
   z-index: 2;
   padding: 1px;
-  opacity: 0.88;
+  opacity: 0.92;
   background:
     radial-gradient(
-      260px circle at var(--spotlight-x) var(--spotlight-y),
-      color-mix(in srgb, var(--spotlight-card-color) 88%, transparent),
-      transparent 54%
+      240px circle at var(--spotlight-x) var(--spotlight-y),
+      color-mix(in srgb, var(--spotlight-card-color) 96%, transparent),
+      transparent 52%
     );
   background-attachment: fixed;
   -webkit-mask:
@@ -101,8 +108,8 @@ body::before {
 
 .spotlight-card:hover::before,
 .spotlight-card:focus-within::before {
-  opacity: 1;
-  filter: saturate(1.15);
+  opacity: 0.44;
+  filter: blur(6px) saturate(1.15);
 }
 
 .spotlight-card > * {
