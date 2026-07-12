@@ -7,7 +7,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
 import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordUser } from "../services/discord.js";
-import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, verifyUserToken } from "../services/users.js";
+import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateFirebaseUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, verifyUserToken } from "../services/users.js";
+import { verifyFirebaseToken } from "../services/firebaseAuth.js";
 import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks.js";
 import { env } from "../config/env.js";
 import { auditAction } from "../services/audit.js";
@@ -85,6 +86,11 @@ router.get("/providers", (_req, res) => {
     },
     twitch: { configured: Boolean(env.TWITCH_CLIENT_ID && env.TWITCH_CLIENT_SECRET) }
   });
+});
+
+const firebaseSessionSchema = z.object({
+  idToken: z.string().min(1), username: z.string().min(2).max(80).optional(),
+  create: z.boolean().default(false), termsVersion: z.string().max(40).default("1.0.0")
 });
 
 router.post(
@@ -242,6 +248,18 @@ router.get(
     res.json({ user: await getUserById(req.user.id), providers });
   })
 );
+
+router.post("/firebase-session", authLimiter, asyncHandler(async (req, res) => {
+  const body = firebaseSessionSchema.parse(req.body || {});
+  const decoded = await verifyFirebaseToken(body.idToken);
+  if (!decoded.email) throw Object.assign(new Error("firebase_email_required"), { status: 422 });
+  await assertAccountNotBlocked({ email: decoded.email, ipAddress: req.ip });
+  const user = await loginOrCreateFirebaseUser({ uid: decoded.uid, email: decoded.email, emailVerified: decoded.email_verified, username: body.username, create: body.create, termsVersion: body.termsVersion, ipAddress: req.ip });
+  await recordUserIp(user.id, req.ip);
+  const token = setSession(res, user);
+  await auditAction({ req: { ...req, user }, action: body.create ? "firebase_email_register" : "firebase_email_login", targetType: "web_users", targetId: user.id, webhookCategory: "security" });
+  res.status(body.create ? 201 : 200).json({ user, token });
+}));
 
 router.post(
   "/complete-session",

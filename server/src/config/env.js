@@ -66,6 +66,10 @@ const schema = z.object({
   CLOUDINARY_API_KEY: z.string().default(""),
   CLOUDINARY_API_SECRET: z.string().default(""),
 
+  FIREBASE_PROJECT_ID: z.string().default(""),
+  FIREBASE_CLIENT_EMAIL: z.string().default(""),
+  FIREBASE_PRIVATE_KEY: z.string().default(""),
+
   FIVEM_PLAYERS_URL: z.string().default(""),
   FIVEM_DYNAMIC_URL: z.string().default(""),
   FIVEM_INFO_URL: z.string().default(""),

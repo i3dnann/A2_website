@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { AUTH_INVALIDATED_EVENT, api, apiUrl, clearStoredAuth } from "../api/client";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
 // Toast is not needed here
 
 export type Ticket = {
@@ -45,6 +47,7 @@ type AuthContextType = {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
   register: (username: string, email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
   loginDiscord: () => void;
   loginSteam: () => void;
@@ -190,7 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       clearStoredAuth();
-      const r = await api<{ token: string; user: BackendUser }>("/api/auth/login", { method: "POST", body: { email, password } });
+      if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken() } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
       return { ok: true };
@@ -205,7 +210,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       clearStoredAuth();
-      const r = await api<{ token: string; user: BackendUser }>("/api/auth/register", { method: "POST", body: { username, email, password } });
+      if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken(), username, create: true } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
       return { ok: true };
@@ -218,10 +225,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
+    try { await signOut(firebaseAuth); } catch {}
     clearStoredAuth();
     setUser(null);
     setTickets([]);
     setCharacters([]);
+  };
+
+  const resetPassword: AuthContextType["resetPassword"] = async (email) => {
+    try {
+      if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      await sendPasswordResetEmail(firebaseAuth, email);
+      return { ok: true };
+    } catch (e: any) {
+      return { ok: false, error: e?.message || "Could not send password reset email." };
+    }
   };
 
   const completeOAuth = async (token: string) => {
@@ -273,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";
 
-  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, updateEmail, createTicket };
+  const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, resetPassword, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, updateEmail, createTicket };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

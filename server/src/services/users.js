@@ -346,6 +346,29 @@ export async function loginEmailUser({ email, password }) {
   return user;
 }
 
+export async function loginOrCreateFirebaseUser({ uid, email, username, create, termsVersion, ipAddress, emailVerified }) {
+  const providerUser = await getInternalUserByProvider("firebase", uid);
+  if (providerUser) {
+    const user = await upsertUser({ ...providerUser, email_verified_at: emailVerified ? providerUser.email_verified_at || nowIso() : providerUser.email_verified_at, last_login_at: nowIso() });
+    if (!accountCanLogin(user)) throw Object.assign(new Error("account_disabled_or_frozen"), { status: 403 });
+    return user;
+  }
+
+  const existing = await getInternalUserByEmail(email);
+  if (existing) throw Object.assign(new Error("firebase_migration_required"), { status: 409 });
+  if (!create) throw Object.assign(new Error("firebase_account_not_registered"), { status: 404 });
+
+  const roles = rolesForIdentity({ email });
+  const user = await upsertUser({
+    id: randomUUID(), username: username || email.split("@")[0], email, password_hash: "",
+    email_verified_at: emailVerified ? nowIso() : null, roles, permissions: permissionsForRoles(roles),
+    account_status: "active", admin_status: "active", first_login_at: nowIso(), last_login_at: nowIso()
+  });
+  await linkProvider(user.id, "firebase", uid, { username: user.username, email });
+  await saveTermsAgreement({ userId: user.id, termsVersion: termsVersion || "1.0.0", ipAddress });
+  return user;
+}
+
 export async function linkProvider(userId, provider, providerUserId, profile = {}) {
   const existing = await getInternalUserByProvider(provider, providerUserId);
   if (existing && String(existing.id) !== String(userId)) {

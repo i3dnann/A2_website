@@ -8,13 +8,22 @@ import { useLanguage } from "../context/LanguageContext";
 import { launchLoginFireworks } from "../utils/loginFireworks";
 
 export default function Login() {
-  const { login, loginDiscord, loginSteam, loading } = useAuth();
+  const { login, resetPassword, loginDiscord, loginSteam, loading } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const onResetPassword = async () => {
+    setError(""); setNotice("");
+    if (!email) { setError("Enter your email address first."); return; }
+    const result = await resetPassword(email);
+    if (result.ok) setNotice("Password reset email sent. Check your inbox.");
+    else setError(result.error || "Could not send password reset email.");
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,9 +61,9 @@ export default function Login() {
             <label className="block text-xs font-medium uppercase tracking-wider text-white/50">
               {t("Password")}
             </label>
-            <a href="#" className="text-xs text-orange-300 hover:text-orange-200">
+            <button type="button" onClick={onResetPassword} className="text-xs text-orange-300 hover:text-orange-200">
               {t("Forgot password?")}
-            </a>
+            </button>
           </div>
           <div className="relative">
             <Lock size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
@@ -85,6 +94,7 @@ export default function Login() {
             {error}
           </motion.p>
         )}
+        {notice && <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">{notice}</p>}
 
         <button
           type="submit"
