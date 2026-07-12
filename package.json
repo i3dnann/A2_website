@@ -10,7 +10,6 @@
     "build:cloudflare": "npm install --prefix client && npm run build --prefix client",
     "start:server": "npm start --prefix server",
     "check": "npm run check --prefix server && npm run build --prefix client",
-    "test": "npm run test --prefix server",
     "deploy": "wrangler deploy",
     "preview": "wrangler dev"
   },

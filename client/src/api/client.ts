@@ -100,8 +100,8 @@ export async function api<T>(path: string, opts: { method?: "GET" | "POST" | "PU
   }
 }
 
-export function upload(path: string, form: FormData, opts: { method?: "POST" | "PATCH" } = {}) {
-  return http.request({ url: path, method: opts.method || "POST", data: form, headers: { "Content-Type": "multipart/form-data" } });
+export function upload(path: string, form: FormData) {
+  return http.post(path, form, { headers: { "Content-Type": "multipart/form-data" } });
 }
 
 // ──────────────────────────────────────────────────────────────────────
