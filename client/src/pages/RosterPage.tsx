@@ -32,7 +32,7 @@ export default function RosterPage() {
       </motion.p>
 
       {groups.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
+        <div className="spotlight-card rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
           <p className="font-serif text-xl text-white">{t("No roster members added yet")}</p>
           <p className="mt-2 text-sm text-white/45">{t("Add roster profiles from the admin panel.")}</p>
         </div>
@@ -79,7 +79,7 @@ function RosterCircle({ member, onClick }: { member: RosterItem; onClick: () => 
       onClick={onClick}
       className="group flex min-w-0 flex-col items-center text-center focus:outline-none"
     >
-      <div className="relative">
+        <div className="spotlight-card relative rounded-full">
         <div className="absolute inset-0 rounded-full bg-[#60519b]/30 blur-xl opacity-0 transition group-hover:opacity-100" />
         <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-gradient-to-br from-[#1a1328] to-black shadow-[0_18px_40px_rgba(0,0,0,0.36)] transition group-hover:border-[#8a7ac4]/65 sm:h-32 sm:w-32">
           {member.avatar ? (
@@ -123,7 +123,7 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           exit={{ opacity: 0, y: 18, scale: 0.98 }}
           transition={{ duration: 0.22 }}
           onClick={(event) => event.stopPropagation()}
-          className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
+          className="spotlight-card relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
         >
           <button onClick={onClose} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 transition hover:text-white">
             <X size={16} />

@@ -24,7 +24,7 @@ export default function Roster() {
             const Icon = getIcon(r.icon);
             return (
               <motion.div key={r.name} variants={staggerItem} whileHover={{ y: -4, scale: 1.02 }} className="group flex min-w-0 flex-col items-center text-center">
-                <div className="relative">
+                <div className="spotlight-card relative rounded-full">
                   <div className="absolute inset-0 rounded-full bg-[#60519b]/30 blur-xl opacity-0 transition group-hover:opacity-100" />
                   <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-gradient-to-br from-[#1a1328] to-black shadow-[0_18px_40px_rgba(0,0,0,0.36)] transition group-hover:border-[#8a7ac4]/65 sm:h-32 sm:w-32">
                     {r.avatar ? (

@@ -1831,10 +1831,20 @@ function ThemeEditor({ content, update }: any) {
   const colors = { "Gotham Purple": "#60519b", "Crimson": "#8a7ac4", "Cyan": "#06b6d4", "Red": "#dc2626", "Lime": "#84cc16", "Gold": "#f59e0b", "Blue": "#2563eb", "Pink": "#ec4899" };
   return <div className="flex flex-col gap-1">
     <EditableSection title="Color Theme">
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div><label className={stClass}>Primary Color</label><div className="flex items-center gap-3"><input className={`${inpClass} flex-1`} value={content.primaryHex} onChange={(e) => update({ primaryHex: e.target.value })} /><span className="h-8 w-8 rounded-full border border-white/20" style={{ background: content.primaryHex }} /></div></div>
         <div><label className={stClass}>Accent Color</label><div className="flex items-center gap-3"><input className={`${inpClass} flex-1`} value={content.accentHex} onChange={(e) => update({ accentHex: e.target.value })} /><span className="h-8 w-8 rounded-full border border-white/20" style={{ background: content.accentHex }} /></div></div>
         <div><label className={stClass}>Background</label><div className="flex items-center gap-3"><input className={`${inpClass} flex-1`} value={content.darkBgHex} onChange={(e) => update({ darkBgHex: e.target.value })} /><span className="h-8 w-8 rounded-full border border-white/20" style={{ background: content.darkBgHex }} /></div></div>
+        <div>
+          <label className={stClass}>Card Spotlight Color</label>
+          <div className="flex items-center gap-3">
+            <input className={`${inpClass} flex-1`} value={content.spotlightColor || content.accentHex || "#8a7ac4"} onChange={(e) => update({ spotlightColor: e.target.value })} />
+            <input type="color" value={content.spotlightColor || content.accentHex || "#8a7ac4"} onChange={(e) => update({ spotlightColor: e.target.value })} className="h-10 w-12 cursor-pointer rounded-lg border border-white/10 bg-black/30 p-1" />
+          </div>
+        </div>
+      </div>
+      <div className="spotlight-card mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/70" style={{ "--spotlight-card-color": content.spotlightColor || content.accentHex || "#8a7ac4" } as React.CSSProperties}>
+        Spotlight preview. Move your mouse over this card to see the website-wide effect.
       </div>
     </EditableSection>
     <EditableSection title="Quick Presets">

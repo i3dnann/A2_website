@@ -16,14 +16,14 @@ export default function News() {
           <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{t(content.newsTitle)}</h2>
         </Reveal>
         {content.news.length === 0 ? (
-          <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
+          <div className="spotlight-card mx-auto mt-10 max-w-xl rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
             {t("No news posts are published yet.")}
           </div>
         ) : <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {content.news.map((n) => {
             const Icon = getIcon(n.icon);
             return (
-              <motion.a href="/news" key={n.id || n.title} variants={staggerItem} whileHover={{ y: -6 }} className="group flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30">
+              <motion.a href="/news" key={n.id || n.title} variants={staggerItem} whileHover={{ y: -6 }} className="spotlight-card group flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300"><Icon size={20} /></div>
                 <p className="mt-5 text-xs uppercase tracking-wider text-white/40">{n.date}</p>
                 <h3 className="mt-2 font-serif text-lg text-white">{t(n.title)}</h3>

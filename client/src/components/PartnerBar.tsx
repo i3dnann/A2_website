@@ -84,7 +84,7 @@ function PartnerCard({ partner }: { partner: Partner }) {
   const { t } = useLanguage();
   const name = partner.partner_name || "Partner";
   const content = (
-    <div className="group flex h-20 w-64 items-center gap-4 rounded-xl border border-white/10 bg-white/[0.035] px-4 shadow-[0_14px_30px_rgba(0,0,0,0.25)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/12 hover:shadow-[0_0_28px_rgba(96,81,155,0.22)]">
+    <div className="spotlight-card group flex h-20 w-64 items-center gap-4 rounded-xl border border-white/10 bg-white/[0.035] px-4 shadow-[0_14px_30px_rgba(0,0,0,0.25)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/12 hover:shadow-[0_0_28px_rgba(96,81,155,0.22)]">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/35">
         {partner.logo_url ? (
           <img src={partner.logo_url} alt={name} className="h-full w-full object-contain p-1.5" loading="lazy" />

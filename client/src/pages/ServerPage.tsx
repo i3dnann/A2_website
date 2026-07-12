@@ -31,7 +31,7 @@ export default function ServerPage() {
               key={f.title}
               variants={staggerItem}
               whileHover={{ y: -8, borderColor: "rgba(96,81,155,0.35)" }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur transition-colors duration-300"
+              className="spotlight-card group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur transition-colors duration-300"
             >
               <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-orange-600/0 blur-2xl transition-all duration-500 group-hover:bg-orange-600/20" />
               <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-500/10 text-orange-300 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">

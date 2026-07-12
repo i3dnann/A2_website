@@ -130,16 +130,16 @@ export default function CareerApplyPage() {
       </Link>
 
       {loading ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
+        <div className="spotlight-card flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
           <Loader2 size={16} className="animate-spin" /> {t("Loading application...")}
         </div>
       ) : error || !job ? (
-        <div className="rounded-2xl border border-orange-400/20 bg-orange-500/5 p-8 text-center text-orange-100">
+        <div className="spotlight-card rounded-2xl border border-orange-400/20 bg-orange-500/5 p-8 text-center text-orange-100">
           {error ? t(error) : t("This position could not be found.")}
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[0.75fr_1.25fr]">
-          <motion.aside initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="h-fit rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+          <motion.aside initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="spotlight-card h-fit rounded-2xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
               <Briefcase size={22} />
             </div>
@@ -147,14 +147,14 @@ export default function CareerApplyPage() {
             <h2 className="mt-2 font-serif text-2xl text-white">{t(job.title)}</h2>
             {job.description && <p className="mt-4 text-sm leading-6 text-white/55">{t(job.description)}</p>}
             {job.requirements && (
-              <div className="mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
+              <div className="spotlight-card mt-5 rounded-xl border border-white/10 bg-black/25 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wider text-white/40">{t("Requirements")}</p>
                 <p className="mt-2 whitespace-pre-wrap text-sm text-white/65">{t(job.requirements)}</p>
               </div>
             )}
           </motion.aside>
 
-          <motion.form initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} onSubmit={submit} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+          <motion.form initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }} onSubmit={submit} className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-7">
             {!user && (
               <div className="mb-5 rounded-xl border border-orange-400/25 bg-orange-500/10 p-4 text-sm text-orange-100">
                 {t("You need to log in before submitting. You can still read the questions here.")}

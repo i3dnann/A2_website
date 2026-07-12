@@ -105,7 +105,7 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0a0710] shadow-2xl"
+          className="spotlight-card relative w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0a0710] shadow-2xl"
         >
           <button onClick={onClose} className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/80 hover:bg-white/10">
             <X size={16} />
@@ -189,10 +189,10 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
                   )}
                   <div className="mt-4 flex flex-col gap-3">
                     {(!data?.comments || data.comments.length === 0) && (
-                      <p className="rounded-lg border border-dashed border-white/10 p-4 text-center text-xs text-white/40">{t("No comments yet. Be the first to reply.")}</p>
+                    <p className="spotlight-card rounded-lg border border-dashed border-white/10 p-4 text-center text-xs text-white/40">{t("No comments yet. Be the first to reply.")}</p>
                     )}
                     {data?.comments.map((c) => (
-                      <div key={c.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+                      <div key={c.id} className="spotlight-card rounded-lg border border-white/10 bg-white/[0.02] p-3">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-medium text-white">{c.author_name}</span>
                           <span className="text-white/30">{new Date(c.created_at).toLocaleString()}</span>

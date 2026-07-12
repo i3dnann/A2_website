@@ -6,6 +6,7 @@ import BatSwingIntro from "./components/BatSwingIntro";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import StickyBanner from "./components/StickyBanner";
+import SpotlightSync from "./components/SpotlightSync";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import Home from "./pages/Home";
@@ -49,6 +50,7 @@ function AppShell() {
   return (
     <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
       <AnimatedBackground />
+      <SpotlightSync />
       <BatSwingIntro />
       <Navbar />
       <StickyBanner />

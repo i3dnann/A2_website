@@ -78,6 +78,7 @@ export type SiteContent = {
   primaryHex: string;
   accentHex: string;
   darkBgHex: string;
+  spotlightColor: string;
   maintenanceMode: boolean;
 };
 
@@ -142,6 +143,7 @@ const DEFAULT_CONTENT: SiteContent = {
   primaryHex: "#60519b",
   accentHex: "#8a7ac4",
   darkBgHex: "#080808",
+  spotlightColor: "#8a7ac4",
   maintenanceMode: false,
 };
 

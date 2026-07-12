@@ -120,7 +120,7 @@ export default function CharactersPage() {
   if (!user) {
     return (
       <PageShell subtitle="Restricted" title="Characters">
-        <div className="mx-auto max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
+        <div className="spotlight-card mx-auto max-w-md rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center">
           <ShieldAlert size={32} className="mx-auto text-orange-300" />
           <h3 className="mt-4 font-serif text-lg text-white">{t("Login Required")}</h3>
           <p className="mt-2 text-sm text-white/55">{t("Please log in to view your FiveM characters.")}</p>
@@ -133,7 +133,7 @@ export default function CharactersPage() {
   if (!user.steamLinked) {
     return (
       <PageShell subtitle="Link Steam" title="Characters">
-        <div className="mx-auto max-w-md rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
+        <div className="spotlight-card mx-auto max-w-md rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center">
           <Link2 size={32} className="mx-auto text-orange-300" />
           <h3 className="mt-4 font-serif text-lg text-white">{t("Connect Your Steam Account")}</h3>
           <p className="mt-2 text-sm text-white/55">{t("We match your Steam identity to your FiveM characters. Link Steam to see your characters, inventory, vehicles, and more.")}</p>
@@ -148,7 +148,7 @@ export default function CharactersPage() {
       {loading ? (
         <div className="grid gap-5 md:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <div key={i} className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6">
               <Skeleton className="h-6 w-1/2" />
               <Skeleton className="mt-3 h-4 w-1/3" />
               <div className="mt-5 grid grid-cols-3 gap-3">
@@ -160,7 +160,7 @@ export default function CharactersPage() {
           ))}
         </div>
       ) : chars.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-12 text-center">
+        <div className="spotlight-card rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-12 text-center">
           <Users2 size={32} className="mx-auto text-white/20" />
           <h3 className="mt-4 font-serif text-lg text-white">{t("No Characters Found")}</h3>
           <p className="mt-2 text-sm text-white/50">{t("Your Steam account doesn't appear to own any characters on this server yet. Join the server and create one!")}</p>
@@ -175,7 +175,7 @@ export default function CharactersPage() {
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -4 }}
                 onClick={() => setSelected(c)}
-                className={`group rounded-2xl border p-6 text-left transition-colors ${
+                className={`spotlight-card group rounded-2xl border p-6 text-left transition-colors ${
                   selected?.citizenid === c.citizenid ? "border-orange-400/50 bg-orange-500/[0.06]" : "border-white/10 bg-white/[0.03] hover:border-orange-400/30"
                 }`}
               >
@@ -210,7 +210,7 @@ export default function CharactersPage() {
               key={selected.citizenid}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+              className="spotlight-card mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -235,7 +235,7 @@ export default function CharactersPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
                         whileHover={{ y: -2 }}
-                        className="rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-orange-400/30"
+                        className="spotlight-card rounded-lg border border-white/10 bg-black/20 p-3 transition-colors hover:border-orange-400/30"
                       >
                         <p className="font-serif text-sm text-white">{v.model || v.vehicle || t("Unknown")}</p>
                         <p className="text-[11px] text-white/40">{t("Plate")}: {v.plate || "-"}</p>

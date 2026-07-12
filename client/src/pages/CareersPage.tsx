@@ -71,11 +71,11 @@ export default function CareersPage() {
         </motion.div>
         <motion.div id="positions" variants={staggerContainer} initial="hidden" animate="show" className="flex flex-col gap-4">
           {loading ? (
-            <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 text-sm text-white/55">
+            <div className="spotlight-card flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 text-sm text-white/55">
               <Loader2 size={16} className="animate-spin" /> {t("Loading open positions...")}
             </div>
           ) : careers.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center text-sm text-white/45">
+            <div className="spotlight-card rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center text-sm text-white/45">
               {t("No open positions are posted right now.")}
             </div>
           ) : careers.map((career) => (
@@ -83,7 +83,7 @@ export default function CareersPage() {
               key={career.id}
               variants={staggerItem}
               whileHover={{ x: isOpen(career) ? 6 : 0 }}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30"
+              className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30"
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">

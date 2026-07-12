@@ -39,7 +39,7 @@ export default function NewsPage() {
           {Array.from({ length: 8 }).map((_, i) => <CardSkeleton key={i} />)}
         </div>
       ) : posts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center text-sm text-white/40">
+        <div className="spotlight-card rounded-2xl border border-dashed border-white/10 p-12 text-center text-sm text-white/40">
           {t("No news posts yet. Check back soon.")}
         </div>
       ) : (
@@ -52,7 +52,7 @@ export default function NewsPage() {
                 key={post.id}
                 onClick={() => setSelected(post)}
                 whileHover={{ y: -6 }}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-colors hover:border-orange-400/30"
+                className="spotlight-card group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] text-left transition-colors hover:border-orange-400/30"
               >
                 {post.image ? (
                   <div className="relative aspect-[16/9] overflow-hidden">

@@ -20,6 +20,9 @@
   --accent: #60519b;
   --accent-red: #8a7ac4;
   --muted: #6b6b6b;
+  --spotlight-card-color: #8a7ac4;
+  --spotlight-x: 50vw;
+  --spotlight-y: 50vh;
 }
 
 html {
@@ -47,6 +50,64 @@ body::before {
 
 .font-serif {
   font-family: var(--font-serif);
+}
+
+.spotlight-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.spotlight-card::before,
+.spotlight-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-radius: inherit;
+  transition: opacity 180ms ease, filter 180ms ease;
+}
+
+.spotlight-card::before {
+  inset: 0;
+  z-index: 0;
+  opacity: 0.76;
+  background:
+    radial-gradient(
+      360px circle at var(--spotlight-x) var(--spotlight-y),
+      color-mix(in srgb, var(--spotlight-card-color) 22%, transparent),
+      transparent 48%
+    );
+  background-attachment: fixed;
+}
+
+.spotlight-card::after {
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  opacity: 0.88;
+  background:
+    radial-gradient(
+      260px circle at var(--spotlight-x) var(--spotlight-y),
+      color-mix(in srgb, var(--spotlight-card-color) 88%, transparent),
+      transparent 54%
+    );
+  background-attachment: fixed;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.spotlight-card:hover::before,
+.spotlight-card:focus-within::before {
+  opacity: 1;
+  filter: saturate(1.15);
+}
+
+.spotlight-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 ::selection {
@@ -117,6 +178,11 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   :where(button, a[href][class*="rounded"])::after {
     animation: none;
+  }
+
+  .spotlight-card::before,
+  .spotlight-card::after {
+    background-attachment: scroll;
   }
 
   .site-ripple-ring {

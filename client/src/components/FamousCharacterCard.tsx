@@ -24,7 +24,7 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
         viewport={{ once: true, margin: "-60px" }}
         transition={{ duration: 0.6, delay: index * 0.08 }}
         whileHover={{ y: -6 }}
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6 text-left transition hover:border-[#8a7ac4]/45"
+        className="spotlight-card relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent p-6 text-left transition hover:border-[#8a7ac4]/45"
       >
         {character.image && <img src={character.image} alt={character.name} loading="lazy" className="-mx-2 -mt-2 mb-4 h-36 w-[calc(100%+1rem)] rounded-xl object-cover" />}
         <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">{t(character.tag)}</span>
@@ -49,7 +49,7 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
               exit={{ opacity: 0, y: 18, scale: 0.98 }}
               transition={{ duration: 0.22 }}
               onClick={(event) => event.stopPropagation()}
-              className="relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
+              className="spotlight-card relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
             >
               <button onClick={() => setOpen(false)} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/55 text-white/70 transition hover:text-white">
                 <X size={16} />

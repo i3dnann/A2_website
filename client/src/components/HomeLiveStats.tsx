@@ -24,7 +24,7 @@ export default function HomeLiveStats() {
   return (
     <section className="border-y border-white/10 bg-[#07070a] py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-2xl border border-emerald-400/20 bg-[linear-gradient(110deg,rgba(16,185,129,.07),rgba(96,81,155,.05),rgba(255,255,255,.02))] p-5 shadow-[0_18px_50px_rgba(0,0,0,.3)] sm:p-6">
+        <div className="spotlight-card overflow-hidden rounded-2xl border border-emerald-400/20 bg-[linear-gradient(110deg,rgba(16,185,129,.07),rgba(96,81,155,.05),rgba(255,255,255,.02))] p-5 shadow-[0_18px_50px_rgba(0,0,0,.3)] sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.16em] text-emerald-200">
@@ -37,7 +37,7 @@ export default function HomeLiveStats() {
           </div>
           <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
             {values.map(({ icon: Icon, label, value, color }) => (
-              <div key={label} className="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
+              <div key={label} className="spotlight-card flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
                 <Icon size={17} className={color} />
                 <div><p className={`font-serif text-lg leading-none ${color}`}>{value}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-white/40">{label}</p></div>
               </div>

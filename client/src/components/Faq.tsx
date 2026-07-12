@@ -21,7 +21,7 @@ export default function Faq() {
             const isOpen = openIndex === i;
             return (
               <Reveal key={f.q} delay={i * 0.06}>
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+                <div className="spotlight-card overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
                   <button onClick={() => setOpenIndex(isOpen ? null : i)} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left">
                     <span className="font-serif text-base text-white sm:text-lg">{t(f.q)}</span>
                     <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500/10 text-orange-300"><Plus size={16} /></motion.span>

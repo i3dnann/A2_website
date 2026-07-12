@@ -20,11 +20,11 @@ export default function Careers() {
           </Reveal>
           <motion.div variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }} className="flex flex-col gap-4">
             {content.careers.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
+              <div className="spotlight-card rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
                 {t("No career positions are posted right now.")}
               </div>
             ) : content.careers.map((c) => (
-              <motion.div key={c.role} variants={staggerItem} whileHover={{ x: 6 }} className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30">
+              <motion.div key={c.role} variants={staggerItem} whileHover={{ x: 6 }} className="spotlight-card flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5 transition-colors hover:border-orange-300/30">
                 <div className="flex items-center gap-4"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300"><Briefcase size={20} /></div>
                   <div><p className="font-serif text-base text-white">{t(c.role)}</p><p className="text-xs uppercase tracking-wider text-white/40">{t(c.dept)}</p></div>
                 </div>

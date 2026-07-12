@@ -248,7 +248,7 @@ function StatCard({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+    <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5">
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone}`}>
         <Icon size={18} />
       </div>
@@ -262,7 +262,7 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
   const { t } = useLanguage();
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-7">
+      <div className="spotlight-card rounded-2xl border border-white/10 bg-gradient-to-br from-orange-600/15 via-transparent to-orange-700/15 p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-orange-300">
           {t("Welcome back")}
         </p>
@@ -285,7 +285,7 @@ function Overview({ user, openTickets, characters, applications }: { user: any; 
         <StatCard icon={Briefcase} label="Applications" value={String(applications.length)} tone="bg-orange-500/10 text-orange-300" />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h3 className="font-serif text-lg text-white">{t("Account Timeline")}</h3>
         <div className="mt-4 flex flex-col gap-4">
           <TimelineRow label="Account created" value={user.joinDate} />
@@ -324,17 +324,17 @@ function Applications({ applications, loading }: { applications: any[]; loading:
       </div>
 
       {loading ? (
-        <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
+        <div className="spotlight-card flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-sm text-white/55">
           <Loader2 size={16} className="animate-spin" /> {t("Loading applications...")}
         </div>
       ) : applications.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
+        <div className="spotlight-card rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
           {t("No applications submitted yet. Open the careers portal to apply for a position.")}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {applications.map((application) => (
-            <div key={application.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <div key={application.id} className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-wider text-white/35">{t(application.department || "Career Application")}</p>
@@ -387,7 +387,7 @@ function Characters({
   const { t } = useLanguage();
   if (!steamLinked) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-20 text-center">
+      <div className="spotlight-card flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-20 text-center">
         <Gamepad2 className="text-white/20" size={40} />
         <h3 className="mt-4 font-serif text-xl text-white">{t("Link Steam to view characters")}</h3>
         <p className="mt-2 max-w-sm text-sm text-white/50">
@@ -414,7 +414,7 @@ function Characters({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -4 }}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30"
+            className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -520,7 +520,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
       </div>
 
       {tickets.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
+        <div className="spotlight-card rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-10 text-center text-sm text-white/45">
           No tickets yet. Open one and staff can reply here.
         </div>
       ) : (
@@ -531,7 +531,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
           <button
             key={t.id}
             onClick={() => setSelectedId(t.id)}
-            className={`flex flex-col gap-3 rounded-2xl border p-5 text-left transition sm:flex-row sm:items-center sm:justify-between ${selectedId === t.id ? "border-orange-400/40 bg-orange-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/20"}`}
+            className={`spotlight-card flex flex-col gap-3 rounded-2xl border p-5 text-left transition sm:flex-row sm:items-center sm:justify-between ${selectedId === t.id ? "border-orange-400/40 bg-orange-500/10" : "border-white/10 bg-white/[0.03] hover:border-white/20"}`}
           >
             <div>
               <div className="flex items-center gap-2">
@@ -547,7 +547,7 @@ function Tickets({ tickets, onNewTicket }: { tickets: any[]; onNewTicket: () => 
           </button>
             ))}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-5">
             {loading ? (
               <div className="flex items-center gap-2 text-sm text-white/50"><Loader2 size={16} className="animate-spin" /> Loading ticket...</div>
             ) : detail?.ticket ? (
@@ -747,7 +747,7 @@ function ProviderCard({
   color: string;
 }) {
   return (
-    <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:flex-row sm:items-center">
+    <div className="spotlight-card flex flex-col items-start justify-between gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:flex-row sm:items-center">
       <div className="flex items-center gap-4">
         <div className={`flex h-12 w-12 items-center justify-center rounded-xl border ${color} font-serif text-lg`}>
           {name.charAt(0)}
@@ -803,13 +803,13 @@ function Account({ user }: { user: any }) {
   return (
     <div className="flex flex-col gap-5">
       <h3 className="font-serif text-xl text-white">{t("Account Details")}</h3>
-      <div className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:grid-cols-2">
+      <div className="spotlight-card grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:grid-cols-2">
         <Field label={t("Username")} value={user.username} />
         <Field label={t("Member Since")} value={user.joinDate} />
         <Field label={t("Role")} value={user.role} />
         <Field label={t("Email Address")} value={user.email || t("Not added yet")} />
       </div>
-      <form onSubmit={submitEmail} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <form onSubmit={submitEmail} className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h4 className="font-serif text-base text-white">{t("Email Address")}</h4>
         <p className="mt-1 text-sm text-white/45">
           {t("Discord login only uses your Discord username. Add or change your email here manually.")}
@@ -833,7 +833,7 @@ function Account({ user }: { user: any }) {
           </button>
         </div>
       </form>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h4 className="font-serif text-base text-white">{t("Danger Zone")}</h4>
         <p className="mt-1 text-sm text-white/45">
           {t("Deleting your account is permanent and will remove your linked characters, tickets, and identifiers.")}

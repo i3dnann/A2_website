@@ -92,7 +92,7 @@ export default function LivePage() {
             {Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-56" />)}
           </div>
         ) : streamers.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
+          <div className="spotlight-card rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center">
             <p className="font-serif text-lg text-white">{t("No streamers added yet")}</p>
             <p className="mt-1 text-sm text-white/45">{t("Add Kick or Twitch channels from the admin Streamers page.")}</p>
           </div>
@@ -109,7 +109,7 @@ export default function LivePage() {
 
 function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
-    <div className="flex min-w-[150px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-5 py-4 shadow-[0_12px_35px_rgba(0,0,0,.28)]">
+    <div className="spotlight-card flex min-w-[150px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-5 py-4 shadow-[0_12px_35px_rgba(0,0,0,.28)]">
       <Icon size={21} className={color} />
       <div><p className="font-serif text-xl leading-none text-white">{value.toLocaleString()}</p><p className="mt-1 text-xs text-white/45">{label}</p></div>
     </div>
@@ -138,7 +138,7 @@ function StreamerCard({ streamer }: { streamer: Streamer }) {
   const viewers = Number(streamer.stream?.viewerCount || 0);
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/10">
+    <div className="spotlight-card group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/10">
       <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-[#161022] via-[#0b0810] to-black">
         {embedUrl ? (
           <iframe

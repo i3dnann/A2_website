@@ -27,7 +27,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
 
   if (!items.length) {
     return (
-      <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
+      <div className="spotlight-card rounded-xl border border-dashed border-white/10 p-8 text-center">
         <Layers className="mx-auto text-white/15" size={26} />
         <p className="mt-2 text-xs text-white/40">Inventory is empty.</p>
       </div>
@@ -55,7 +55,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               whileHover={{ y: -4, scale: 1.045 }}
               whileTap={{ scale: 0.96 }}
               onClick={() => setActive(it)}
-              className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-orange-400/40"
+              className="spotlight-card group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] p-2 text-left transition-colors hover:border-orange-400/40"
             >
               {/* glow backdrop */}
               <div className={`absolute inset-0 bg-gradient-to-br ${glow} opacity-70 transition-opacity duration-300 group-hover:opacity-100`} />
@@ -103,7 +103,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+              className="spotlight-card w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
             >
               {(() => {
                 const label = active.name || active.label || "Item";
