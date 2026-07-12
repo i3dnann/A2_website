@@ -55,7 +55,6 @@ body::before {
 .spotlight-card {
   position: relative;
   isolation: isolate;
-  overflow: hidden;
 }
 
 .spotlight-card::before,
@@ -69,7 +68,7 @@ body::before {
 
 .spotlight-card::before {
   inset: -1px;
-  z-index: 2;
+  z-index: 0;
   padding: 1px;
   opacity: 0.26;
   background:
@@ -89,7 +88,7 @@ body::before {
 
 .spotlight-card::after {
   inset: 0;
-  z-index: 2;
+  z-index: 0;
   padding: 1px;
   opacity: 0.92;
   background:
@@ -110,11 +109,6 @@ body::before {
 .spotlight-card:focus-within::before {
   opacity: 0.44;
   filter: blur(6px) saturate(1.15);
-}
-
-.spotlight-card > * {
-  position: relative;
-  z-index: 1;
 }
 
 ::selection {
