@@ -1,599 +1,79 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  Archive,
-  ChevronDown,
-  ChevronUp,
-  Copy,
-  Eye,
-  FilePlus2,
-  GripVertical,
-  Loader2,
-  Plus,
-  Save,
-  Send,
-  Settings2,
-  Trash2,
-} from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Archive, ChevronDown, ChevronUp, Copy, Eye, FileImage, FilePlus2, GripVertical, Heading1, Image, Layers, Loader2, Lock, Minus, MousePointer2, Plus, Save, Send, Settings2, Trash2, Type, Unlock } from "lucide-react";
 import { api } from "../../api/client";
 import { useToast } from "../Toast";
-import type {
-  NewspaperBlock,
-  NewspaperBundle,
-  NewspaperIssue,
-  NewspaperPage,
-} from "./types";
+import type { NewspaperBlock, NewspaperBundle, NewspaperIssue, NewspaperPage } from "./types";
 
-const templates = [
-  "front-page",
-  "standard",
-  "feature-story",
-  "full-page-article",
-  "two-article-split",
-  "three-column",
-  "photo-story",
-  "classifieds",
-  "advertisement",
-  "announcements",
-  "department-news",
-  "crime-court",
-  "business",
-  "community-events",
-  "sports",
-  "memorials",
-  "blank",
-];
-const field =
-  "w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-[#8a7ac4]/60";
+const field="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white outline-none focus:border-[#8a7ac4]/60";
+const templates=["front-page","standard","feature-story","full-page-article","two-article-split","three-column","photo-story","classifieds","advertisement","announcements","department-news","crime-court","business","community-events","sports","memorials","blank"];
+const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
+const positioned=(b:NewspaperBlock)=>[b.x,b.y,b.width,b.height].every(Number.isFinite);
+const newId=()=>`layer-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
 
-export default function AdminNewspaperBuilder() {
-  const { push, confirm } = useToast();
-  const [issues, setIssues] = useState<NewspaperIssue[]>([]);
-  const [bundle, setBundle] = useState<NewspaperBundle | null>(null);
-  const [selectedPageId, setSelectedPageId] = useState("");
-  const [articles, setArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"content" | "templates" | "ads">("content");
-  const selectedPage = useMemo(
-    () =>
-      bundle?.pages.find((page) => page.id === selectedPageId) ||
-      bundle?.pages[0] ||
-      null,
-    [bundle, selectedPageId],
-  );
-  const loadIssues = async () => {
-    setLoading(true);
-    try {
-      const [result, posts] = await Promise.all([
-        api<{ rows: NewspaperIssue[] }>("/api/newspaper/admin/issues"),
-        api<{ rows?: any[]; data?: any[] }>("/api/admin/news", {
-          params: { limit: 100 },
-        }),
-      ]);
-      setIssues(result.rows || []);
-      setArticles(posts.rows || posts.data || []);
-      if (!bundle && result.rows?.[0]) await openIssue(result.rows[0].id);
-    } catch (e: any) {
-      push({
-        kind: "error",
-        message: e?.message || "Could not load newspaper builder",
-      });
-    } finally {
-      setLoading(false);
-    }
+function LayerContent({block}:{block:NewspaperBlock}) {
+  if(block.type==="image") return block.image?<img src={block.image} alt="" draggable={false}/>:<span className="free-placeholder"><Image/>Choose an image</span>;
+  if(block.type==="divider") return <span className="free-divider"/>;
+  return <>{block.category&&<small>{block.category}</small>}{block.headline&&<strong>{block.headline}</strong>}<span>{block.deck||block.body||"Double-click properties to edit this text."}</span></>;
+}
+
+function CanvasLayer({block,index,selected,onSelect,onChange}:{block:NewspaperBlock;index:number;selected:boolean;onSelect:()=>void;onChange:(patch:Partial<NewspaperBlock>)=>void}) {
+  const start=useRef<any>(null);
+  const begin=(event:React.PointerEvent,mode:"move"|"resize")=>{
+    event.stopPropagation(); onSelect(); if(block.locked)return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const paper=(event.currentTarget.closest(".builder-paper") as HTMLElement).getBoundingClientRect();
+    start.current={mode,clientX:event.clientX,clientY:event.clientY,paper,x:block.x||0,y:block.y||0,width:block.width||20,height:block.height||10};
   };
-  const openIssue = async (id: string) => {
-    const next = await api<NewspaperBundle>(
-      `/api/newspaper/admin/issues/${id}`,
-    );
-    setBundle(next);
-    setSelectedPageId(next.pages[0]?.id || "");
+  const move=(event:React.PointerEvent)=>{
+    const s=start.current;if(!s)return;
+    const dx=(event.clientX-s.clientX)/s.paper.width*100,dy=(event.clientY-s.clientY)/s.paper.height*100;
+    if(s.mode==="move") onChange({x:clamp(Math.round((s.x+dx)*2)/2,0,100-(block.width||1)),y:clamp(Math.round((s.y+dy)*2)/2,0,100-(block.height||1))});
+    else onChange({width:clamp(Math.round((s.width+dx)*2)/2,3,100-(block.x||0)),height:clamp(Math.round((s.height+dy)*2)/2,2,100-(block.y||0))});
   };
-  useEffect(() => {
-    loadIssues();
-  }, []);
-  const create = async () => {
-    try {
-      const created = await api<NewspaperBundle>(
-        "/api/newspaper/admin/issues",
-        {
-          method: "POST",
-          body: {
-            name: `Gotham Edition ${issues.length + 1}`,
-            issue_number: String(issues.length + 1),
-          },
-        },
-      );
-      setBundle(created);
-      setSelectedPageId(created.pages[0]?.id || "");
-      await loadIssues();
-      push({ kind: "success", message: "Draft issue created" });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message });
-    }
-  };
-  const patchIssue = (patch: Partial<NewspaperIssue>) =>
-    setBundle((current) =>
-      current ? { ...current, issue: { ...current.issue, ...patch } } : current,
-    );
-  const patchPage = (patch: Partial<NewspaperPage>) =>
-    setBundle((current) =>
-      current
-        ? {
-            ...current,
-            pages: current.pages.map((page) =>
-              page.id === selectedPage?.id ? { ...page, ...patch } : page,
-            ),
-          }
-        : current,
-    );
-  const save = async (statusOverride?: "draft" | "published") => {
-    if (!bundle) return;
-    setSaving(true);
-    try {
-      if (selectedPage)
-        await api(`/api/newspaper/admin/pages/${selectedPage.id}`, {
-          method: "PATCH",
-          body: selectedPage,
-        });
-      await api("/api/newspaper/admin/settings", {
-        method: "PATCH",
-        body: {
-          newspaper_name: bundle.settings.newspaper_name,
-          motto: bundle.settings.motto,
-          style: bundle.settings.style,
-        },
-      });
-      await api(`/api/newspaper/admin/issues/${bundle.issue.id}`, {
-        method: "PATCH",
-        body: {
-          name: bundle.issue.name,
-          issue_number: bundle.issue.issue_number,
-          slug: bundle.issue.slug,
-          status: statusOverride || bundle.issue.status,
-          publication_date:
-            statusOverride === "published"
-              ? new Date().toISOString()
-              : bundle.issue.publication_date,
-          settings: bundle.issue.settings,
-        },
-      });
-      const fresh = await api<NewspaperBundle>(
-        `/api/newspaper/admin/issues/${bundle.issue.id}`,
-      );
-      setBundle(fresh);
-      setSelectedPageId(selectedPage?.id || fresh.pages[0]?.id || "");
-      await loadIssues();
-      push({
-        kind: "success",
-        message:
-          statusOverride === "published"
-            ? "Newspaper published"
-            : statusOverride === "draft"
-              ? "Newspaper unpublished"
-              : "Newspaper saved",
-      });
-    } catch (e: any) {
-      push({ kind: "error", message: e?.message });
-    } finally {
-      setSaving(false);
-    }
-  };
-  const addPage = async () => {
-    if (!bundle) return;
-    const result = await api<{ page: NewspaperPage }>(
-      `/api/newspaper/admin/issues/${bundle.issue.id}/pages`,
-      { method: "POST", body: { template_key: "standard" } },
-    );
-    setBundle({ ...bundle, pages: [...bundle.pages, result.page] });
-    setSelectedPageId(result.page.id);
-  };
-  const removePage = async () => {
-    if (!selectedPage || !bundle || bundle.pages.length <= 1) return;
-    const ok = await confirm({
-      title: "Delete newspaper page?",
-      message: "The page and its placed content will be removed.",
-      confirmText: "Delete",
-    });
-    if (!ok) return;
-    await api(`/api/newspaper/admin/pages/${selectedPage.id}`, {
-      method: "DELETE",
-    });
-    const pages = bundle.pages.filter((page) => page.id !== selectedPage.id);
-    setBundle({ ...bundle, pages });
-    setSelectedPageId(pages[0]?.id || "");
-  };
-  const movePage = async (direction: number) => {
-    if (!bundle || !selectedPage) return;
-    const from = bundle.pages.findIndex((page) => page.id === selectedPage.id);
-    const to = from + direction;
-    if (to < 0 || to >= bundle.pages.length) return;
-    const pages = [...bundle.pages];
-    [pages[from], pages[to]] = [pages[to], pages[from]];
-    const renumbered = pages.map((page, index) => ({
-      ...page,
-      page_number: index + 1,
-    }));
-    setBundle({ ...bundle, pages: renumbered });
-    await api(`/api/newspaper/admin/issues/${bundle.issue.id}/reorder`, {
-      method: "POST",
-      body: { ids: renumbered.map((page) => page.id) },
-    });
-  };
-  const addArticle = (article: any) => {
-    if (!selectedPage) return;
-    const block: NewspaperBlock = {
-      type: "article",
-      article_id: String(article.id),
-      headline: article.title,
-      deck: article.subtitle || article.excerpt || "",
-      body: article.content || "",
-      image: article.image_url || article.image || "",
-      category: article.category || "News",
-      author: article.author_name || "Gotham City",
-      lead: selectedPage.blocks.length === 0,
-    };
-    patchPage({ blocks: [...selectedPage.blocks, block] });
-  };
-  const addAd = () => {
-    if (!selectedPage) return;
-    patchPage({
-      blocks: [
-        ...selectedPage.blocks,
-        {
-          type: "advertisement",
-          category: "Advertisement",
-          headline: "Your advertisement",
-          deck: "Promote a Gotham business or community event.",
-          body: "Edit this block directly on the page properties panel.",
-        },
-      ],
-    });
-  };
-  const removeBlock = (index: number) =>
-    selectedPage &&
-    patchPage({ blocks: selectedPage.blocks.filter((_, i) => i !== index) });
-  const updateBlock = (index: number, patch: Partial<NewspaperBlock>) =>
-    selectedPage &&
-    patchPage({
-      blocks: selectedPage.blocks.map((block, i) =>
-        i === index ? { ...block, ...patch } : block,
-      ),
-    });
-  if (loading)
-    return (
-      <div className="grid h-64 place-items-center">
-        <Loader2 className="animate-spin text-[#9d8bd6]" />
-      </div>
-    );
-  return (
-    <section className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#09080c]">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-        <div>
-          <h3 className="font-serif text-lg text-white">Newspaper Builder</h3>
-          <p className="text-xs text-white/40">
-            Build printed editions from existing news articles.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <select
-            className={`${field} !w-auto min-w-48`}
-            value={bundle?.issue.id || ""}
-            onChange={(e) => openIssue(e.target.value)}
-          >
-            <option value="">Select issue</option>
-            {issues.map((issue) => (
-              <option key={issue.id} value={issue.id}>
-                {issue.name} · {issue.status}
-              </option>
-            ))}
-          </select>
-          <button onClick={create} className="builder-button">
-            <Plus size={14} /> New Issue
-          </button>
-          <button
-            onClick={() => save()}
-            disabled={!bundle || saving}
-            className="builder-button primary"
-          >
-            {saving ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : (
-              <Save size={14} />
-            )}{" "}
-            Save
-          </button>
-          <button
-            onClick={() =>
-              save(bundle?.issue.status === "published" ? "draft" : "published")
-            }
-            disabled={!bundle}
-            className="builder-button"
-          >
-            <Send size={14} />{" "}
-            {bundle?.issue.status === "published" ? "Unpublish" : "Publish"}
-          </button>
-          <a href="/news" target="_blank" className="builder-button">
-            <Eye size={14} /> Preview
-          </a>
-        </div>
-      </header>
-      {!bundle ? (
-        <div className="grid min-h-72 place-items-center text-center">
-          <div>
-            <FilePlus2 className="mx-auto mb-3 text-white/25" />
-            <p className="text-white/55">
-              Create an issue to start designing pages.
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="newspaper-builder-grid">
-          <aside className="builder-sidebar left">
-            <div className="builder-tabs">
-              <button
-                className={tab === "content" ? "active" : ""}
-                onClick={() => setTab("content")}
-              >
-                Articles
-              </button>
-              <button
-                className={tab === "templates" ? "active" : ""}
-                onClick={() => setTab("templates")}
-              >
-                Templates
-              </button>
-              <button
-                className={tab === "ads" ? "active" : ""}
-                onClick={() => setTab("ads")}
-              >
-                Ads
-              </button>
-            </div>
-            {tab === "content" ? (
-              <div className="builder-scroll">
-                <p className="builder-label">Available news</p>
-                {articles.map((article) => (
-                  <button
-                    draggable
-                    onDragEnd={() => addArticle(article)}
-                    onClick={() => addArticle(article)}
-                    key={article.id}
-                    className="content-block"
-                  >
-                    <GripVertical size={13} />
-                    <span>
-                      <strong>{article.title}</strong>
-                      <small>{article.category || "News"}</small>
-                    </span>
-                    <Plus size={13} />
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {tab === "templates" ? (
-              <div className="builder-scroll">
-                <p className="builder-label">Page templates</p>
-                {templates.map((template) => (
-                  <button
-                    key={template}
-                    onClick={() => patchPage({ template_key: template })}
-                    className={`template-choice ${selectedPage?.template_key === template ? "active" : ""}`}
-                  >
-                    {template.replaceAll("-", " ")}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-            {tab === "ads" ? (
-              <div className="builder-scroll">
-                <p className="builder-label">Advertisement blocks</p>
-                <button onClick={addAd} className="content-block">
-                  <Archive size={14} />
-                  <span>
-                    <strong>Print advertisement</strong>
-                    <small>Clearly labeled sponsored space</small>
-                  </span>
-                  <Plus size={13} />
-                </button>
-              </div>
-            ) : null}
-          </aside>
-          <main className="builder-canvas">
-            <div className="canvas-toolbar">
-              <input
-                className={field}
-                value={bundle.issue.name}
-                onChange={(e) => patchIssue({ name: e.target.value })}
-              />
-              <input
-                className={`${field} max-w-28`}
-                value={bundle.issue.issue_number}
-                onChange={(e) => patchIssue({ issue_number: e.target.value })}
-              />
-              <span className={`issue-status ${bundle.issue.status}`}>
-                {bundle.issue.status}
-              </span>
-            </div>
-            {selectedPage ? (
-              <div className="builder-paper">
-                <div className="mini-masthead">
-                  {bundle.settings.newspaper_name}
-                </div>
-                <div className="mini-rule">
-                  <span>{selectedPage.section_name || "City Edition"}</span>
-                  <span>Page {selectedPage.page_number}</span>
-                </div>
-                <div className="mini-columns">
-                  {selectedPage.blocks.length ? (
-                    selectedPage.blocks.map((block, index) => (
-                      <article key={index} className={block.lead ? "lead" : ""}>
-                        <button
-                          aria-label="Remove block"
-                          onClick={() => removeBlock(index)}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                        <p>{block.category}</p>
-                        <h4>{block.headline}</h4>
-                        {block.image ? <img src={block.image} alt="" /> : null}
-                        <span>{block.deck || block.body}</span>
-                      </article>
-                    ))
-                  ) : (
-                    <div className="canvas-empty">
-                      Choose an article, advertisement, or template from the
-                      left panel.
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : null}
-          </main>
-          <aside className="builder-sidebar right">
-            {selectedPage ? (
-              <div className="builder-scroll">
-                <p className="builder-label">Masthead settings</p>
-                <label>
-                  Newspaper name
-                  <input
-                    className={field}
-                    value={bundle.settings.newspaper_name}
-                    onChange={(event) =>
-                      setBundle((current) =>
-                        current
-                          ? {
-                              ...current,
-                              settings: {
-                                ...current.settings,
-                                newspaper_name: event.target.value,
-                              },
-                            }
-                          : current,
-                      )
-                    }
-                  />
-                </label>
-                <label>
-                  Motto
-                  <input
-                    className={field}
-                    value={bundle.settings.motto || ""}
-                    onChange={(event) =>
-                      setBundle((current) =>
-                        current
-                          ? {
-                              ...current,
-                              settings: {
-                                ...current.settings,
-                                motto: event.target.value,
-                              },
-                            }
-                          : current,
-                      )
-                    }
-                  />
-                </label>
-                <p className="builder-label">Page properties</p>
-                <label>
-                  Internal label
-                  <input
-                    className={field}
-                    value={selectedPage.internal_label || ""}
-                    onChange={(e) =>
-                      patchPage({ internal_label: e.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Section
-                  <input
-                    className={field}
-                    value={selectedPage.section_name || ""}
-                    onChange={(e) =>
-                      patchPage({ section_name: e.target.value })
-                    }
-                  />
-                </label>
-                <label>
-                  Template
-                  <select
-                    className={field}
-                    value={selectedPage.template_key}
-                    onChange={(e) =>
-                      patchPage({ template_key: e.target.value })
-                    }
-                  >
-                    {templates.map((template) => (
-                      <option key={template}>{template}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(selectedPage.is_hidden)}
-                    onChange={(e) =>
-                      patchPage({ is_hidden: e.target.checked ? 1 : 0 })
-                    }
-                  />{" "}
-                  Hide this page
-                </label>
-                {selectedPage.blocks.map((block, index) => (
-                  <div key={index} className="block-properties">
-                    <strong>
-                      {block.type} {index + 1}
-                    </strong>
-                    <input
-                      className={field}
-                      value={block.headline || ""}
-                      onChange={(e) =>
-                        updateBlock(index, { headline: e.target.value })
-                      }
-                      placeholder="Headline"
-                    />
-                    <textarea
-                      className={field}
-                      rows={3}
-                      value={block.deck || block.body || ""}
-                      onChange={(e) =>
-                        updateBlock(index, { deck: e.target.value })
-                      }
-                      placeholder="Deck or body"
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </aside>
-          <footer className="page-strip">
-            <button onClick={addPage} className="page-thumb add">
-              <Plus /> Add page
-            </button>
-            {bundle.pages.map((page) => (
-              <button
-                key={page.id}
-                onClick={() => setSelectedPageId(page.id)}
-                className={`page-thumb ${page.id === selectedPageId ? "active" : ""}`}
-              >
-                <span>{page.page_number}</span>
-                <strong>{page.internal_label || page.template_key}</strong>
-              </button>
-            ))}
-            <div className="page-actions">
-              <button onClick={() => movePage(-1)}>
-                <ChevronUp />
-              </button>
-              <button onClick={() => movePage(1)}>
-                <ChevronDown />
-              </button>
-              <button onClick={removePage}>
-                <Trash2 />
-              </button>
-            </div>
-          </footer>
-        </div>
-      )}
-    </section>
-  );
+  const end=()=>{start.current=null};
+  return <div className={`free-canvas-layer ${selected?"selected":""} type-${block.type}`} style={{left:`${block.x}%`,top:`${block.y}%`,width:`${block.width}%`,height:`${block.height}%`,zIndex:block.z??index+1,fontSize:`${block.fontSize||16}px`,fontFamily:block.fontFamily||"Georgia",fontWeight:block.fontWeight||400,textAlign:block.textAlign||"left",color:block.color||"#171512",background:block.background||"transparent",borderWidth:block.borderWidth||0,padding:`${block.padding??4}px`,transform:`rotate(${block.rotation||0}deg)`,opacity:block.opacity??1}} onPointerDown={e=>begin(e,"move")} onPointerMove={move} onPointerUp={end} onPointerCancel={end} onClick={e=>{e.stopPropagation();onSelect()}}>
+    <LayerContent block={block}/>{selected&&!block.locked&&<button className="free-resize" aria-label="Resize layer" onPointerDown={e=>begin(e,"resize")} onPointerMove={move} onPointerUp={end}/>} {block.locked&&<Lock className="layer-lock"/>}
+  </div>;
+}
+
+export default function AdminNewspaperBuilder(){
+ const {push,confirm}=useToast(); const [issues,setIssues]=useState<NewspaperIssue[]>([]); const [bundle,setBundle]=useState<NewspaperBundle|null>(null); const [selectedPageId,setSelectedPageId]=useState(""); const [selectedBlock,setSelectedBlock]=useState<number|null>(null); const [articles,setArticles]=useState<any[]>([]); const [loading,setLoading]=useState(true); const [saving,setSaving]=useState(false); const [tab,setTab]=useState<"elements"|"articles"|"templates">("elements");
+ const selectedPage=useMemo(()=>bundle?.pages.find(p=>p.id===selectedPageId)||bundle?.pages[0]||null,[bundle,selectedPageId]); const block=selectedBlock===null?null:selectedPage?.blocks[selectedBlock]||null;
+ const openIssue=async(id:string)=>{const next=await api<NewspaperBundle>(`/api/newspaper/admin/issues/${id}`);setBundle(next);setSelectedPageId(next.pages[0]?.id||"");setSelectedBlock(null)};
+ const loadIssues=async()=>{setLoading(true);try{const [result,posts]=await Promise.all([api<{rows:NewspaperIssue[]}>("/api/newspaper/admin/issues"),api<{rows?:any[];data?:any[]}>("/api/admin/news",{params:{limit:100}})]);setIssues(result.rows||[]);setArticles(posts.rows||posts.data||[]);if(!bundle&&result.rows?.[0])await openIssue(result.rows[0].id)}catch(e:any){push({kind:"error",message:e?.message||"Could not load newspaper builder"})}finally{setLoading(false)}};
+ useEffect(()=>{loadIssues()},[]);
+ const patchIssue=(patch:Partial<NewspaperIssue>)=>setBundle(c=>c?{...c,issue:{...c.issue,...patch}}:c);
+ const patchPage=(patch:Partial<NewspaperPage>)=>setBundle(c=>c?{...c,pages:c.pages.map(p=>p.id===selectedPage?.id?{...p,...patch}:p)}:c);
+ const updateBlock=(i:number,patch:Partial<NewspaperBlock>)=>selectedPage&&patchPage({blocks:selectedPage.blocks.map((b,n)=>n===i?{...b,...patch}:b)});
+ const addElement=(type:string,source:Partial<NewspaperBlock>={})=>{if(!selectedPage)return;const count=selectedPage.blocks.length;const next:NewspaperBlock={id:newId(),type,x:6+(count%4)*4,y:16+(count%6)*5,width:type==="divider"?88:type==="headline"?70:38,height:type==="divider"?2:type==="image"?25:16,z:count+1,fontSize:type==="headline"?36:type==="text"?15:18,fontFamily:"Georgia",fontWeight:type==="headline"?900:400,textAlign:type==="headline"?"center":"left",color:"#171512",background:"transparent",borderWidth:type==="advertisement"?1:0,padding:6,fit:"cover",headline:type==="headline"?"YOUR HEADLINE":undefined,deck:type==="text"?"Write your story here. You can move and resize this box anywhere on the page.":undefined,...source};patchPage({blocks:[...selectedPage.blocks,next]});setSelectedBlock(count)};
+ const addArticle=(a:any)=>addElement("article",{article_id:String(a.id),headline:a.title,deck:a.subtitle||a.excerpt||"",body:a.content||"",image:a.image_url||a.image||"",category:a.category||"News",author:a.author_name||"Gotham City",width:44,height:28,fontSize:14});
+ const duplicate=()=>{if(!block||selectedBlock===null||!selectedPage)return;addElement(block.type,{...block,id:newId(),x:clamp((block.x||0)+3,0,95),y:clamp((block.y||0)+3,0,95),z:selectedPage.blocks.length+1})};
+ const removeBlock=()=>{if(selectedBlock===null||!selectedPage)return;patchPage({blocks:selectedPage.blocks.filter((_,i)=>i!==selectedBlock)});setSelectedBlock(null)};
+ const create=async()=>{try{const c=await api<NewspaperBundle>("/api/newspaper/admin/issues",{method:"POST",body:{name:`Gotham Edition ${issues.length+1}`,issue_number:String(issues.length+1)}});setBundle(c);setSelectedPageId(c.pages[0]?.id||"");await loadIssues()}catch(e:any){push({kind:"error",message:e?.message})}};
+ const save=async(status?:"draft"|"published")=>{if(!bundle)return;setSaving(true);try{if(selectedPage)await api(`/api/newspaper/admin/pages/${selectedPage.id}`,{method:"PATCH",body:selectedPage});await api("/api/newspaper/admin/settings",{method:"PATCH",body:bundle.settings});await api(`/api/newspaper/admin/issues/${bundle.issue.id}`,{method:"PATCH",body:{...bundle.issue,status:status||bundle.issue.status,publication_date:status==="published"?new Date().toISOString():bundle.issue.publication_date}});await openIssue(bundle.issue.id);push({kind:"success",message:status==="published"?"Newspaper published":"Newspaper saved"})}catch(e:any){push({kind:"error",message:e?.message})}finally{setSaving(false)}};
+ const addPage=async()=>{if(!bundle)return;const r=await api<{page:NewspaperPage}>(`/api/newspaper/admin/issues/${bundle.issue.id}/pages`,{method:"POST",body:{template_key:"blank"}});setBundle({...bundle,pages:[...bundle.pages,r.page]});setSelectedPageId(r.page.id);setSelectedBlock(null)};
+ const removePage=async()=>{if(!selectedPage||!bundle||bundle.pages.length<=1)return;if(!await confirm({title:"Delete newspaper page?",message:"The page and its placed content will be removed.",confirmText:"Delete"}))return;await api(`/api/newspaper/admin/pages/${selectedPage.id}`,{method:"DELETE"});const pages=bundle.pages.filter(p=>p.id!==selectedPage.id);setBundle({...bundle,pages});setSelectedPageId(pages[0]?.id||"")};
+ const movePage=async(d:number)=>{if(!bundle||!selectedPage)return;const from=bundle.pages.findIndex(p=>p.id===selectedPage.id),to=from+d;if(to<0||to>=bundle.pages.length)return;const pages=[...bundle.pages];[pages[from],pages[to]]=[pages[to],pages[from]];const ren=pages.map((p,i)=>({...p,page_number:i+1}));setBundle({...bundle,pages:ren});await api(`/api/newspaper/admin/issues/${bundle.issue.id}/reorder`,{method:"POST",body:{ids:ren.map(p=>p.id)}})};
+ if(loading)return <div className="grid h-64 place-items-center"><Loader2 className="animate-spin text-[#9d8bd6]"/></div>;
+ return <section className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-[#09080c]">
+  <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3"><div><h3 className="font-serif text-lg text-white">Free Newspaper Studio</h3><p className="text-xs text-white/40">Place, resize and layer anything anywhere on every page.</p></div><div className="flex flex-wrap gap-2"><select className={`${field} !w-auto min-w-48`} value={bundle?.issue.id||""} onChange={e=>openIssue(e.target.value)}><option value="">Select issue</option>{issues.map(i=><option key={i.id} value={i.id}>{i.name} · {i.status}</option>)}</select><button onClick={create} className="builder-button"><Plus size={14}/> New Issue</button><button onClick={()=>save()} disabled={!bundle||saving} className="builder-button primary">{saving?<Loader2 size={14} className="animate-spin"/>:<Save size={14}/>} Save</button><button onClick={()=>save(bundle?.issue.status==="published"?"draft":"published")} className="builder-button"><Send size={14}/> {bundle?.issue.status==="published"?"Unpublish":"Publish"}</button><a href="/news" target="_blank" className="builder-button"><Eye size={14}/> Preview</a></div></header>
+  {!bundle?<div className="grid min-h-72 place-items-center"><button onClick={create} className="builder-button"><FilePlus2/> Create first issue</button></div>:<div className="newspaper-builder-grid">
+   <aside className="builder-sidebar left"><div className="builder-tabs"><button className={tab==="elements"?"active":""} onClick={()=>setTab("elements")}>Elements</button><button className={tab==="articles"?"active":""} onClick={()=>setTab("articles")}>Articles</button><button className={tab==="templates"?"active":""} onClick={()=>setTab("templates")}>Pages</button></div><div className="builder-scroll">
+    {tab==="elements"&&<><p className="builder-label">Drag-and-place elements</p><div className="element-palette"><button onClick={()=>addElement("headline")}><Heading1/>Headline</button><button onClick={()=>addElement("text")}><Type/>Text box</button><button onClick={()=>addElement("image")}><Image/>Image box</button><button onClick={()=>addElement("divider")}><Minus/>Divider</button><button onClick={()=>addElement("advertisement",{headline:"ADVERTISEMENT",deck:"Your message here"})}><Archive/>Advertisement</button></div><div className="studio-help"><MousePointer2/><span>Click an element, drag it anywhere, then use the purple corner to resize it.</span></div></>}
+    {tab==="articles"&&<>{articles.map(a=><button key={a.id} onClick={()=>addArticle(a)} className="content-block"><GripVertical size={13}/><span><strong>{a.title}</strong><small>{a.category||"News"}</small></span><Plus size={13}/></button>)}</>}
+    {tab==="templates"&&templates.map(t=><button key={t} onClick={()=>patchPage({template_key:t})} className={`template-choice ${selectedPage?.template_key===t?"active":""}`}>{t.replaceAll("-"," ")}</button>)}
+   </div></aside>
+   <main className="builder-canvas"><div className="canvas-toolbar"><input className={field} value={bundle.issue.name} onChange={e=>patchIssue({name:e.target.value})}/><input className={`${field} max-w-28`} value={bundle.issue.issue_number} onChange={e=>patchIssue({issue_number:e.target.value})}/><span className={`issue-status ${bundle.issue.status}`}>{bundle.issue.status}</span></div>
+    {selectedPage&&<div className="builder-paper free-editor-paper" onClick={()=>setSelectedBlock(null)}><div className="canvas-grid"/><div className="mini-masthead">{bundle.settings.newspaper_name}</div><div className="mini-rule"><span>{selectedPage.section_name||"City Edition"}</span><span>Page {selectedPage.page_number}</span></div>{selectedPage.blocks.map((b,i)=>positioned(b)?<CanvasLayer key={b.id||i} block={b} index={i} selected={selectedBlock===i} onSelect={()=>setSelectedBlock(i)} onChange={p=>updateBlock(i,p)}/>:<CanvasLayer key={b.id||i} block={{...b,x:6,y:18+i*8,width:42,height:18}} index={i} selected={selectedBlock===i} onSelect={()=>setSelectedBlock(i)} onChange={p=>updateBlock(i,p)}/>)}</div>}
+   </main>
+   <aside className="builder-sidebar right"><div className="builder-scroll">{block&&selectedBlock!==null?<><div className="property-title"><span><Layers/> Selected {block.type}</span><div><button onClick={duplicate} title="Duplicate"><Copy/></button><button onClick={()=>updateBlock(selectedBlock,{locked:!block.locked})}>{block.locked?<Unlock/>:<Lock/>}</button><button onClick={removeBlock}><Trash2/></button></div></div>
+    {block.type!=="image"&&block.type!=="divider"&&<><label>Headline<input className={field} value={block.headline||""} onChange={e=>updateBlock(selectedBlock,{headline:e.target.value})}/></label><label>Text<textarea rows={5} className={field} value={block.deck||block.body||""} onChange={e=>updateBlock(selectedBlock,{deck:e.target.value,body:""})}/></label></>}
+    {block.type==="image"&&<label>Image URL<input className={field} value={block.image||""} onChange={e=>updateBlock(selectedBlock,{image:e.target.value})} placeholder="https://..."/></label>}
+    <p className="builder-label">Position & size (%)</p><div className="property-grid">{(["x","y","width","height"] as const).map(k=><label key={k}>{k}<input type="number" className={field} value={block[k]||0} onChange={e=>updateBlock(selectedBlock,{[k]:Number(e.target.value)})}/></label>)}</div>
+    <p className="builder-label">Typography & appearance</p>{block.type!=="image"&&<><label>Font<select className={field} value={block.fontFamily||"Georgia"} onChange={e=>updateBlock(selectedBlock,{fontFamily:e.target.value})}><option>Georgia</option><option>Times New Roman</option><option>Arial</option><option>Impact</option></select></label><div className="property-grid"><label>Font size<input type="number" className={field} value={block.fontSize||16} onChange={e=>updateBlock(selectedBlock,{fontSize:Number(e.target.value)})}/></label><label>Weight<select className={field} value={block.fontWeight||400} onChange={e=>updateBlock(selectedBlock,{fontWeight:Number(e.target.value)})}><option value="400">Regular</option><option value="700">Bold</option><option value="900">Black</option></select></label></div><label>Alignment<select className={field} value={block.textAlign||"left"} onChange={e=>updateBlock(selectedBlock,{textAlign:e.target.value as any})}><option>left</option><option>center</option><option>right</option><option>justify</option></select></label></>}
+    <div className="property-grid"><label>Text color<input type="color" value={block.color||"#171512"} onChange={e=>updateBlock(selectedBlock,{color:e.target.value})}/></label><label>Background<input type="color" value={block.background==="transparent"?"#e8ddc4":block.background||"#e8ddc4"} onChange={e=>updateBlock(selectedBlock,{background:e.target.value})}/></label><label>Border<input type="number" className={field} value={block.borderWidth||0} onChange={e=>updateBlock(selectedBlock,{borderWidth:Number(e.target.value)})}/></label><label>Padding<input type="number" className={field} value={block.padding??4} onChange={e=>updateBlock(selectedBlock,{padding:Number(e.target.value)})}/></label><label>Rotation<input type="number" className={field} value={block.rotation||0} onChange={e=>updateBlock(selectedBlock,{rotation:Number(e.target.value)})}/></label><label>Layer<input type="number" className={field} value={block.z||1} onChange={e=>updateBlock(selectedBlock,{z:Number(e.target.value)})}/></label></div>
+   </>:<><p className="builder-label">Page settings</p><label>Newspaper name<input className={field} value={bundle.settings.newspaper_name} onChange={e=>setBundle(c=>c?{...c,settings:{...c.settings,newspaper_name:e.target.value}}:c)}/></label><label>Section<input className={field} value={selectedPage?.section_name||""} onChange={e=>patchPage({section_name:e.target.value})}/></label><div className="studio-help"><Settings2/><span>Select an element on the page to edit every property.</span></div></>}</div></aside>
+   <footer className="page-strip"><button onClick={addPage} className="page-thumb add"><Plus/> Add page</button>{bundle.pages.map(p=><button key={p.id} onClick={()=>{setSelectedPageId(p.id);setSelectedBlock(null)}} className={`page-thumb ${p.id===selectedPageId?"active":""}`}><span>{p.page_number}</span><strong>{p.internal_label||p.template_key}</strong></button>)}<div className="page-actions"><button onClick={()=>movePage(-1)}><ChevronUp/></button><button onClick={()=>movePage(1)}><ChevronDown/></button><button onClick={removePage}><Trash2/></button></div></footer>
+  </div>}
+ </section>;
 }

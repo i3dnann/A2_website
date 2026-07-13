@@ -77,6 +77,13 @@ function PrintedArticle({
   );
 }
 
+function FreeformPrintedBlock({ block, onRead }: { block: NewspaperBlock; onRead: (block: NewspaperBlock) => void }) {
+  const style: React.CSSProperties = { left:`${block.x}%`, top:`${block.y}%`, width:`${block.width}%`, height:`${block.height}%`, zIndex:block.z, fontSize:`clamp(5px, ${(block.fontSize||16)/700*45}vw, ${block.fontSize||16}px)`, fontFamily:block.fontFamily||"Georgia", fontWeight:block.fontWeight||400, textAlign:block.textAlign||"left", color:block.color||"var(--ink)", background:block.background||"transparent", borderWidth:block.borderWidth||0, padding:`${block.padding??4}px`, transform:`rotate(${block.rotation||0}deg)`, opacity:block.opacity??1 };
+  if(block.type==="image") return <div className="free-print-block image" style={style}>{block.image&&<img src={block.image} alt={block.caption||"Newspaper image"} style={{objectFit:block.fit||"cover"}}/>}</div>;
+  if(block.type==="divider") return <div className="free-print-block divider" style={style}/>;
+  return <article className={`free-print-block type-${block.type}`} style={style} onClick={()=>onRead(block)}>{block.category&&<small>{block.category}</small>}{block.headline&&<h2>{block.headline}</h2>}<p>{block.deck||block.body}</p>{block.type==="article"&&block.author&&<em>By {block.author}</em>}</article>;
+}
+
 function PrintedPage({
   page,
   bundle,
@@ -87,18 +94,19 @@ function PrintedPage({
   onRead: (block: NewspaperBlock) => void;
 }) {
   const isFront = page.page_number === 1 || page.template_key === "front-page";
+  const isFreeform = page.blocks.some((block) => [block.x, block.y, block.width, block.height].every(Number.isFinite));
   return (
     <section
       className={`newspaper-sheet template-${page.template_key}`}
       aria-label={`Page ${page.page_number}`}
     >
       <div className="paper-noise" aria-hidden="true" />
-      <header className="newsprint-page-header">
+      {!isFreeform && <header className="newsprint-page-header">
         <span>{page.section_name || "City Edition"}</span>
         <span>{dateLabel(bundle.issue.publication_date)}</span>
         <span>Page {page.page_number}</span>
-      </header>
-      {isFront ? (
+      </header>}
+      {!isFreeform && (isFront ? (
         <>
           <div className="newsprint-masthead">
             {bundle.settings.newspaper_name}
@@ -113,8 +121,8 @@ function PrintedPage({
         <div className="newsprint-section-title">
           {page.section_name || page.internal_label || "Gotham News"}
         </div>
-      )}
-      <div
+      ))}
+      {isFreeform ? <div className="free-print-layout">{page.blocks.map((block,index)=><FreeformPrintedBlock key={block.id||index} block={block} onRead={onRead}/>)}</div> : <div
         className={`newsprint-layout ${isFront ? "front-layout" : "columns-layout"}`}
       >
         {page.blocks.length ? (
@@ -131,7 +139,7 @@ function PrintedPage({
             <span>New stories will appear in the next edition.</span>
           </div>
         )}
-      </div>
+      </div>}
       <footer className="newsprint-footer">
         <span>{bundle.settings.newspaper_name}</span>
         <span>Issue {bundle.issue.issue_number}</span>
@@ -156,7 +164,9 @@ export default function NewspaperReader() {
   const [reader, setReader] = useState<NewspaperBlock | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
   const isMobile =
     typeof window !== "undefined" &&
     window.matchMedia("(max-width: 767px)").matches;
@@ -182,14 +192,18 @@ export default function NewspaperReader() {
     load();
   }, [load]);
   const playSound = useCallback(() => {
-    if (!sound || reduceMotion || !bundle?.settings.sound_url) return;
-    if (!audioRef.current)
-      audioRef.current = new Audio(bundle.settings.sound_url);
-    const audio = audioRef.current;
-    audio.pause();
-    audio.currentTime = 0;
-    audio.volume = 0.22;
-    audio.play().catch(() => {});
+    if (!sound || reduceMotion) return;
+    if (bundle?.settings.sound_url) {
+      if (!audioRef.current) audioRef.current = new Audio(bundle.settings.sound_url);
+      const audio = audioRef.current; audio.pause(); audio.currentTime = 0; audio.volume = 0.22; audio.play().catch(() => {}); return;
+    }
+    try {
+      const Context = window.AudioContext || (window as any).webkitAudioContext;
+      const context = audioContextRef.current || new Context(); audioContextRef.current=context;
+      const length=Math.floor(context.sampleRate*.34), buffer=context.createBuffer(1,length,context.sampleRate), data=buffer.getChannelData(0); let last=0;
+      for(let i=0;i<length;i++){const white=Math.random()*2-1;last=last*.82+white*.18;data[i]=last*(1-i/length)*.7}
+      const source=context.createBufferSource(), filter=context.createBiquadFilter(), gain=context.createGain(); source.buffer=buffer;filter.type="bandpass";filter.frequency.value=1450;filter.Q.value=.5;gain.gain.setValueAtTime(.001,context.currentTime);gain.gain.exponentialRampToValueAtTime(.16,context.currentTime+.025);gain.gain.exponentialRampToValueAtTime(.001,context.currentTime+.34);source.connect(filter).connect(gain).connect(context.destination);source.start();
+    } catch {}
   }, [sound, reduceMotion, bundle]);
   const turn = useCallback(
     (direction: number) => {
@@ -327,11 +341,16 @@ export default function NewspaperReader() {
         </div>
       </div>
       <motion.div
+        ref={stageRef}
         className="newspaper-stage"
         drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.18}
+        onDragStart={() => { stageRef.current?.classList.add("is-dragging"); playSound(); }}
+        onDrag={(_,info)=>{shellRef.current?.style.setProperty("--drag-x",`${info.offset.x}px`)}}
         onDragEnd={(_, info) => {
+          shellRef.current?.style.setProperty("--drag-x","0px");
+          stageRef.current?.classList.remove("is-dragging");
           if (Math.abs(info.offset.x) > 80) turn(info.offset.x < 0 ? 1 : -1);
         }}
         style={{ scale: zoom }}

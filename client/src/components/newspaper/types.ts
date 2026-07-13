@@ -1,4 +1,5 @@
 export type NewspaperBlock = {
+  id?: string;
   type: string;
   article_id?: string;
   headline?: string;
@@ -11,6 +12,23 @@ export type NewspaperBlock = {
   lead?: boolean;
   label?: string;
   link?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  z?: number;
+  fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: number;
+  textAlign?: "left" | "center" | "right" | "justify";
+  color?: string;
+  background?: string;
+  borderWidth?: number;
+  padding?: number;
+  rotation?: number;
+  opacity?: number;
+  fit?: "cover" | "contain";
+  locked?: boolean;
 };
 export type NewspaperPage = {
   id: string;
