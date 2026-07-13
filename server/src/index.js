@@ -27,6 +27,7 @@ import playerRouter from "./routes/player.js";
 import accountRouter from "./routes/account.js";
 import newsRouter from "./routes/news.js";
 import contractsRouter from "./routes/contracts.js";
+import newspaperRouter from "./routes/newspaper.js";
 
 const shots = await import("./services/" + "galleryService.js");
 const __filename = fileURLToPath(import.meta.url);
@@ -204,6 +205,7 @@ app.delete(`/api/admin${photoPath}/:id`, requirePermission("manage_gallery"), as
 
 app.use("/api/auth", authRouter);
 app.use("/api/news", newsRouter);
+app.use("/api/newspaper", newspaperRouter);
 app.use("/api/public", publicRouter);
 app.use("/api/player", playerTicketLocksRouter);
 app.use("/api/player", playerRouter);

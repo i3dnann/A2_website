@@ -41,6 +41,7 @@ import { useToast, Skeleton } from "../components/Toast";
 import FileUpload from "../components/FileUpload";
 import VerifiedBadge from "../components/VerifiedBadge";
 import AdminContracts from "../components/contracts/AdminContracts";
+import AdminNewspaperBuilder from "../components/newspaper/AdminNewspaperBuilder";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -1517,6 +1518,7 @@ function NewsAdmin() {
 
   return (
     <div className="flex flex-col gap-1">
+      <AdminNewspaperBuilder />
       <EditableSection title="News Posts">
         <button
           onClick={() =>
