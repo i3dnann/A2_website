@@ -66,6 +66,19 @@ function normalizeRoles(roles = ["Player"]) {
   return roles?.length ? roles : ["Player"];
 }
 
+const emptyProviderPrefix = "__unlinked__";
+
+function publicProviderId(value) {
+  const normalized = String(value || "");
+  return normalized.startsWith(emptyProviderPrefix) ? "" : normalized;
+}
+
+function storedProviderId(value, userId, provider) {
+  const normalized = publicProviderId(value);
+  if (normalized) return normalized;
+  return `${emptyProviderPrefix}${provider[0]}${String(userId).replaceAll("-", "").slice(0, 19)}`;
+}
+
 function normalizeUser(row) {
   const roles = normalizeRoles(
     Array.isArray(row.roles) ? row.roles : safeJson(row.roles_json, []),
@@ -95,9 +108,9 @@ function normalizeUser(row) {
     account_status: row.account_status || "active",
     admin_status: row.admin_status || "active",
     preferred_language: row.preferred_language || "en",
-    discord_id: row.discord_id || "",
+    discord_id: publicProviderId(row.discord_id),
     discord_username: row.discord_username || "",
-    steam_id: row.steam_id || "",
+    steam_id: publicProviderId(row.steam_id),
     steam_persona: row.steam_persona || "",
     linked_identifiers: Array.isArray(row.linked_identifiers)
       ? row.linked_identifiers
@@ -419,8 +432,8 @@ async function upsertUser(row) {
         updated_at = CURRENT_TIMESTAMP`,
       {
         ...user,
-        discord_id: user.discord_id || null,
-        steam_id: user.steam_id || null,
+        discord_id: storedProviderId(user.discord_id, user.id, "discord"),
+        steam_id: storedProviderId(user.steam_id, user.id, "steam"),
         roles_json: JSON.stringify(user.roles),
         permissions_json: JSON.stringify(user.permissions),
         linked_identifiers_json: JSON.stringify(user.linked_identifiers),
@@ -651,12 +664,12 @@ export async function unlinkProviderForUser(userId, provider, actor) {
       const [result] = await connection.execute(
         provider === "discord"
           ? `UPDATE web_users
-             SET discord_id = NULL, discord_username = '',
+             SET discord_id = CONCAT('__unlinked__d', LEFT(REPLACE(id, '-', ''), 19)), discord_username = '',
                  linked_identifiers_json = :linked_identifiers_json,
                  updated_by = :actor, updated_at = CURRENT_TIMESTAMP
              WHERE id = :user_id AND deleted_at IS NULL`
           : `UPDATE web_users
-             SET steam_id = NULL, steam_persona = '',
+             SET steam_id = CONCAT('__unlinked__s', LEFT(REPLACE(id, '-', ''), 19)), steam_persona = '',
                  linked_identifiers_json = :linked_identifiers_json,
                  updated_by = :actor, updated_at = CURRENT_TIMESTAMP
              WHERE id = :user_id AND deleted_at IS NULL`,
@@ -764,9 +777,9 @@ export async function listWebUsers({ q = "", limit = 100 } = {}) {
   if (databaseEnabled) {
     const rows = await query(
       `SELECT u.*,
-          COALESCE(NULLIF(u.discord_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' AND p.deleted_at IS NULL LIMIT 1), '') AS discord_id,
+          COALESCE(NULLIF(CASE WHEN u.discord_id LIKE '__unlinked__%' THEN '' ELSE u.discord_id END, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' AND p.deleted_at IS NULL LIMIT 1), '') AS discord_id,
           COALESCE(NULLIF(u.discord_username, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' AND p.deleted_at IS NULL LIMIT 1), '') AS discord_username,
-          COALESCE(NULLIF(u.steam_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' AND p.deleted_at IS NULL LIMIT 1), '') AS steam_id,
+          COALESCE(NULLIF(CASE WHEN u.steam_id LIKE '__unlinked__%' THEN '' ELSE u.steam_id END, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' AND p.deleted_at IS NULL LIMIT 1), '') AS steam_id,
           COALESCE(NULLIF(u.steam_persona, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' AND p.deleted_at IS NULL LIMIT 1), '') AS steam_persona
        FROM web_users u
        WHERE u.deleted_at IS NULL
@@ -922,7 +935,7 @@ export async function deleteWebUser(id, actor) {
         { id, actor: actor?.id || null },
       );
       const [result] = await connection.execute(
-        `UPDATE web_users SET account_status='disabled',admin_status='disabled',roles_json='[\"Player\"]',permissions_json='[]',discord_id=NULL,discord_username='',steam_id=NULL,steam_persona='',deleted_at=NOW(),updated_by=:actor WHERE id=:id`,
+        `UPDATE web_users SET account_status='disabled',admin_status='disabled',roles_json='[\"Player\"]',permissions_json='[]',deleted_at=NOW(),updated_by=:actor WHERE id=:id`,
         { id, actor: actor?.id || null },
       );
       if (!result.affectedRows) {
