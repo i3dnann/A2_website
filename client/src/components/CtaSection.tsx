@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { ArrowRight, LifeBuoy, MessageCircle } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";

@@ -6,6 +6,7 @@ import {
   Home, Menu, X, LogOut, Save, Trash2, Plus, Loader2, LayoutDashboard,
   CheckCircle2, XCircle, MessageCircle, Shield, AlertTriangle, TrendingUp,
   Server, Eye, ArrowUpRight, Ticket as TicketIcon, Star, Radio,
+  ScrollText,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useSite } from "../context/SiteContext";
@@ -14,6 +15,7 @@ import { api, upload } from "../api/client";
 import { useToast, Skeleton } from "../components/Toast";
 import FileUpload from "../components/FileUpload";
 import VerifiedBadge from "../components/VerifiedBadge";
+import AdminContracts from "../components/contracts/AdminContracts";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -29,6 +31,7 @@ const ADMIN_TABS = [
   { id: "applications", label: "Applications", icon: CheckCircle2 },
   { id: "faq", label: "FAQ", icon: HelpCircle },
   { id: "tickets", label: "Tickets", icon: TicketIcon },
+  { id: "contracts", label: "Contracts", icon: ScrollText },
   { id: "comments", label: "Comments", icon: MessageCircle },
   { id: "verification", label: "Verification", icon: Star },
   { id: "theme", label: "Theme & Brand", icon: Palette },
@@ -243,6 +246,7 @@ export default function AdminPanel() {
                 {tab === "applications" && <ApplicationsAdmin />}
                 {tab === "faq" && <FaqEditor content={content} update={updateContent} />}
                 {tab === "tickets" && <TicketsAdmin />}
+                {tab === "contracts" && <AdminContracts />}
                 {tab === "comments" && <CommentsAdmin />}
                 {tab === "verification" && <VerificationAdmin />}
                 {tab === "theme" && <ThemeEditor content={content} update={updateContent} />}
@@ -1951,7 +1955,7 @@ function ServerEditor({ content, update }: any) {
   </div>;
 }
 
-function RosterEditor({ content, update }: any) {
+export function RosterEditor({ content, update }: any) {
   return <div className="flex flex-col gap-1">
     <EditableSection title="Header">
       <EField label="Subtitle" value={content.rosterSubtitle} onChange={(v) => update({ rosterSubtitle: v })} />
@@ -1997,7 +2001,7 @@ function JourneyEditor({ content, update }: any) {
   </div>;
 }
 
-function CareersEditor({ content, update }: any) {
+export function CareersEditor({ content, update }: any) {
   return <div className="flex flex-col gap-1">
     <EditableSection title="Header">
       <EField label="Subtitle" value={content.careersSubtitle} onChange={(v) => update({ careersSubtitle: v })} />

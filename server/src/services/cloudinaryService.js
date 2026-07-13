@@ -66,6 +66,27 @@ export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
   }
 }
 
+export async function uploadBufferToCloudinary(buffer, options = {}) {
+  if (!Buffer.isBuffer(buffer) || !buffer.length) throw Object.assign(new Error("file_required"), { status: 422 });
+  if (!cloudinaryConfigured()) throw Object.assign(new Error("cloudinary_not_configured"), { status: 503 });
+  try {
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream({
+        folder: options.folder || "gotham-city/contracts",
+        public_id: options.publicId,
+        resource_type: options.resourceType || "raw",
+        overwrite: false,
+        unique_filename: !options.publicId,
+        use_filename: false,
+      }, (error, uploaded) => error ? reject(error) : resolve(uploaded));
+      stream.end(buffer);
+    });
+    return { url: result.secure_url, publicId: result.public_id, bytes: result.bytes || buffer.length, format: result.format || "" };
+  } catch (error) {
+    throw cloudinaryError(error);
+  }
+}
+
 export async function deleteFromCloudinary(publicId, mimeType = "") {
   if (!publicId || !cloudinaryConfigured()) return;
   const resourceType = String(mimeType).startsWith("video/") ? "video" : String(mimeType).startsWith("audio/") ? "video" : "image";

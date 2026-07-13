@@ -22,6 +22,7 @@ export const PERMISSIONS = [
   "manage_theme",
   "manage_webhooks",
   "manage_files",
+  "manage_contracts",
   "view_audit_logs",
   "master_access",
   "view_player_portal"
@@ -73,6 +74,7 @@ export const DEFAULT_ROLE_PERMISSIONS = {
     "manage_theme",
     "manage_webhooks",
     "manage_files",
+    "manage_contracts",
     "view_audit_logs"
   ],
   "Super Admin": PERMISSIONS.filter((permission) => permission !== "master_access"),

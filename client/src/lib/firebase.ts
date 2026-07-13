@@ -9,4 +9,4 @@ const firebaseConfig = {
 };
 
 export const firebaseConfigured = Object.values(firebaseConfig).every(Boolean);
-export const firebaseAuth = getAuth(initializeApp(firebaseConfig));
+export const firebaseAuth = firebaseConfigured ? getAuth(initializeApp(firebaseConfig)) : null;

@@ -23,6 +23,8 @@ import {
   Send,
   CheckCheck,
   Star,
+  FileSignature,
+  ArrowUpRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -37,6 +39,7 @@ const TABS = [
   { id: "characters", label: "Characters", icon: Gamepad2 },
   { id: "applications", label: "Applications", icon: Briefcase },
   { id: "tickets", label: "Tickets", icon: TicketIcon },
+  { id: "contracts", label: "My Contracts", icon: FileSignature },
   { id: "verification", label: "Verify Badge", icon: Star },
   { id: "linked", label: "Linked Accounts", icon: Link2 },
   { id: "account", label: "Account", icon: UserCircle },
@@ -206,6 +209,7 @@ export default function Dashboard() {
                 {tab === "tickets" && (
                   <Tickets tickets={tickets} onNewTicket={() => setTicketModalOpen(true)} />
                 )}
+                {tab === "contracts" && <ContractsShortcut />}
                 {tab === "verification" && <Verification user={user} characters={characters} />}
                 {tab === "linked" && (
                   <LinkedAccounts
@@ -238,6 +242,18 @@ export default function Dashboard() {
           }
         }}
       />
+    </div>
+  );
+}
+
+function ContractsShortcut() {
+  const { t } = useLanguage();
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8">
+      <FileSignature size={30} className="text-orange-300" />
+      <h2 className="mt-5 font-serif text-2xl text-white">{t("My Contracts")}</h2>
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/45">{t("Review documents assigned to your account, sign as your verified character, or download completed agreements.")}</p>
+      <Link to="/contracts" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white">{t("Open My Contracts")} <ArrowUpRight size={15} /></Link>
     </div>
   );
 }

@@ -203,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       clearStoredAuth();
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
-      const credential = await signInWithEmailAndPassword(firebaseAuth, email, password);
+      const credential = await signInWithEmailAndPassword(firebaseAuth!, email, password);
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken() } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
@@ -220,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       clearStoredAuth();
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
-      const credential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+      const credential = await createUserWithEmailAndPassword(firebaseAuth!, email, password);
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken(), username, create: true } });
       localStorage.setItem("a2_token", r.token);
       setUser(normalizeUser(r.user));
@@ -234,7 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-    try { await signOut(firebaseAuth); } catch {}
+    try { if (firebaseAuth) await signOut(firebaseAuth); } catch {}
     clearStoredAuth();
     setUser(null);
     setTickets([]);
@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword: AuthContextType["resetPassword"] = async (email) => {
     try {
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
-      await sendPasswordResetEmail(firebaseAuth, email);
+      await sendPasswordResetEmail(firebaseAuth!, email);
       return { ok: true };
     } catch (e: any) {
       return { ok: false, error: e?.message || "Could not send password reset email." };

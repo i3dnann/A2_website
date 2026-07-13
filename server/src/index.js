@@ -26,6 +26,7 @@ import playerTicketLocksRouter from "./routes/playerTicketLocks.js";
 import playerRouter from "./routes/player.js";
 import accountRouter from "./routes/account.js";
 import newsRouter from "./routes/news.js";
+import contractsRouter from "./routes/contracts.js";
 
 const shots = await import("./services/" + "galleryService.js");
 const __filename = fileURLToPath(import.meta.url);
@@ -207,6 +208,7 @@ app.use("/api/public", publicRouter);
 app.use("/api/player", playerTicketLocksRouter);
 app.use("/api/player", playerRouter);
 app.use("/api/account", accountRouter);
+app.use("/api/contracts", contractsRouter);
 app.use("/api/admin", adminTicketsRouter);
 app.use("/api/admin/maintenance", maintenanceAdminRouter);
 app.use("/api/admin", adminUsersExtraRouter);
