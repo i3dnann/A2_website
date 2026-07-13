@@ -419,6 +419,8 @@ async function upsertUser(row) {
         updated_at = CURRENT_TIMESTAMP`,
       {
         ...user,
+        discord_id: user.discord_id || null,
+        steam_id: user.steam_id || null,
         roles_json: JSON.stringify(user.roles),
         permissions_json: JSON.stringify(user.permissions),
         linked_identifiers_json: JSON.stringify(user.linked_identifiers),
@@ -649,12 +651,12 @@ export async function unlinkProviderForUser(userId, provider, actor) {
       const [result] = await connection.execute(
         provider === "discord"
           ? `UPDATE web_users
-             SET discord_id = '', discord_username = '',
+             SET discord_id = NULL, discord_username = '',
                  linked_identifiers_json = :linked_identifiers_json,
                  updated_by = :actor, updated_at = CURRENT_TIMESTAMP
              WHERE id = :user_id AND deleted_at IS NULL`
           : `UPDATE web_users
-             SET steam_id = '', steam_persona = '',
+             SET steam_id = NULL, steam_persona = '',
                  linked_identifiers_json = :linked_identifiers_json,
                  updated_by = :actor, updated_at = CURRENT_TIMESTAMP
              WHERE id = :user_id AND deleted_at IS NULL`,
@@ -920,7 +922,7 @@ export async function deleteWebUser(id, actor) {
         { id, actor: actor?.id || null },
       );
       const [result] = await connection.execute(
-        `UPDATE web_users SET account_status='disabled',admin_status='disabled',roles_json='[\"Player\"]',permissions_json='[]',discord_id='',discord_username='',steam_id='',steam_persona='',deleted_at=NOW(),updated_by=:actor WHERE id=:id`,
+        `UPDATE web_users SET account_status='disabled',admin_status='disabled',roles_json='[\"Player\"]',permissions_json='[]',discord_id=NULL,discord_username='',steam_id=NULL,steam_persona='',deleted_at=NOW(),updated_by=:actor WHERE id=:id`,
         { id, actor: actor?.id || null },
       );
       if (!result.affectedRows) {
