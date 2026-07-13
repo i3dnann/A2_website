@@ -94,7 +94,6 @@ export default function ContractsPage() {
     setBusy(true);
     try {
       const reauthToken = await firebaseAuth?.currentUser?.getIdToken(true);
-      if (!reauthToken) throw new Error("Please sign in again before signing.");
       await api(`/api/contracts/${selected.id}/sign`, {
         method: "POST",
         body: {
@@ -104,6 +103,7 @@ export default function ContractsPage() {
           reviewed,
           agreed,
           reauthToken,
+          reauthProvider: reauthToken ? "firebase" : "gotham_session",
         },
       });
       push({
