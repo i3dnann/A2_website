@@ -337,7 +337,8 @@ async function getInternalUserByProvider(provider, providerUserId) {
       `SELECT u.*
        FROM web_auth_providers p
        JOIN web_users u ON u.id = p.user_id
-       WHERE p.provider = :provider AND p.provider_user_id = :provider_user_id AND u.deleted_at IS NULL
+       WHERE p.provider = :provider AND p.provider_user_id = :provider_user_id
+         AND p.deleted_at IS NULL AND u.deleted_at IS NULL
        LIMIT 1`,
       { provider, provider_user_id: String(providerUserId) },
     );
@@ -350,7 +351,7 @@ async function getInternalUserByProvider(provider, providerUserId) {
 export async function listProvidersForUser(userId) {
   if (databaseEnabled) {
     const rows = await query(
-      "SELECT provider, provider_user_id, username, avatar_url, metadata_json, created_at, updated_at FROM web_auth_providers WHERE user_id = :user_id",
+      "SELECT provider, provider_user_id, username, avatar_url, metadata_json, created_at, updated_at FROM web_auth_providers WHERE user_id = :user_id AND deleted_at IS NULL",
       { user_id: userId },
     );
     if (rows) return rows;
@@ -605,7 +606,7 @@ export async function linkProvider(
         (id, user_id, provider, provider_user_id, username, avatar_url, metadata_json)
        VALUES
         (:id, :user_id, :provider, :provider_user_id, :username, :avatar_url, :metadata_json)
-       ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), username = VALUES(username), avatar_url = VALUES(avatar_url), metadata_json = VALUES(metadata_json), updated_at = CURRENT_TIMESTAMP`,
+       ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), username = VALUES(username), avatar_url = VALUES(avatar_url), metadata_json = VALUES(metadata_json), deleted_at = NULL, updated_at = CURRENT_TIMESTAMP`,
       providerRow,
     );
   }
@@ -635,10 +636,44 @@ export async function unlinkProviderForUser(userId, provider, actor) {
   };
 
   if (databaseEnabled) {
-    await query(
-      "DELETE FROM web_auth_providers WHERE user_id = :user_id AND provider = :provider",
-      { user_id: userId, provider },
-    );
+    const pool = getPool();
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.execute(
+        `UPDATE web_auth_providers
+         SET deleted_at = CURRENT_TIMESTAMP, updated_by = :actor
+         WHERE user_id = :user_id AND provider = :provider AND deleted_at IS NULL`,
+        { user_id: userId, provider, actor: actor?.id || null },
+      );
+      const [result] = await connection.execute(
+        provider === "discord"
+          ? `UPDATE web_users
+             SET discord_id = '', discord_username = '',
+                 linked_identifiers_json = :linked_identifiers_json,
+                 updated_by = :actor, updated_at = CURRENT_TIMESTAMP
+             WHERE id = :user_id AND deleted_at IS NULL`
+          : `UPDATE web_users
+             SET steam_id = '', steam_persona = '',
+                 linked_identifiers_json = :linked_identifiers_json,
+                 updated_by = :actor, updated_at = CURRENT_TIMESTAMP
+             WHERE id = :user_id AND deleted_at IS NULL`,
+        {
+          user_id: userId,
+          actor: actor?.id || null,
+          linked_identifiers_json: JSON.stringify(linked_identifiers),
+        },
+      );
+      if (!result.affectedRows) {
+        throw Object.assign(new Error("user_not_found"), { status: 404 });
+      }
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   }
 
   for (const [key, value] of providers.entries()) {
@@ -727,14 +762,14 @@ export async function listWebUsers({ q = "", limit = 100 } = {}) {
   if (databaseEnabled) {
     const rows = await query(
       `SELECT u.*,
-          COALESCE(NULLIF(u.discord_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' LIMIT 1), '') AS discord_id,
-          COALESCE(NULLIF(u.discord_username, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' LIMIT 1), '') AS discord_username,
-          COALESCE(NULLIF(u.steam_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' LIMIT 1), '') AS steam_id,
-          COALESCE(NULLIF(u.steam_persona, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' LIMIT 1), '') AS steam_persona
+          COALESCE(NULLIF(u.discord_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' AND p.deleted_at IS NULL LIMIT 1), '') AS discord_id,
+          COALESCE(NULLIF(u.discord_username, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='discord' AND p.deleted_at IS NULL LIMIT 1), '') AS discord_username,
+          COALESCE(NULLIF(u.steam_id, ''), (SELECT p.provider_user_id FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' AND p.deleted_at IS NULL LIMIT 1), '') AS steam_id,
+          COALESCE(NULLIF(u.steam_persona, ''), (SELECT p.username FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider='steam' AND p.deleted_at IS NULL LIMIT 1), '') AS steam_persona
        FROM web_users u
        WHERE u.deleted_at IS NULL
          AND (:q = '' OR u.email LIKE :like OR u.username LIKE :like OR u.discord_id LIKE :like OR u.steam_id LIKE :like
-           OR EXISTS (SELECT 1 FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider_user_id LIKE :like))
+           OR EXISTS (SELECT 1 FROM web_auth_providers p WHERE p.user_id=u.id AND p.provider_user_id LIKE :like AND p.deleted_at IS NULL))
        ORDER BY u.updated_at DESC
        LIMIT :limit`,
       { q, like: `%${q}%`, limit: Math.min(Number(limit) || 100, 200) },
@@ -879,13 +914,18 @@ export async function deleteWebUser(id, actor) {
     try {
       await connection.beginTransaction();
       await connection.execute(
-        "DELETE FROM web_auth_providers WHERE user_id = :id",
-        { id },
+        `UPDATE web_auth_providers
+         SET deleted_at = CURRENT_TIMESTAMP, updated_by = :actor
+         WHERE user_id = :id AND deleted_at IS NULL`,
+        { id, actor: actor?.id || null },
       );
-      await connection.execute(
+      const [result] = await connection.execute(
         `UPDATE web_users SET account_status='disabled',admin_status='disabled',roles_json='[\"Player\"]',permissions_json='[]',discord_id='',discord_username='',steam_id='',steam_persona='',deleted_at=NOW(),updated_by=:actor WHERE id=:id`,
         { id, actor: actor?.id || null },
       );
+      if (!result.affectedRows) {
+        throw Object.assign(new Error("user_not_found"), { status: 404 });
+      }
       await connection.commit();
     } catch (error) {
       await connection.rollback();
