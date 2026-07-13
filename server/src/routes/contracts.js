@@ -167,7 +167,8 @@ router.get(
       isContractAdmin(req),
     );
     if (!contract) return res.status(404).json({ error: "contract_not_found" });
-    const pdf = contract.pdf || (await generatePdf(req.params.id, req.user.id));
+    // This also upgrades legacy stored PDFs on their next authorized download.
+    const pdf = await generatePdf(req.params.id, req.user.id);
     const upstream = await fetch(pdf.file_url);
     if (!upstream.ok)
       return res.status(502).json({ error: "pdf_storage_unavailable" });

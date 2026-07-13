@@ -12,26 +12,35 @@ cloudinary.config({
 });
 
 export function cloudinaryConfigured() {
-  return Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
+  return Boolean(
+    env.CLOUDINARY_CLOUD_NAME &&
+      env.CLOUDINARY_API_KEY &&
+      env.CLOUDINARY_API_SECRET,
+  );
 }
 
 function cloudinaryError(error) {
-  const status = Number(error?.http_code || error?.statusCode || error?.status || 502);
+  const status = Number(
+    error?.http_code || error?.statusCode || error?.status || 502,
+  );
   const message = String(error?.message || "Cloudinary upload failed.");
   return Object.assign(new Error(message), {
     status: status >= 400 && status < 600 ? status : 502,
-    code: error?.code || "cloudinary_upload_failed"
+    code: error?.code || "cloudinary_upload_failed",
   });
 }
 
 async function uploadStream(filePath, options) {
   let result;
   const uploadPromise = new Promise((resolve, reject) => {
-    const cloudinaryStream = cloudinary.uploader.upload_stream(options, (error, uploaded) => {
-      if (error) return reject(error);
-      result = uploaded;
-      return resolve(uploaded);
-    });
+    const cloudinaryStream = cloudinary.uploader.upload_stream(
+      options,
+      (error, uploaded) => {
+        if (error) return reject(error);
+        result = uploaded;
+        return resolve(uploaded);
+      },
+    );
     pipeline(createReadStream(filePath), cloudinaryStream).catch(reject);
   });
 
@@ -40,10 +49,14 @@ async function uploadStream(filePath, options) {
 }
 
 export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
-  if (!file?.path) throw Object.assign(new Error("file_required"), { status: 422 });
+  if (!file?.path)
+    throw Object.assign(new Error("file_required"), { status: 422 });
 
   try {
-    if (!cloudinaryConfigured()) throw Object.assign(new Error("cloudinary_not_configured"), { status: 503 });
+    if (!cloudinaryConfigured())
+      throw Object.assign(new Error("cloudinary_not_configured"), {
+        status: 503,
+      });
     const result = await uploadStream(file.path, {
       folder,
       resource_type: "auto",
@@ -67,21 +80,33 @@ export async function uploadToCloudinary(file, folder = "gotham-city/uploads") {
 }
 
 export async function uploadBufferToCloudinary(buffer, options = {}) {
-  if (!Buffer.isBuffer(buffer) || !buffer.length) throw Object.assign(new Error("file_required"), { status: 422 });
-  if (!cloudinaryConfigured()) throw Object.assign(new Error("cloudinary_not_configured"), { status: 503 });
+  if (!Buffer.isBuffer(buffer) || !buffer.length)
+    throw Object.assign(new Error("file_required"), { status: 422 });
+  if (!cloudinaryConfigured())
+    throw Object.assign(new Error("cloudinary_not_configured"), {
+      status: 503,
+    });
   try {
     const result = await new Promise((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream({
-        folder: options.folder || "gotham-city/contracts",
-        public_id: options.publicId,
-        resource_type: options.resourceType || "raw",
-        overwrite: false,
-        unique_filename: !options.publicId,
-        use_filename: false,
-      }, (error, uploaded) => error ? reject(error) : resolve(uploaded));
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: options.folder || "gotham-city/contracts",
+          public_id: options.publicId,
+          resource_type: options.resourceType || "raw",
+          overwrite: Boolean(options.overwrite),
+          unique_filename: !options.publicId,
+          use_filename: false,
+        },
+        (error, uploaded) => (error ? reject(error) : resolve(uploaded)),
+      );
       stream.end(buffer);
     });
-    return { url: result.secure_url, publicId: result.public_id, bytes: result.bytes || buffer.length, format: result.format || "" };
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      bytes: result.bytes || buffer.length,
+      format: result.format || "",
+    };
   } catch (error) {
     throw cloudinaryError(error);
   }
@@ -89,6 +114,13 @@ export async function uploadBufferToCloudinary(buffer, options = {}) {
 
 export async function deleteFromCloudinary(publicId, mimeType = "") {
   if (!publicId || !cloudinaryConfigured()) return;
-  const resourceType = String(mimeType).startsWith("video/") ? "video" : String(mimeType).startsWith("audio/") ? "video" : "image";
-  await cloudinary.uploader.destroy(publicId, { resource_type: resourceType, invalidate: true });
+  const resourceType = String(mimeType).startsWith("video/")
+    ? "video"
+    : String(mimeType).startsWith("audio/")
+      ? "video"
+      : "image";
+  await cloudinary.uploader.destroy(publicId, {
+    resource_type: resourceType,
+    invalidate: true,
+  });
 }
