@@ -1639,7 +1639,7 @@ function UsersAdmin() {
   const deleteUser = async (user: any) => {
     const ok = await confirm({
       title: "Delete user?",
-      message: `This disables ${user.username || user.email || "this user"} and removes their website access.`,
+      message: `This permanently removes ${user.username || user.email || "this user"}, their provider links, and their website access.`,
       confirmText: "Delete",
     });
     if (!ok) return;
@@ -1695,7 +1695,7 @@ function UsersAdmin() {
                     {user.verified_badge ? <VerifiedBadge /> : null}
                   </p>
                   <p className="mt-1 text-xs text-white/40">{user.email || "No email"} - Discord {user.discord_id || "not linked"} - Steam {user.steam_id || "not linked"}</p>
-                  <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Verification {user.verified_badge ? "verified" : user.verification_status || "none"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
+                  <p className="mt-1 text-xs text-white/35">Roles: {(user.roles || []).join(", ") || "Player"} - Account {user.account_status || "active"} - Admin {user.admin_status || "active"} - Verification {user.verified_badge ? "verified" : user.verification_status || "none"} - Created {user.created_at ? new Date(user.created_at).toLocaleDateString() : "unknown"}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {user.verified_badge ? (
@@ -1709,8 +1709,11 @@ function UsersAdmin() {
                   {user.steam_id ? (
                     <button onClick={() => unlinkProvider(user, "steam")} className="rounded-lg border border-sky-400/30 bg-sky-500/5 px-3 py-2 text-xs text-sky-200">Disconnect Steam</button>
                   ) : null}
-                  <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
-                  <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
+                  {user.account_status === "active" ? (
+                    <button onClick={() => setUserStatus(user, false)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300">Disable</button>
+                  ) : (
+                    <button onClick={() => setUserStatus(user, true)} className="rounded-lg border border-emerald-400/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">Enable</button>
+                  )}
                   <button onClick={() => deleteUser(user)} className="rounded-lg border border-red-400/30 bg-red-500/5 px-3 py-2 text-xs text-red-300"><Trash2 size={13} /></button>
                 </div>
               </div>
@@ -1785,7 +1788,7 @@ function StaffAdmin() {
   const deleteAdmin = async (admin: any) => {
     const ok = await confirm({
       title: "Delete admin?",
-      message: `This disables ${admin.username || admin.email || "this admin"} and removes their admin access.`,
+      message: `This removes all staff roles and permissions from ${admin.username || admin.email || "this admin"}. Their normal player account will remain.`,
       confirmText: "Delete",
     });
     if (!ok) return;

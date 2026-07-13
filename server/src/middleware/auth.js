@@ -5,11 +5,13 @@ export const cookieOptions = {
   httpOnly: true,
   sameSite: cookieSameSite,
   secure: cookieSameSite === "none" ? true : cookieSecure,
-  maxAge: 30 * 24 * 60 * 60 * 1000
+  maxAge: 30 * 24 * 60 * 60 * 1000,
 };
 
 function tokenFromRequest(req) {
-  const bearer = req.headers.authorization?.startsWith("Bearer ") ? req.headers.authorization.slice(7) : null;
+  const bearer = req.headers.authorization?.startsWith("Bearer ")
+    ? req.headers.authorization.slice(7)
+    : null;
   return req.cookies?.a2_session || bearer || null;
 }
 
@@ -34,10 +36,19 @@ export function requirePermission(permission) {
   return (req, res, next) => {
     const permissions = req.user?.permissions || [];
     const isAdminPermission = permission !== "view_player_portal";
-    if (isAdminPermission && ["frozen", "disabled"].includes(req.user?.admin_status)) {
-      return res.status(403).json({ error: "admin_account_frozen_or_disabled" });
+    if (
+      isAdminPermission &&
+      ["frozen", "disabled", "removed"].includes(req.user?.admin_status)
+    ) {
+      return res
+        .status(403)
+        .json({ error: "admin_account_frozen_or_disabled" });
     }
-    if (permissions.includes("master_access") || permissions.includes(permission)) return next();
+    if (
+      permissions.includes("master_access") ||
+      permissions.includes(permission)
+    )
+      return next();
     return res.status(403).json({ error: "missing_permission", permission });
   };
 }

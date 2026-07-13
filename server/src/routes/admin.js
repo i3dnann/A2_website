@@ -1,13 +1,38 @@
 import { Router } from "express";
 import { z } from "zod";
 import { RESOURCE_DEFINITIONS, RESOURCE_MAP } from "../data/catalog.js";
-import { ADMIN_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, ROLES, hasPermission } from "../data/permissions.js";
-import { requireAuth, requireMaster, requirePermission } from "../middleware/auth.js";
+import {
+  ADMIN_PERMISSIONS,
+  DEFAULT_ROLE_PERMISSIONS,
+  PERMISSIONS,
+  ROLES,
+  hasPermission,
+} from "../data/permissions.js";
+import {
+  requireAuth,
+  requireMaster,
+  requirePermission,
+} from "../middleware/auth.js";
 import { upload } from "../middleware/security.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { createResource, deleteResource, getResource, getSettings, listResource, updateResource, updateSettings } from "../services/repository.js";
+import {
+  createResource,
+  deleteResource,
+  getResource,
+  getSettings,
+  listResource,
+  updateResource,
+  updateSettings,
+} from "../services/repository.js";
 import { auditAction } from "../services/audit.js";
-import { deactivateWebUser, listWebUsers, resolveUserIdentity, updateAdminStatus, upsertWebUserFromAdmin } from "../services/users.js";
+import {
+  deactivateWebUser,
+  listWebUsers,
+  removeAdminAccess,
+  resolveUserIdentity,
+  updateAdminStatus,
+  upsertWebUserFromAdmin,
+} from "../services/users.js";
 import { uploadToCloudinary } from "../services/cloudinaryService.js";
 import { sendWebhook } from "../services/webhook.js";
 import { getFiveMLiveState } from "../services/liveService.js";
@@ -20,11 +45,14 @@ const webhookKeys = [
   "WEBHOOK_CAREERS",
   "WEBHOOK_ADMIN_LOGS",
   "WEBHOOK_SECURITY",
-  "WEBHOOK_USER_ACCOUNTS"
+  "WEBHOOK_USER_ACCOUNTS",
 ];
 
 function requireAnyAdmin(req, res, next) {
-  if (ADMIN_PERMISSIONS.some((permission) => hasPermission(req.user, permission))) return next();
+  if (
+    ADMIN_PERMISSIONS.some((permission) => hasPermission(req.user, permission))
+  )
+    return next();
   return res.status(403).json({ error: "admin_permission_required" });
 }
 
@@ -39,26 +67,35 @@ router.get(
       listResource("team", { limit: 5 }),
       listResource("news", { limit: 5 }),
       listResource("auditLogs", { limit: 8 }),
-      getFiveMLiveState()
+      getFiveMLiveState(),
     ]);
     res.json({
       cards: [
-        { label: "Open tickets", value: tickets.rows.filter((ticket) => ticket.status !== "Closed").length || tickets.total },
+        {
+          label: "Open tickets",
+          value:
+            tickets.rows.filter((ticket) => ticket.status !== "Closed")
+              .length || tickets.total,
+        },
         { label: "Career applications", value: applications.total },
         { label: "Roster members", value: team.total },
-        { label: "News articles", value: news.total }
+        { label: "News articles", value: news.total },
       ],
       recentTickets: await Promise.all(tickets.rows.map(enrichOwner)),
       recentApplications: await Promise.all(applications.rows.map(enrichOwner)),
       recentLogs: audit.rows,
-      live
+      live,
     });
-  })
+  }),
 );
 
-router.get("/settings", requirePermission("manage_home"), asyncHandler(async (_req, res) => {
-  res.json({ settings: await getSettings() });
-}));
+router.get(
+  "/settings",
+  requirePermission("manage_home"),
+  asyncHandler(async (_req, res) => {
+    res.json({ settings: await getSettings() });
+  }),
+);
 
 router.patch(
   "/settings",
@@ -66,9 +103,18 @@ router.patch(
   asyncHandler(async (req, res) => {
     const patch = settingsSchema.parse(req.body || {});
     const { before, after } = await updateSettings(patch, req.user);
-    await auditAction({ req, action: "update_settings", targetType: "web_settings", targetId: "global", before, after, reason: req.body?.reason || "settings update", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: "update_settings",
+      targetType: "web_settings",
+      targetId: "global",
+      before,
+      after,
+      reason: req.body?.reason || "settings update",
+      webhookCategory: "admin",
+    });
     res.json({ settings: await getSettings() });
-  })
+  }),
 );
 
 router.patch(
@@ -77,48 +123,88 @@ router.patch(
   asyncHandler(async (req, res) => {
     const patch = settingsSchema.parse(req.body || {});
     const { before, after } = await updateSettings(patch, req.user);
-    await auditAction({ req, action: "update_theme", targetType: "web_theme_settings", targetId: "global", before, after, reason: req.body?.reason || "theme update", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: "update_theme",
+      targetType: "web_theme_settings",
+      targetId: "global",
+      before,
+      after,
+      reason: req.body?.reason || "theme update",
+      webhookCategory: "admin",
+    });
     res.json({ settings: await getSettings() });
-  })
+  }),
 );
 
-router.get("/webhooks", requirePermission("manage_webhooks"), asyncHandler(async (_req, res) => {
-  const settings = await getSettings({ includeSecrets: true });
-  res.json({
-    webhooks: Object.fromEntries(
-      webhookKeys.map((key) => [
-        key,
-        {
-          configured: Boolean(settings[key] || process.env[key]),
-          value: settings[key] || process.env[key] ? "configured" : ""
-        }
-      ])
-    )
-  });
-}));
+router.get(
+  "/webhooks",
+  requirePermission("manage_webhooks"),
+  asyncHandler(async (_req, res) => {
+    const settings = await getSettings({ includeSecrets: true });
+    res.json({
+      webhooks: Object.fromEntries(
+        webhookKeys.map((key) => [
+          key,
+          {
+            configured: Boolean(settings[key] || process.env[key]),
+            value: settings[key] || process.env[key] ? "configured" : "",
+          },
+        ]),
+      ),
+    });
+  }),
+);
 
 router.patch(
   "/webhooks",
   requirePermission("manage_webhooks"),
   asyncHandler(async (req, res) => {
-    const patch = Object.fromEntries(Object.entries(req.body || {}).filter(([key, value]) => webhookKeys.includes(key) && typeof value === "string"));
-    const { before, after } = await updateSettings(patch, req.user, { secretKeys: Object.keys(patch) });
-    await auditAction({ req, action: "update_webhooks", targetType: "webhook_settings", targetId: "global", before: Object.keys(before), after: Object.keys(after), reason: "webhook settings update", webhookCategory: "security" });
+    const patch = Object.fromEntries(
+      Object.entries(req.body || {}).filter(
+        ([key, value]) =>
+          webhookKeys.includes(key) && typeof value === "string",
+      ),
+    );
+    const { before, after } = await updateSettings(patch, req.user, {
+      secretKeys: Object.keys(patch),
+    });
+    await auditAction({
+      req,
+      action: "update_webhooks",
+      targetType: "webhook_settings",
+      targetId: "global",
+      before: Object.keys(before),
+      after: Object.keys(after),
+      reason: "webhook settings update",
+      webhookCategory: "security",
+    });
     res.json({ ok: true });
-  })
+  }),
 );
 
-router.get("/permissions", requirePermission("manage_permissions"), (_req, res) => {
-  res.json({ roles: ROLES, permissions: PERMISSIONS, defaults: DEFAULT_ROLE_PERMISSIONS });
-});
+router.get(
+  "/permissions",
+  requirePermission("manage_permissions"),
+  (_req, res) => {
+    res.json({
+      roles: ROLES,
+      permissions: PERMISSIONS,
+      defaults: DEFAULT_ROLE_PERMISSIONS,
+    });
+  },
+);
 
 router.get(
   "/users",
   requirePermission("manage_users"),
   asyncHandler(async (req, res) => {
-    const rows = await listWebUsers({ q: req.query.q || "", limit: req.query.limit || 100 });
+    const rows = await listWebUsers({
+      q: req.query.q || "",
+      limit: req.query.limit || 100,
+    });
     res.json({ rows, total: rows.length });
-  })
+  }),
 );
 
 router.post(
@@ -126,19 +212,38 @@ router.post(
   requirePermission("manage_users"),
   asyncHandler(async (req, res) => {
     const user = await upsertWebUserFromAdmin(req.body || {}, req.user);
-    await auditAction({ req, action: "upsert_user", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "user upsert", webhookCategory: "security" });
+    await auditAction({
+      req,
+      action: "upsert_user",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "user upsert",
+      webhookCategory: "security",
+    });
     res.status(201).json({ user });
-  })
+  }),
 );
 
 router.patch(
   "/users/:id",
   requirePermission("manage_users"),
   asyncHandler(async (req, res) => {
-    const user = await upsertWebUserFromAdmin({ ...req.body, id: req.params.id }, req.user);
-    await auditAction({ req, action: "update_user", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "user update", webhookCategory: "security" });
+    const user = await upsertWebUserFromAdmin(
+      { ...req.body, id: req.params.id },
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "update_user",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "user update",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
 router.delete(
@@ -146,13 +251,26 @@ router.delete(
   requireMaster,
   asyncHandler(async (req, res) => {
     if (String(req.params.id) === String(req.user.id)) {
-      return res.status(400).json({ error: "cannot_delete_self", message: "You cannot delete your own account while logged in." });
+      return res
+        .status(400)
+        .json({
+          error: "cannot_delete_self",
+          message: "You cannot delete your own account while logged in.",
+        });
     }
     const user = await deactivateWebUser(req.params.id, req.user);
     if (!user) return res.status(404).json({ error: "user_not_found" });
-    await auditAction({ req, action: "disable_user", targetType: "web_users", targetId: user.id, after: user, reason: "master disabled user", webhookCategory: "security" });
+    await auditAction({
+      req,
+      action: "disable_user",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: "master disabled user",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
 router.get(
@@ -160,9 +278,13 @@ router.get(
   requirePermission("manage_admins"),
   asyncHandler(async (req, res) => {
     const users = await listWebUsers({ q: req.query.q || "", limit: 200 });
-    const admins = users.filter((user) => (user.permissions || []).some((permission) => permission !== "view_player_portal"));
+    const admins = users.filter((user) =>
+      (user.permissions || []).some(
+        (permission) => permission !== "view_player_portal",
+      ),
+    );
     res.json({ rows: admins, total: admins.length });
-  })
+  }),
 );
 
 router.post(
@@ -170,20 +292,48 @@ router.post(
   requirePermission("manage_admins"),
   asyncHandler(async (req, res) => {
     const roles = req.body?.roles?.length ? req.body.roles : ["Admin"];
-    const user = await upsertWebUserFromAdmin({ ...req.body, roles, permissions: req.body?.permissions || DEFAULT_ROLE_PERMISSIONS.Admin }, req.user);
-    await auditAction({ req, action: "add_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin added", webhookCategory: "security" });
+    const user = await upsertWebUserFromAdmin(
+      {
+        ...req.body,
+        roles,
+        permissions: req.body?.permissions || DEFAULT_ROLE_PERMISSIONS.Admin,
+        admin_status: "active",
+        account_status: "active",
+      },
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "add_admin",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "admin added",
+      webhookCategory: "security",
+    });
     res.status(201).json({ user });
-  })
+  }),
 );
 
 router.patch(
   "/admins/:id",
   requirePermission("manage_admins"),
   asyncHandler(async (req, res) => {
-    const user = await upsertWebUserFromAdmin({ ...req.body, id: req.params.id }, req.user);
-    await auditAction({ req, action: "update_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin update", webhookCategory: "security" });
+    const user = await upsertWebUserFromAdmin(
+      { ...req.body, id: req.params.id },
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "update_admin",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "admin update",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
 router.post(
@@ -192,9 +342,17 @@ router.post(
   asyncHandler(async (req, res) => {
     const user = await updateAdminStatus(req.params.id, "frozen", req.user);
     if (!user) return res.status(404).json({ error: "admin_not_found" });
-    await auditAction({ req, action: "freeze_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin frozen", webhookCategory: "security" });
+    await auditAction({
+      req,
+      action: "freeze_admin",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "admin frozen",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
 router.post(
@@ -203,9 +361,17 @@ router.post(
   asyncHandler(async (req, res) => {
     const user = await updateAdminStatus(req.params.id, "active", req.user);
     if (!user) return res.status(404).json({ error: "admin_not_found" });
-    await auditAction({ req, action: "unfreeze_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin unfrozen", webhookCategory: "security" });
+    await auditAction({
+      req,
+      action: "unfreeze_admin",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "admin unfrozen",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
 router.delete(
@@ -213,36 +379,56 @@ router.delete(
   requireMaster,
   asyncHandler(async (req, res) => {
     if (String(req.params.id) === String(req.user.id)) {
-      return res.status(400).json({ error: "cannot_delete_self", message: "You cannot remove your own admin account while logged in." });
+      return res
+        .status(400)
+        .json({
+          error: "cannot_delete_self",
+          message: "You cannot remove your own admin account while logged in.",
+        });
     }
-    const user = await deactivateWebUser(req.params.id, req.user);
+    const user = await removeAdminAccess(req.params.id, req.user);
     if (!user) return res.status(404).json({ error: "admin_not_found" });
-    await auditAction({ req, action: "remove_admin", targetType: "web_users", targetId: user.id, after: user, reason: req.body?.reason || "admin removed", webhookCategory: "security" });
+    await auditAction({
+      req,
+      action: "remove_admin",
+      targetType: "web_users",
+      targetId: user.id,
+      after: user,
+      reason: req.body?.reason || "admin removed",
+      webhookCategory: "security",
+    });
     res.json({ user });
-  })
+  }),
 );
 
-router.post("/uploads", requirePermission("manage_files"), upload.single("file"), asyncHandler(async (req, res) => {
-  const uploaded = await uploadToCloudinary(req.file, "gotham-city/admin");
-  const url = uploaded.url;
-  const file = await createResource(
-    "files",
-    {
-      owner_user_id: req.user.id,
-      original_name: req.file?.originalname,
-      stored_name: uploaded.publicId,
-      mime_type: req.file?.mimetype,
-      size_bytes: uploaded.bytes,
-      url,
-      storage_driver: "cloudinary"
-    },
-    req.user
-  );
-  res.json({ url, file });
-}));
+router.post(
+  "/uploads",
+  requirePermission("manage_files"),
+  upload.single("file"),
+  asyncHandler(async (req, res) => {
+    const uploaded = await uploadToCloudinary(req.file, "gotham-city/admin");
+    const url = uploaded.url;
+    const file = await createResource(
+      "files",
+      {
+        owner_user_id: req.user.id,
+        original_name: req.file?.originalname,
+        stored_name: uploaded.publicId,
+        mime_type: req.file?.mimetype,
+        size_bytes: uploaded.bytes,
+        url,
+        storage_driver: "cloudinary",
+      },
+      req.user,
+    );
+    res.json({ url, file });
+  }),
+);
 
 function commentStatus(row) {
-  return String(row?.status || (Number(row?.approved || 0) === 1 ? "approved" : "pending")).toLowerCase();
+  return String(
+    row?.status || (Number(row?.approved || 0) === 1 ? "approved" : "pending"),
+  ).toLowerCase();
 }
 
 async function enrichOwner(row) {
@@ -250,9 +436,14 @@ async function enrichOwner(row) {
     user_id: row?.user_id || row?.created_by || "",
     discord_id: row?.discord_id || "",
     steam_id: row?.steam_id || "",
-    author_name: row?.author_name || ""
+    author_name: row?.author_name || "",
   });
-  return { ...row, user_identity: identity, user_label: identity.label, user_secondary: identity.secondary };
+  return {
+    ...row,
+    user_identity: identity,
+    user_label: identity.label,
+    user_secondary: identity.secondary,
+  };
 }
 
 async function enrichStaffField(row, field, outputPrefix) {
@@ -260,7 +451,7 @@ async function enrichStaffField(row, field, outputPrefix) {
   return {
     ...row,
     [`${outputPrefix}_identity`]: identity,
-    [`${outputPrefix}_label`]: identity.label
+    [`${outputPrefix}_label`]: identity.label,
   };
 }
 
@@ -269,52 +460,133 @@ async function enrichAdminResourceRows(resource, rows = []) {
     return Promise.all(rows.map(enrichOwner));
   }
   if (resource === "ticketMessages") {
-    return Promise.all(rows.map(async (row) => enrichStaffField(row, "author_id", "author")));
+    return Promise.all(
+      rows.map(async (row) => enrichStaffField(row, "author_id", "author")),
+    );
   }
   if (resource === "ticketParticipants") {
     return Promise.all(rows.map(enrichOwner));
   }
   if (resource === "ticketNotes") {
-    return Promise.all(rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")));
+    return Promise.all(
+      rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")),
+    );
   }
   if (resource === "careerApplicationNotes") {
-    return Promise.all(rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")));
+    return Promise.all(
+      rows.map(async (row) => enrichStaffField(row, "admin_id", "admin")),
+    );
   }
   return rows;
 }
 
-router.get("/comments", requirePermission("manage_news"), asyncHandler(async (req, res) => {
-  const status = String(req.query.status || "pending").toLowerCase();
-  const { rows } = await listResource("newsComments", { q: req.query.q || "", limit: 200 });
-  const filtered = rows
-    .filter((comment) => status === "all" || commentStatus(comment) === status)
-    .map((comment) => ({
-      ...comment,
-      approved: commentStatus(comment) === "approved" ? 1 : commentStatus(comment) === "rejected" ? -1 : 0
-    }));
-  res.json({ data: await Promise.all(filtered.map(enrichOwner)) });
-}));
+router.get(
+  "/comments",
+  requirePermission("manage_news"),
+  asyncHandler(async (req, res) => {
+    const status = String(req.query.status || "pending").toLowerCase();
+    const { rows } = await listResource("newsComments", {
+      q: req.query.q || "",
+      limit: 200,
+    });
+    const filtered = rows
+      .filter(
+        (comment) => status === "all" || commentStatus(comment) === status,
+      )
+      .map((comment) => ({
+        ...comment,
+        approved:
+          commentStatus(comment) === "approved"
+            ? 1
+            : commentStatus(comment) === "rejected"
+              ? -1
+              : 0,
+      }));
+    res.json({ data: await Promise.all(filtered.map(enrichOwner)) });
+  }),
+);
 
-router.post("/comments/:id/approve", requirePermission("manage_news"), asyncHandler(async (req, res) => {
-  const result = await updateResource("newsComments", req.params.id, { status: "approved", approved: 1, is_hidden: 0 }, req.user);
-  if (!result) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
-  await auditAction({ req, action: "approve_comment", targetType: "news_comments", targetId: req.params.id, before: result.before, after: result.after, reason: "comment approved", webhookCategory: "admin" });
-  res.json({ comment: result.after });
-}));
+router.post(
+  "/comments/:id/approve",
+  requirePermission("manage_news"),
+  asyncHandler(async (req, res) => {
+    const result = await updateResource(
+      "newsComments",
+      req.params.id,
+      { status: "approved", approved: 1, is_hidden: 0 },
+      req.user,
+    );
+    if (!result)
+      return res
+        .status(404)
+        .json({ error: "comment_not_found", message: "Comment not found." });
+    await auditAction({
+      req,
+      action: "approve_comment",
+      targetType: "news_comments",
+      targetId: req.params.id,
+      before: result.before,
+      after: result.after,
+      reason: "comment approved",
+      webhookCategory: "admin",
+    });
+    res.json({ comment: result.after });
+  }),
+);
 
-router.post("/comments/:id/reject", requirePermission("manage_news"), asyncHandler(async (req, res) => {
-  const result = await updateResource("newsComments", req.params.id, { status: "rejected", approved: -1, is_hidden: 1 }, req.user);
-  if (!result) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
-  await auditAction({ req, action: "reject_comment", targetType: "news_comments", targetId: req.params.id, before: result.before, after: result.after, reason: "comment rejected", webhookCategory: "admin" });
-  res.json({ comment: result.after });
-}));
+router.post(
+  "/comments/:id/reject",
+  requirePermission("manage_news"),
+  asyncHandler(async (req, res) => {
+    const result = await updateResource(
+      "newsComments",
+      req.params.id,
+      { status: "rejected", approved: -1, is_hidden: 1 },
+      req.user,
+    );
+    if (!result)
+      return res
+        .status(404)
+        .json({ error: "comment_not_found", message: "Comment not found." });
+    await auditAction({
+      req,
+      action: "reject_comment",
+      targetType: "news_comments",
+      targetId: req.params.id,
+      before: result.before,
+      after: result.after,
+      reason: "comment rejected",
+      webhookCategory: "admin",
+    });
+    res.json({ comment: result.after });
+  }),
+);
 
-router.delete("/comments/:id", requirePermission("manage_news"), asyncHandler(async (req, res) => {
-  const before = await deleteResource("newsComments", req.params.id, req.user);
-  if (!before) return res.status(404).json({ error: "comment_not_found", message: "Comment not found." });
-  await auditAction({ req, action: "delete_comment", targetType: "news_comments", targetId: req.params.id, before, reason: "comment deleted", webhookCategory: "admin" });
-  res.json({ ok: true });
-}));
+router.delete(
+  "/comments/:id",
+  requirePermission("manage_news"),
+  asyncHandler(async (req, res) => {
+    const before = await deleteResource(
+      "newsComments",
+      req.params.id,
+      req.user,
+    );
+    if (!before)
+      return res
+        .status(404)
+        .json({ error: "comment_not_found", message: "Comment not found." });
+    await auditAction({
+      req,
+      action: "delete_comment",
+      targetType: "news_comments",
+      targetId: req.params.id,
+      before,
+      reason: "comment deleted",
+      webhookCategory: "admin",
+    });
+    res.json({ ok: true });
+  }),
+);
 
 router.post(
   "/tickets/:id/reply",
@@ -322,11 +594,37 @@ router.post(
   asyncHandler(async (req, res) => {
     const ticket = await getResource("tickets", req.params.id);
     if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
-    const message = await createResource("ticketMessages", { ticket_id: ticket.id, author_id: req.user.id, author_type: "admin", message: req.body?.message || "", internal_only: Boolean(req.body?.internal_only) }, req.user);
-    const result = await updateResource("tickets", ticket.id, { status: req.body?.internal_only ? ticket.status : "Waiting for player", assigned_to: req.user.id }, req.user);
-    await auditAction({ req, action: "admin_reply_ticket", targetType: "tickets", targetId: ticket.id, after: message, reason: "admin ticket reply", webhookCategory: "admin" });
+    const message = await createResource(
+      "ticketMessages",
+      {
+        ticket_id: ticket.id,
+        author_id: req.user.id,
+        author_type: "admin",
+        message: req.body?.message || "",
+        internal_only: Boolean(req.body?.internal_only),
+      },
+      req.user,
+    );
+    const result = await updateResource(
+      "tickets",
+      ticket.id,
+      {
+        status: req.body?.internal_only ? ticket.status : "Waiting for player",
+        assigned_to: req.user.id,
+      },
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "admin_reply_ticket",
+      targetType: "tickets",
+      targetId: ticket.id,
+      after: message,
+      reason: "admin ticket reply",
+      webhookCategory: "admin",
+    });
     res.status(201).json({ ticket: result.after, message });
-  })
+  }),
 );
 
 router.get(
@@ -337,14 +635,18 @@ router.get(
     if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
     const [messages, notes] = await Promise.all([
       listResource("ticketMessages", { q: ticket.id, limit: 100 }),
-      listResource("ticketNotes", { q: ticket.id, limit: 100 })
+      listResource("ticketNotes", { q: ticket.id, limit: 100 }),
     ]);
     res.json({
       ticket,
-      messages: messages.rows.filter((message) => String(message.ticket_id) === String(ticket.id)),
-      notes: notes.rows.filter((note) => String(note.ticket_id) === String(ticket.id))
+      messages: messages.rows.filter(
+        (message) => String(message.ticket_id) === String(ticket.id),
+      ),
+      notes: notes.rows.filter(
+        (note) => String(note.ticket_id) === String(ticket.id),
+      ),
     });
-  })
+  }),
 );
 
 router.post(
@@ -353,10 +655,26 @@ router.post(
   asyncHandler(async (req, res) => {
     const ticket = await getResource("tickets", req.params.id);
     if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
-    const note = await createResource("ticketNotes", { ticket_id: ticket.id, admin_id: req.user.id, note: req.body?.note || "" }, req.user);
-    await auditAction({ req, action: "add_ticket_note", targetType: "tickets", targetId: ticket.id, after: note, reason: "internal ticket note", webhookCategory: "admin" });
+    const note = await createResource(
+      "ticketNotes",
+      {
+        ticket_id: ticket.id,
+        admin_id: req.user.id,
+        note: req.body?.note || "",
+      },
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "add_ticket_note",
+      targetType: "tickets",
+      targetId: ticket.id,
+      after: note,
+      reason: "internal ticket note",
+      webhookCategory: "admin",
+    });
     res.status(201).json({ note });
-  })
+  }),
 );
 
 router.post(
@@ -365,9 +683,24 @@ router.post(
   asyncHandler(async (req, res) => {
     const ticket = await getResource("tickets", req.params.id);
     if (!ticket) return res.status(404).json({ error: "ticket_not_found" });
-    const result = await updateResource("tickets", ticket.id, { status: "Closed", closed_by: req.user.id, closed_at: new Date().toISOString() }, req.user);
-    const { rows: messages } = await listResource("ticketMessages", { q: ticket.id, limit: 100 });
-    const { rows: notes } = await listResource("ticketNotes", { q: ticket.id, limit: 100 });
+    const result = await updateResource(
+      "tickets",
+      ticket.id,
+      {
+        status: "Closed",
+        closed_by: req.user.id,
+        closed_at: new Date().toISOString(),
+      },
+      req.user,
+    );
+    const { rows: messages } = await listResource("ticketMessages", {
+      q: ticket.id,
+      limit: 100,
+    });
+    const { rows: notes } = await listResource("ticketNotes", {
+      q: ticket.id,
+      limit: 100,
+    });
     await sendWebhook("tickets_closed", {
       title: `Ticket closed: ${ticket.ticket_number || ticket.id}`,
       Ticket: ticket.ticket_number || ticket.id,
@@ -378,12 +711,28 @@ router.post(
       Created: ticket.created_at,
       Closed: result.after.closed_at,
       FinalStatus: "Closed",
-      Transcript: messages.filter((message) => message.ticket_id === ticket.id).map((message) => `${message.author_type}: ${message.message}`).join("\n").slice(0, 3000),
-      InternalNotes: notes.filter((note) => note.ticket_id === ticket.id).map((note) => note.note).join("\n").slice(0, 1000)
+      Transcript: messages
+        .filter((message) => message.ticket_id === ticket.id)
+        .map((message) => `${message.author_type}: ${message.message}`)
+        .join("\n")
+        .slice(0, 3000),
+      InternalNotes: notes
+        .filter((note) => note.ticket_id === ticket.id)
+        .map((note) => note.note)
+        .join("\n")
+        .slice(0, 1000),
     });
-    await auditAction({ req, action: "close_ticket", targetType: "tickets", targetId: ticket.id, after: result.after, reason: req.body?.reason || "ticket closed", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: "close_ticket",
+      targetType: "tickets",
+      targetId: ticket.id,
+      after: result.after,
+      reason: req.body?.reason || "ticket closed",
+      webhookCategory: "admin",
+    });
     res.json({ ticket: result.after });
-  })
+  }),
 );
 
 router.get(
@@ -391,20 +740,29 @@ router.get(
   requirePermission("review_career_applications"),
   asyncHandler(async (req, res) => {
     const application = await getResource("careerApplications", req.params.id);
-    if (!application) return res.status(404).json({ error: "application_not_found" });
+    if (!application)
+      return res.status(404).json({ error: "application_not_found" });
     const [answers, notes, job] = await Promise.all([
       listResource("careerAnswers", { q: application.id, limit: 200 }),
       listResource("careerApplicationNotes", { q: application.id, limit: 100 }),
-      getResource("careerJobs", application.job_id)
+      getResource("careerJobs", application.job_id),
     ]);
-    const enrichedNotes = await Promise.all(notes.rows.filter((note) => String(note.application_id) === String(application.id)).map((note) => enrichStaffField(note, "admin_id", "admin")));
+    const enrichedNotes = await Promise.all(
+      notes.rows
+        .filter(
+          (note) => String(note.application_id) === String(application.id),
+        )
+        .map((note) => enrichStaffField(note, "admin_id", "admin")),
+    );
     res.json({
       application: await enrichOwner(application),
       job,
-      answers: answers.rows.filter((answer) => String(answer.application_id) === String(application.id)),
-      notes: enrichedNotes
+      answers: answers.rows.filter(
+        (answer) => String(answer.application_id) === String(application.id),
+      ),
+      notes: enrichedNotes,
     });
-  })
+  }),
 );
 
 router.post(
@@ -419,33 +777,54 @@ router.post(
         status,
         reviewed_by: req.user.id,
         reviewed_at: new Date().toISOString(),
-        internal_notes: req.body?.private_note || req.body?.internal_notes || ""
+        internal_notes:
+          req.body?.private_note || req.body?.internal_notes || "",
       },
-      req.user
+      req.user,
     );
-    if (!result) return res.status(404).json({ error: "application_not_found" });
+    if (!result)
+      return res.status(404).json({ error: "application_not_found" });
     const notes = [];
     if (req.body?.public_note) {
       notes.push(
         await createResource(
           "careerApplicationNotes",
-          { application_id: req.params.id, admin_id: req.user.id, note: req.body.public_note, is_internal: false },
-          req.user
-        )
+          {
+            application_id: req.params.id,
+            admin_id: req.user.id,
+            note: req.body.public_note,
+            is_internal: false,
+          },
+          req.user,
+        ),
       );
     }
     if (req.body?.private_note) {
       notes.push(
         await createResource(
           "careerApplicationNotes",
-          { application_id: req.params.id, admin_id: req.user.id, note: req.body.private_note, is_internal: true },
-          req.user
-        )
+          {
+            application_id: req.params.id,
+            admin_id: req.user.id,
+            note: req.body.private_note,
+            is_internal: true,
+          },
+          req.user,
+        ),
       );
     }
-    await auditAction({ req, action: "review_career_application", targetType: "career_applications", targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.reason || "application review", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: "review_career_application",
+      targetType: "career_applications",
+      targetId: req.params.id,
+      before: result.before,
+      after: result.after,
+      reason: req.body?.reason || "application review",
+      webhookCategory: "admin",
+    });
     res.json({ application: result.after, notes });
-  })
+  }),
 );
 
 router.delete(
@@ -453,32 +832,60 @@ router.delete(
   requirePermission("review_career_applications"),
   asyncHandler(async (req, res) => {
     const application = await getResource("careerApplications", req.params.id);
-    if (!application) return res.status(404).json({ error: "application_not_found", message: "Application not found." });
+    if (!application)
+      return res
+        .status(404)
+        .json({
+          error: "application_not_found",
+          message: "Application not found.",
+        });
     const status = String(application.status || "").toLowerCase();
-    const finished = status === "approved" || status.includes("denied") || status === "closed" || status === "archived";
+    const finished =
+      status === "approved" ||
+      status.includes("denied") ||
+      status === "closed" ||
+      status === "archived";
     if (!finished) {
       return res.status(409).json({
         error: "application_must_be_finished",
-        message: "Approve, deny, or close the application before deleting it."
+        message: "Approve, deny, or close the application before deleting it.",
       });
     }
 
     const [answers, notes] = await Promise.all([
       listResource("careerAnswers", { q: application.id, limit: 200 }),
-      listResource("careerApplicationNotes", { q: application.id, limit: 200 })
+      listResource("careerApplicationNotes", { q: application.id, limit: 200 }),
     ]);
     await Promise.all([
       ...answers.rows
-        .filter((answer) => String(answer.application_id) === String(application.id))
+        .filter(
+          (answer) => String(answer.application_id) === String(application.id),
+        )
         .map((answer) => deleteResource("careerAnswers", answer.id, req.user)),
       ...notes.rows
-        .filter((note) => String(note.application_id) === String(application.id))
-        .map((note) => deleteResource("careerApplicationNotes", note.id, req.user))
+        .filter(
+          (note) => String(note.application_id) === String(application.id),
+        )
+        .map((note) =>
+          deleteResource("careerApplicationNotes", note.id, req.user),
+        ),
     ]);
-    const before = await deleteResource("careerApplications", application.id, req.user);
-    await auditAction({ req, action: "delete_career_application", targetType: "career_applications", targetId: application.id, before, reason: req.body?.reason || "application deleted", webhookCategory: "admin" });
+    const before = await deleteResource(
+      "careerApplications",
+      application.id,
+      req.user,
+    );
+    await auditAction({
+      req,
+      action: "delete_career_application",
+      targetType: "career_applications",
+      targetId: application.id,
+      before,
+      reason: req.body?.reason || "application deleted",
+      webhookCategory: "admin",
+    });
     res.json({ ok: true });
-  })
+  }),
 );
 
 router.get(
@@ -486,10 +893,22 @@ router.get(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const { rows, total } = await listResource(req.params.resource, { q: req.query.q || "", limit: req.query.limit || 25, offset: req.query.offset || 0 });
-    res.json({ rows: await enrichAdminResourceRows(req.params.resource, rows), total, config, resources: RESOURCE_DEFINITIONS });
-  })
+    if (!hasPermission(req.user, config.permission))
+      return res
+        .status(403)
+        .json({ error: "missing_permission", permission: config.permission });
+    const { rows, total } = await listResource(req.params.resource, {
+      q: req.query.q || "",
+      limit: req.query.limit || 25,
+      offset: req.query.offset || 0,
+    });
+    res.json({
+      rows: await enrichAdminResourceRows(req.params.resource, rows),
+      total,
+      config,
+      resources: RESOURCE_DEFINITIONS,
+    });
+  }),
 );
 
 router.post(
@@ -497,12 +916,23 @@ router.post(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
+    if (!hasPermission(req.user, config.permission))
+      return res
+        .status(403)
+        .json({ error: "missing_permission", permission: config.permission });
     const payload = req.body || {};
     const row = await createResource(req.params.resource, payload, req.user);
-    await auditAction({ req, action: `create_${req.params.resource}`, targetType: req.params.resource, targetId: row.id, after: row, reason: req.body?.reason || "created", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: `create_${req.params.resource}`,
+      targetType: req.params.resource,
+      targetId: row.id,
+      after: row,
+      reason: req.body?.reason || "created",
+      webhookCategory: "admin",
+    });
     res.status(201).json({ row });
-  })
+  }),
 );
 
 router.patch(
@@ -510,13 +940,30 @@ router.patch(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
+    if (!hasPermission(req.user, config.permission))
+      return res
+        .status(403)
+        .json({ error: "missing_permission", permission: config.permission });
     const payload = req.body || {};
-    const result = await updateResource(req.params.resource, req.params.id, payload, req.user);
+    const result = await updateResource(
+      req.params.resource,
+      req.params.id,
+      payload,
+      req.user,
+    );
     if (!result) return res.status(404).json({ error: "not_found" });
-    await auditAction({ req, action: `update_${req.params.resource}`, targetType: req.params.resource, targetId: req.params.id, before: result.before, after: result.after, reason: req.body?.reason || "updated", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: `update_${req.params.resource}`,
+      targetType: req.params.resource,
+      targetId: req.params.id,
+      before: result.before,
+      after: result.after,
+      reason: req.body?.reason || "updated",
+      webhookCategory: "admin",
+    });
     res.json({ row: result.after });
-  })
+  }),
 );
 
 router.delete(
@@ -524,12 +971,27 @@ router.delete(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission)) return res.status(403).json({ error: "missing_permission", permission: config.permission });
-    const before = await deleteResource(req.params.resource, req.params.id, req.user);
+    if (!hasPermission(req.user, config.permission))
+      return res
+        .status(403)
+        .json({ error: "missing_permission", permission: config.permission });
+    const before = await deleteResource(
+      req.params.resource,
+      req.params.id,
+      req.user,
+    );
     if (!before) return res.status(404).json({ error: "not_found" });
-    await auditAction({ req, action: `delete_${req.params.resource}`, targetType: req.params.resource, targetId: req.params.id, before, reason: req.body?.reason || "deleted", webhookCategory: "admin" });
+    await auditAction({
+      req,
+      action: `delete_${req.params.resource}`,
+      targetType: req.params.resource,
+      targetId: req.params.id,
+      before,
+      reason: req.body?.reason || "deleted",
+      webhookCategory: "admin",
+    });
     res.json({ ok: true });
-  })
+  }),
 );
 
 export default router;
