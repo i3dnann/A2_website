@@ -7,6 +7,8 @@ import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api } from "../api/client";
 import AvatarCircles from "./AvatarCircles";
+import BorderBeam from "./magicui/BorderBeam";
+import AnimatedGridPattern from "./magicui/AnimatedGridPattern";
 
 const PERKS = [
   { icon: ShieldCheck, text: "Secure account with linked Discord & Steam" },
@@ -29,7 +31,9 @@ export default function AuthShell({
   useEffect(() => { api<{ avatars: string[] }>("/api/public/community-avatars").then((result) => setAvatars(result.avatars || [])).catch(() => setAvatars([])); }, []);
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-24">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-[0_0_80px_rgba(0,0,0,0.5)] backdrop-blur-xl lg:grid-cols-2">
+      <AnimatedGridPattern className="opacity-40" />
+      <div className="relative grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-black/40 shadow-[0_0_80px_rgba(0,0,0,0.5)] backdrop-blur-xl lg:grid-cols-2">
+        <BorderBeam duration={10} size={130} />
         {/* Branding side */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}

@@ -124,10 +124,9 @@ export default function Navbar() {
               href={content.discordLink || "/"}
               target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
               rel="noreferrer"
-              className={`group relative overflow-hidden rounded-xl bg-[#60519b] py-2 font-semibold text-white shadow-[0_0_20px_rgba(96,81,155,0.34)] transition hover:bg-[#7868b8] hover:shadow-[0_0_30px_rgba(96,81,155,0.58)] ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
+              className={`magic-shimmer-button group relative overflow-hidden rounded-xl py-2 font-semibold ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
             >
               <span className="relative z-10 whitespace-nowrap">{t("Join Discord")}</span>
-              <span className="absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0" />
             </a>
           </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
 import AuthShell from "../components/AuthShell";
+import ShimmerButton from "../components/magicui/ShimmerButton";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { launchLoginFireworks } from "../utils/loginFireworks";
@@ -96,10 +97,10 @@ export default function Login() {
         )}
         {notice && <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">{notice}</p>}
 
-        <button
+        <ShimmerButton
           type="submit"
           disabled={loading}
-          className="group relative mt-2 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(96,81,155,0.35)] transition hover:shadow-[0_0_35px_rgba(96,81,155,0.55)] disabled:opacity-70"
+          className="mt-2 rounded-xl py-3.5 text-sm font-semibold"
         >
           {loading ? (
             <>
@@ -108,7 +109,7 @@ export default function Login() {
           ) : (
             t("Sign In")
           )}
-        </button>
+        </ShimmerButton>
 
         <div className="relative my-2 flex items-center gap-3">
           <div className="h-px flex-1 bg-white/10" />

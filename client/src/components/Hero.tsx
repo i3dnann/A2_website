@@ -3,6 +3,8 @@ import { ArrowRight, Copy, PlayCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import BorderBeam from "./magicui/BorderBeam";
+import AnimatedGridPattern from "./magicui/AnimatedGridPattern";
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
   const [display, setDisplay] = useState(0);
@@ -46,6 +48,7 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
         <div className="absolute inset-0 opacity-[0.09] mix-blend-screen [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px]" />
       </div>
+      <AnimatedGridPattern className="opacity-40" />
 
       <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
         <div>
@@ -71,7 +74,7 @@ export default function Hero() {
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <a
               href={content.fivemLink && content.fivemLink !== "#" ? content.fivemLink : "/server"}
-              className="group inline-flex items-center gap-2 rounded-xl bg-[#60519b] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_0_30px_rgba(96,81,155,0.35)] transition hover:-translate-y-0.5 hover:bg-[#7868b8] hover:shadow-[0_0_42px_rgba(96,81,155,0.65)]"
+              className="magic-shimmer-button group inline-flex items-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold"
             >
               <PlayCircle size={18} /> {t("Connect Now")}
               <ArrowRight size={16} className={`transition-transform ${isArabic ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
@@ -104,6 +107,7 @@ export default function Hero() {
           className="relative hidden lg:block"
         >
           <div className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/80 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55)]">
+            <BorderBeam duration={9} size={120} />
             <img
               src={content.logoUrl === "/assets/gotham-logo.png" ? "/assets/gotham-logo-512.webp" : content.logoUrl || "/images/gotham-emblem-static.jpg"}
               alt="Gotham City emblem"

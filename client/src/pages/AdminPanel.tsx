@@ -41,6 +41,7 @@ import { useToast, Skeleton } from "../components/Toast";
 import FileUpload from "../components/FileUpload";
 import VerifiedBadge from "../components/VerifiedBadge";
 import AdminContracts from "../components/contracts/AdminContracts";
+import MagicCard from "../components/magicui/MagicCard";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -3767,22 +3768,41 @@ function EditableSection({
 }) {
   const { t } = useLanguage();
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 sm:p-6 mb-5">
+    <MagicCard className="mb-5 rounded-2xl p-4 sm:p-6">
       <h3 className="mb-4 font-serif text-base text-white">{t(title)}</h3>
       <div className="flex flex-col gap-3">{children}</div>
-    </div>
+    </MagicCard>
   );
 }
 function EField({
   label,
   value,
   onChange,
+  uploadable,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  uploadable?: boolean;
 }) {
   const { t } = useLanguage();
+  const { push } = useToast();
+  const [uploading, setUploading] = useState(false);
+  const mediaField = uploadable ?? (/\b(image|logo|favicon|avatar|banner|photo|picture|video|audio|media)\b/i.test(label) && !/\b(link|discord|fivem|store|website)\b/i.test(label.replace(/\b(?:image|media)\s+url\b/gi, "")));
+  const uploadFile = async (file: File) => {
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const result = await upload("/api/admin/uploads", body);
+      onChange(result.data?.url || "");
+      push({ kind: "success", message: `${t(label)} uploaded` });
+    } catch (error: any) {
+      push({ kind: "error", message: error?.message || `Failed to upload ${t(label)}` });
+    } finally {
+      setUploading(false);
+    }
+  };
   return (
     <div>
       <label className={stClass}>{t(label)}</label>
@@ -3791,6 +3811,7 @@ function EField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
+      {mediaField ? <div className="mt-2"><FileUpload label={`Upload ${t(label.replace(/\s*URL$/i, ""))}`} accept={uploadAcceptForField(label.toLowerCase())} uploading={uploading} value={value} onFile={uploadFile} /></div> : null}
     </div>
   );
 }
@@ -4759,6 +4780,7 @@ function SettingsEditor({ content, update }: any) {
               label="Website Logo URL"
               value={settings.logoUrl || ""}
               onChange={(v) => change("logoUrl", v)}
+              uploadable={false}
             />
             <div className="mt-2">
               <FileUpload
@@ -4775,6 +4797,7 @@ function SettingsEditor({ content, update }: any) {
               label="Favicon URL"
               value={settings.faviconUrl || ""}
               onChange={(v) => change("faviconUrl", v)}
+              uploadable={false}
             />
             <div className="mt-2">
               <FileUpload
@@ -4791,6 +4814,7 @@ function SettingsEditor({ content, update }: any) {
               label="Hero Background URL"
               value={settings.heroBackgroundImage || ""}
               onChange={(v) => change("heroBackgroundImage", v)}
+              uploadable={false}
             />
             <div className="mt-2">
               <FileUpload

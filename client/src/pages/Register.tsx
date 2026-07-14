@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, User, Loader2, Check } from "lucide-react";
 import AuthShell from "../components/AuthShell";
+import ShimmerButton from "../components/magicui/ShimmerButton";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { launchLoginFireworks } from "../utils/loginFireworks";
@@ -139,10 +140,10 @@ export default function Register() {
           </motion.p>
         )}
 
-        <button
+        <ShimmerButton
           type="submit"
           disabled={loading}
-          className="group relative mt-1 inline-flex items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-orange-400 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(96,81,155,0.35)] transition hover:shadow-[0_0_35px_rgba(96,81,155,0.55)] disabled:opacity-70"
+          className="mt-1 rounded-xl py-3.5 text-sm font-semibold"
         >
           {loading ? (
             <>
@@ -151,7 +152,7 @@ export default function Register() {
           ) : (
             t("Create Account")
           )}
-        </button>
+        </ShimmerButton>
       </form>
 
       <p className="mt-8 text-center text-sm text-white/50">
