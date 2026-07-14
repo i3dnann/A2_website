@@ -47,7 +47,9 @@ function AppShell() {
   const showFooter = !["/login", "/register", "/auth/complete", "/dashboard", "/admin"].includes(location.pathname);
   const adminEntry = ["/login", "/auth/complete"].includes(location.pathname);
 
-  if (!loading && content.maintenanceMode && !isAdmin && !adminEntry) return <MaintenancePage />;
+  const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+  const maintenancePreview = isLocalPreview && new URLSearchParams(location.search).get("maintenance-preview") === "1";
+  if (!loading && !adminEntry && (maintenancePreview || (content.maintenanceMode && !isAdmin))) return <MaintenancePage />;
 
   return (
     <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
