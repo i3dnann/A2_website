@@ -327,6 +327,16 @@ body::before {
   box-shadow: none !important;
 }
 
+.modal-surface {
+  background: #0b0d14;
+  box-shadow: none;
+}
+
+.modal-surface::before,
+.modal-surface::after {
+  display: none !important;
+}
+
 .spotlight-card::before,
 .spotlight-card::after {
   content: "";

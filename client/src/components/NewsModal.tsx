@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useToast, Skeleton } from "./Toast";
 import VerifiedBadge from "./VerifiedBadge";
+import ModalPortal from "./ModalPortal";
 
 export type NewsPost = {
   id: string;
@@ -102,10 +103,11 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
   const tags = (full.tags || "").split(",").map(t => t.trim()).filter(Boolean);
 
   return (
-    <AnimatePresence>
+    <ModalPortal onClose={onClose}>
+      <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[150] flex items-start justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md sm:items-center"
+        className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/80 p-3 backdrop-blur-md sm:p-6"
         onClick={onClose}
       >
         <motion.div
@@ -114,20 +116,23 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           onClick={(e) => e.stopPropagation()}
-          className="spotlight-card relative w-full max-w-3xl rounded-2xl border border-white/10 bg-[#0a0710] shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="news-modal-title"
+          className="modal-surface relative flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-white/10 sm:max-h-[calc(100dvh-3rem)]"
         >
-          <button onClick={onClose} className="absolute right-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/60 text-white/80 hover:bg-white/10">
+          <button onClick={onClose} aria-label={t("Close")} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/80 text-white/80 hover:bg-white/10">
             <X size={16} />
           </button>
 
           {full.image && (
-            <div className="relative h-56 overflow-hidden rounded-t-2xl sm:h-72">
+            <div className="relative h-48 shrink-0 overflow-hidden rounded-t-2xl sm:h-64">
               <img src={full.image} alt="" className="h-full w-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0a0710] via-transparent to-transparent" />
             </div>
           )}
 
-          <div className="p-6 sm:p-8">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 sm:p-7">
             {loading ? (
               <div className="flex flex-col gap-3">
                 <Skeleton className="h-8 w-3/4" />
@@ -142,7 +147,7 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
                   <span className="flex items-center gap-1 text-white/50"><Calendar size={12} /> {new Date(full.published_at).toLocaleDateString()}</span>
                   <span className="flex items-center gap-1 text-white/50"><User size={12} /> {full.author}</span>
                 </div>
-                <h2 className="mt-3 font-serif text-2xl text-white sm:text-3xl">{t(full.title)}</h2>
+                <h2 id="news-modal-title" className="mt-3 font-serif text-2xl text-white sm:text-3xl">{t(full.title)}</h2>
                 {tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {tags.map((tag) => (
@@ -219,6 +224,7 @@ export default function NewsModal({ post, onClose }: { post: NewsPost | null; on
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </ModalPortal>
   );
 }

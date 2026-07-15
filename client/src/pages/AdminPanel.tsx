@@ -42,6 +42,7 @@ import FileUpload from "../components/FileUpload";
 import VerifiedBadge from "../components/VerifiedBadge";
 import AdminContracts from "../components/contracts/AdminContracts";
 import { TextAnimate } from "../components/ui/text-animate";
+import ModalPortal from "../components/ModalPortal";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -1664,11 +1665,12 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
   };
 
   return (
-    <motion.div
+    <ModalPortal onClose={onClose}>
+      <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-black/80 p-4 backdrop-blur-md sm:items-center"
+      className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/80 p-3 backdrop-blur-md sm:p-6"
       onClick={onClose}
     >
       <motion.div
@@ -1676,7 +1678,9 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.95 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+        role="dialog"
+        aria-modal="true"
+        className="max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0710] p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-6"
       >
         <h3 className="font-serif text-lg text-white">
           {post.id ? "Edit News Post" : "New News Post"}
@@ -1831,7 +1835,8 @@ function NewsEditorModal({ post, onClose, onSaved }: any) {
           </button>
         </div>
       </motion.div>
-    </motion.div>
+      </motion.div>
+    </ModalPortal>
   );
 }
 

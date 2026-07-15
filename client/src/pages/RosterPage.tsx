@@ -6,6 +6,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { getIcon } from "../lib/iconMap";
 import PageShell from "../components/PageShell";
 import { staggerContainer, staggerItem } from "../components/Reveal";
+import ModalPortal from "../components/ModalPortal";
 
 export default function RosterPage() {
   const { content } = useSite();
@@ -108,12 +109,13 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
   ].map((link) => ({ ...link, url: externalUrl(link.url) })).filter((link) => link.url);
 
   return (
-    <AnimatePresence>
+    <ModalPortal onClose={onClose}>
+      <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[160] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+        className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/80 p-3 backdrop-blur-md sm:p-6"
         onClick={onClose}
       >
         <motion.div
@@ -122,9 +124,12 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           exit={{ opacity: 0, y: 18, scale: 0.98 }}
           transition={{ duration: 0.22 }}
           onClick={(event) => event.stopPropagation()}
-          className="spotlight-card relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08060d]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="roster-profile-title"
+          className="modal-surface relative max-h-[calc(100dvh-1.5rem)] w-full max-w-xl overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 sm:max-h-[calc(100dvh-3rem)]"
         >
-          <button onClick={onClose} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 transition hover:text-white">
+          <button onClick={onClose} aria-label={t("Close")} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/70 transition hover:text-white">
             <X size={16} />
           </button>
           <div className="relative h-32 overflow-hidden bg-[radial-gradient(circle_at_top,#60519b55,transparent_58%),linear-gradient(135deg,#100b18,#020203)] sm:h-36">
@@ -139,7 +144,7 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
               <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#090b10]">
                 {member.avatar ? <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" /> : <Icon size={40} className="text-[#c8bcff]" />}
               </div>
-              <h2 className="mt-4 font-serif text-3xl text-white">{t(member.name)}</h2>
+              <h2 id="roster-profile-title" className="mt-4 font-serif text-3xl text-white">{t(member.name)}</h2>
               <p className="mt-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#b8abef]">{t(member.role)}</p>
               <p className="mt-1 text-xs text-white/40">{t(member.category || member.count)}</p>
             </div>
@@ -162,7 +167,8 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           </div>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+      </AnimatePresence>
+    </ModalPortal>
   );
 }
 

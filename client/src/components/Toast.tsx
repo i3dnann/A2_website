@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
+import ModalPortal from "./ModalPortal";
 
 type Toast = { id: string; kind: "success" | "error" | "info"; message: string };
 type ToastCtx = { push: (t: Omit<Toast, "id">) => void; confirm: (opts: { title: string; message?: string; confirmText?: string }) => Promise<boolean> };
@@ -57,14 +58,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       </div>
 
       {/* Confirm modal */}
-        {confirmState.open && (
+        <ModalPortal open={confirmState.open} onClose={() => dismissConfirm(false)}>
+          {confirmState.open && (
           <div
-            className="modal-fade-in fixed inset-0 z-[190] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="modal-fade-in fixed inset-0 z-[230] grid place-items-center overflow-hidden bg-black/75 p-3 backdrop-blur-sm sm:p-6"
             onClick={() => dismissConfirm(false)}
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="modal-panel-in w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+              role="alertdialog"
+              aria-modal="true"
+              className="modal-panel-in max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0710] p-6"
             >
               <h3 className="font-serif text-lg text-white">{confirmState.title}</h3>
               {confirmState.message && <p className="mt-2 text-sm text-white/60">{confirmState.message}</p>}
@@ -74,7 +78,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               </div>
             </div>
           </div>
-        )}
+          )}
+        </ModalPortal>
     </Ctx.Provider>
   );
 }

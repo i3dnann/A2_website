@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion, type Variants } from "framer-motion";
 import { X, Info, Layers } from "lucide-react";
 import { getItemVisual } from "../lib/itemIcon";
+import ModalPortal from "./ModalPortal";
 
 export type InventoryItemData = {
   name?: string;
@@ -88,13 +89,14 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
       </motion.div>
 
       {/* Item detail popover */}
-      <AnimatePresence>
-        {active && (
+      <ModalPortal open={Boolean(active)} onClose={() => setActive(null)}>
+        <AnimatePresence>
+          {active && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[160] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/75 p-3 backdrop-blur-sm sm:p-6"
             onClick={() => setActive(null)}
           >
             <motion.div
@@ -103,7 +105,10 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="spotlight-card w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="inventory-item-title"
+              className="modal-surface max-h-[calc(100dvh-1.5rem)] w-full max-w-sm overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 p-6"
             >
               {(() => {
                 const label = active.name || active.label || "Item";
@@ -118,7 +123,7 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
                       </div>
                       <button onClick={() => setActive(null)} className="text-white/40 hover:text-white"><X size={18} /></button>
                     </div>
-                    <h3 className="mt-4 font-serif text-lg text-white">{label}</h3>
+                    <h3 id="inventory-item-title" className="mt-4 font-serif text-lg text-white">{label}</h3>
                     <p className="text-xs uppercase tracking-wider text-white/40">Quantity: ×{amount}</p>
                     {meta && Object.keys(meta).length > 0 ? (
                       <div className="mt-4 flex flex-col gap-1.5 rounded-xl border border-white/10 bg-black/30 p-3">
@@ -137,8 +142,9 @@ export default function InventoryGrid({ items }: { items: InventoryItemData[] })
               })()}
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </ModalPortal>
     </>
   );
 }

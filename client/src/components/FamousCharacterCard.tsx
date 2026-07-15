@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ExternalLink, X } from "lucide-react";
 import type { FamousChar } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import ModalPortal from "./ModalPortal";
 
 type FamousCharacterCardProps = {
   character: FamousChar;
@@ -34,13 +35,14 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
         <p className="mt-4 text-xs font-semibold text-[#c8bcff]">{t("Read more")}</p>
       </motion.button>
 
-      <AnimatePresence>
-        {open && (
+      <ModalPortal open={open} onClose={() => setOpen(false)}>
+        <AnimatePresence>
+          {open && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[170] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md"
+            className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/80 p-3 backdrop-blur-md sm:p-6"
             onClick={() => setOpen(false)}
           >
             <motion.div
@@ -49,9 +51,12 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
               exit={{ opacity: 0, y: 18, scale: 0.98 }}
               transition={{ duration: 0.22 }}
               onClick={(event) => event.stopPropagation()}
-              className="spotlight-card relative max-h-[90vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`famous-character-${index}`}
+              className="modal-surface relative max-h-[calc(100dvh-1.5rem)] w-full max-w-2xl overflow-y-auto overflow-x-hidden rounded-2xl border border-white/10 sm:max-h-[calc(100dvh-3rem)]"
             >
-              <button onClick={() => setOpen(false)} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/55 text-white/70 transition hover:text-white">
+              <button onClick={() => setOpen(false)} aria-label={t("Close")} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/70 text-white/70 transition hover:text-white">
                 <X size={16} />
               </button>
               <div className="relative h-56 overflow-hidden bg-[radial-gradient(circle_at_top,#60519b55,transparent_58%),linear-gradient(135deg,#100b18,#020203)]">
@@ -60,7 +65,7 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
               </div>
               <div className="p-5 sm:p-7">
                 <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-orange-200">{t(character.tag)}</span>
-                <h2 className="mt-4 font-serif text-3xl text-white sm:text-4xl">{t(character.name)}</h2>
+                <h2 id={`famous-character-${index}`} className="mt-4 font-serif text-3xl text-white sm:text-4xl">{t(character.name)}</h2>
                 <p className="mt-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#b8abef]">{t(character.title)}</p>
                 {character.bio ? (
                   <p className="mt-5 whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-7 text-white/72">{t(character.bio)}</p>
@@ -79,8 +84,9 @@ export default function FamousCharacterCard({ character, index }: FamousCharacte
               </div>
             </motion.div>
           </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </ModalPortal>
     </>
   );
 }

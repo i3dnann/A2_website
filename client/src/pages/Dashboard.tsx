@@ -33,6 +33,7 @@ import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 import { useToast } from "../components/Toast";
 import VerifiedBadge from "../components/VerifiedBadge";
+import ModalPortal from "../components/ModalPortal";
 import { TextAnimate } from "../components/ui/text-animate";
 
 const TABS = [
@@ -771,13 +772,14 @@ function NewTicketModal({
   };
 
   return (
-    <AnimatePresence>
-      {open && (
+    <ModalPortal open={open} onClose={onClose}>
+      <AnimatePresence>
+        {open && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/75 p-3 backdrop-blur-sm sm:p-6"
           onClick={onClose}
         >
           <motion.div
@@ -786,7 +788,9 @@ function NewTicketModal({
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#0a0710] p-5 sm:max-h-[calc(100dvh-3rem)] sm:p-6"
           >
             <div className="flex items-center justify-between">
               <h3 className="font-serif text-lg text-white">Open a New Ticket</h3>
@@ -847,8 +851,9 @@ function NewTicketModal({
             </form>
           </motion.div>
         </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </ModalPortal>
   );
 }
 

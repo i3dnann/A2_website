@@ -14,6 +14,7 @@ import { useToast } from "../components/Toast";
 import ContractPaper from "../components/contracts/ContractPaper";
 import SignatureCanvas from "../components/contracts/SignatureCanvas";
 import type { ContractRecord } from "../components/contracts/types";
+import ModalPortal from "../components/ModalPortal";
 
 export default function ContractsPage() {
   const { user } = useAuth();
@@ -282,9 +283,10 @@ export default function ContractsPage() {
             </aside>
           </div>
         </div>
-        {declineOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#100c17] p-6">
+        <ModalPortal open={declineOpen} onClose={() => setDeclineOpen(false)}>
+          {declineOpen && (
+          <div className="fixed inset-0 z-[220] grid place-items-center overflow-hidden bg-black/80 p-3 sm:p-6" onClick={() => setDeclineOpen(false)}>
+            <div role="dialog" aria-modal="true" className="max-h-[calc(100dvh-1.5rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#100c17] p-6" onClick={(event) => event.stopPropagation()}>
               <button
                 onClick={() => setDeclineOpen(false)}
                 className="float-right"
@@ -311,7 +313,8 @@ export default function ContractsPage() {
               </button>
             </div>
           </div>
-        )}
+          )}
+        </ModalPortal>
       </div>
     );
 
