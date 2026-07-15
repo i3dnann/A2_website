@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { AUTH_INVALIDATED_EVENT, api, apiUrl, clearStoredAuth } from "../api/client";
-import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { firebaseAuth, firebaseConfigured } from "../lib/firebase";
+import { firebaseConfigured, getFirebaseAuth } from "../lib/firebase";
 // Toast is not needed here
 
 export type Ticket = {
@@ -203,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       clearStoredAuth();
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      const [firebaseAuth, { signInWithEmailAndPassword }] = await Promise.all([getFirebaseAuth(), import("firebase/auth")]);
       const credential = await signInWithEmailAndPassword(firebaseAuth!, email, password);
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken() } });
       localStorage.setItem("a2_token", r.token);
@@ -220,6 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       clearStoredAuth();
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      const [firebaseAuth, { createUserWithEmailAndPassword }] = await Promise.all([getFirebaseAuth(), import("firebase/auth")]);
       const credential = await createUserWithEmailAndPassword(firebaseAuth!, email, password);
       const r = await api<{ token: string; user: BackendUser }>("/api/auth/firebase-session", { method: "POST", body: { idToken: await credential.user.getIdToken(), username, create: true } });
       localStorage.setItem("a2_token", r.token);
@@ -234,7 +235,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try { await api("/api/auth/logout", { method: "POST" }); } catch {}
-    try { if (firebaseAuth) await signOut(firebaseAuth); } catch {}
+    try {
+      const firebaseAuth = await getFirebaseAuth();
+      if (firebaseAuth) {
+        const { signOut } = await import("firebase/auth");
+        await signOut(firebaseAuth);
+      }
+    } catch {}
     clearStoredAuth();
     setUser(null);
     setTickets([]);
@@ -244,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword: AuthContextType["resetPassword"] = async (email) => {
     try {
       if (!firebaseConfigured) throw new Error("Firebase email authentication is not configured.");
+      const [firebaseAuth, { sendPasswordResetEmail }] = await Promise.all([getFirebaseAuth(), import("firebase/auth")]);
       await sendPasswordResetEmail(firebaseAuth!, email);
       return { ok: true };
     } catch (e: any) {

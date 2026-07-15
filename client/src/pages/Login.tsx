@@ -41,7 +41,7 @@ export default function Login() {
     <AuthShell title="Welcome back, Citizen" subtitle="Sign in to access your Gotham City dashboard.">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+          <label className="mb-1.5 block text-xs font-medium text-white/50">
             {t("Email Address")}
           </label>
           <div className="relative">
@@ -52,17 +52,17 @@ export default function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
             />
           </div>
         </div>
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label className="block text-xs font-medium uppercase tracking-wider text-white/50">
+            <label className="block text-xs font-medium text-white/50">
               {t("Password")}
             </label>
-            <button type="button" onClick={onResetPassword} className="text-xs text-orange-300 hover:text-orange-200">
+            <button type="button" onClick={onResetPassword} className="text-xs text-violet-300 hover:text-violet-200">
               {t("Forgot password?")}
             </button>
           </div>
@@ -74,11 +74,13 @@ export default function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
+              aria-label={t(showPassword ? "Hide password" : "Show password")}
+              aria-pressed={showPassword}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -90,17 +92,19 @@ export default function Login() {
           <motion.p
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300"
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300"
           >
             {error}
           </motion.p>
         )}
-        {notice && <p className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">{notice}</p>}
+        {notice && <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">{notice}</p>}
 
         <ShimmerButton
           type="submit"
           disabled={loading}
-          className="mt-2 rounded-xl py-3.5 text-sm font-semibold"
+          borderRadius="14px"
+          background="linear-gradient(135deg, var(--site-primary), var(--site-accent))"
+          className="mt-2 gap-2 py-3.5 text-sm font-semibold"
         >
           {loading ? (
             <>
@@ -118,7 +122,7 @@ export default function Login() {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <SocialButton label="Discord" color="from-[#5865F2]/20 to-[#5865F2]/5" border="border-[#5865F2]/30" onClick={loginDiscord}>
+          <SocialButton label="Discord" color="from-[var(--site-primary)]/20 to-[var(--site-accent)]/5" border="border-[var(--site-accent)]/30" onClick={loginDiscord}>
             <path d="M20.317 4.369A19.79 19.79 0 0016.558 3c-.21.375-.444.874-.608 1.267a18.27 18.27 0 00-5.898 0A12.696 12.696 0 009.44 3a19.736 19.736 0 00-3.76 1.37C2.36 9.06 1.57 13.62 1.965 18.115a19.9 19.9 0 006.058 3.058c.49-.665.926-1.372 1.3-2.115a12.9 12.9 0 01-2.048-.98c.172-.126.34-.257.5-.392a14.09 14.09 0 0012.06 0c.163.135.331.266.5.392-.65.386-1.336.71-2.05.981.375.743.81 1.45 1.3 2.114a19.86 19.86 0 006.062-3.057c.5-5.177-.838-9.693-3.53-13.746zM8.68 15.331c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.947 2.419-2.157 2.419zm6.64 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.334-.946 2.419-2.157 2.419z" />
           </SocialButton>
           <SocialButton label="Steam" color="from-white/15 to-white/5" border="border-white/20" onClick={loginSteam}>
@@ -129,7 +133,7 @@ export default function Login() {
 
       <p className="mt-8 text-center text-sm text-white/50">
         {t("Don't have an account?")}{" "}
-        <Link to="/register" className="font-medium text-orange-300 hover:text-orange-200">
+        <Link to="/register" className="font-medium text-violet-300 hover:text-violet-200">
           {t("Create one")}
         </Link>
       </p>

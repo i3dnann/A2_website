@@ -8,7 +8,7 @@ import {
   X,
 } from "lucide-react";
 import { api, apiUrl } from "../api/client";
-import { firebaseAuth } from "../lib/firebase";
+import { getFirebaseAuth } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../components/Toast";
 import ContractPaper from "../components/contracts/ContractPaper";
@@ -93,6 +93,7 @@ export default function ContractsPage() {
     if (!selected || !party) return;
     setBusy(true);
     try {
+      const firebaseAuth = await getFirebaseAuth();
       const reauthToken = await firebaseAuth?.currentUser?.getIdToken(true);
       await api(`/api/contracts/${selected.id}/sign`, {
         method: "POST",

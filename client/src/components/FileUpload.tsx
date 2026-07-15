@@ -41,16 +41,16 @@ export default function FileUpload({ label, accept, uploading = false, value, on
       tabIndex={0}
       aria-label={label}
       onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); inputRef.current?.click(); } }}
-      className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-dashed p-4 outline-none transition focus-visible:ring-2 focus-visible:ring-[#8a7ac4] ${
-        dragging ? "border-[#c7b8ff]/80 bg-[#60519b]/20" : "border-white/15 bg-white/[0.035] hover:border-[#8a7ac4]/55 hover:bg-[#60519b]/10"
+      className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-dashed p-4 outline-none transition focus-visible:ring-2 focus-visible:ring-violet-300/60 ${
+        dragging ? "border-violet-300/70 bg-violet-400/10" : "border-white/15 bg-white/[0.025] hover:border-violet-300/40 hover:bg-violet-400/[0.06]"
       }`}
     >
       {(dragging || uploading) && <BorderBeam duration={3.5} size={110} />}
       <div className="absolute inset-0 opacity-0 transition group-hover:opacity-100">
-        <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#60519b]/25 blur-3xl" />
+        <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/15 blur-3xl" />
       </div>
       <div className="relative flex items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-[#c7b8ff]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-black/35 text-violet-200">
           {uploading ? <Loader2 size={18} className="animate-spin" /> : <UploadCloud size={18} />}
         </div>
         <div className="min-w-0">

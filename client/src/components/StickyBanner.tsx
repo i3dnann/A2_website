@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -8,7 +7,6 @@ import { useLanguage } from "../context/LanguageContext";
 export default function StickyBanner() {
   const { content } = useSite();
   const { t, isArabic } = useLanguage();
-  const reducedMotion = useReducedMotion();
 
   const enabled = Boolean(content.stickyBannerEnabled);
   const text = content.stickyBannerText || "";
@@ -32,11 +30,9 @@ export default function StickyBanner() {
   if (!enabled || !text) return null;
 
   return (
-    <motion.div
-      className="pointer-events-auto fixed inset-x-0 top-0 z-[70] flex min-h-10 items-center justify-center border-b border-white/10 px-4 shadow-[0_10px_35px_rgba(0,0,0,0.35)]"
+    <div
+      className="banner-enter pointer-events-auto fixed inset-x-0 top-0 z-[70] flex min-h-10 items-center justify-center border-b border-white/10 px-4 shadow-[0_10px_35px_rgba(0,0,0,0.35)]"
       style={{ background: color }}
-      initial={reducedMotion ? false : { y: -18, opacity: 0 }}
-      animate={reducedMotion ? undefined : { y: 0, opacity: 1 }}
     >
       <div className="flex w-full max-w-7xl items-center justify-center gap-3 py-2 text-center">
         {href ? (
@@ -53,6 +49,6 @@ export default function StickyBanner() {
           <div className="flex min-w-0 flex-1 items-center justify-center gap-3 text-center">{body}</div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

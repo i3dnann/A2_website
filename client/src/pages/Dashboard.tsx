@@ -33,6 +33,7 @@ import { api } from "../api/client";
 import { VitalRing } from "../components/VitalBar";
 import { useToast } from "../components/Toast";
 import VerifiedBadge from "../components/VerifiedBadge";
+import { TextAnimate } from "../components/ui/text-animate";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -116,10 +117,10 @@ export default function Dashboard() {
   const openTickets = tickets.filter((t) => t.status !== "Closed").length;
 
   return (
-    <div className="relative min-h-screen pt-28 pb-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="dashboard-shell relative min-h-screen pb-16 pt-28">
+      <div className="mx-auto max-w-[94rem] px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4 lg:hidden">
-          <h1 className="font-serif text-2xl text-white">{t("Dashboard")}</h1>
+          <TextAnimate as="h1" by="word" animation="blurInUp" startOnView={false} once className="magic-text text-4xl font-semibold tracking-[-.04em] text-white">{t("Dashboard")}</TextAnimate>
           <button
             onClick={() => setMobileNavOpen((o) => !o)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white"
@@ -136,11 +137,11 @@ export default function Dashboard() {
                 initial={false}
                 className={`${mobileNavOpen ? "block" : "hidden"} lg:block`}
               >
-                <div className="sticky top-28 flex flex-col gap-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
+                <div className="sticky top-28 flex flex-col gap-6 rounded-[1.5rem] border border-white/10 bg-[#080a0f]/88 p-5 shadow-[0_18px_60px_rgba(0,0,0,.38)] backdrop-blur-xl">
                   <div className="flex items-center gap-3">
                     <UserAvatar src={user.avatarUrl} name={user.username} />
                     <div className="min-w-0">
-                      <p className="flex items-center gap-1.5 truncate font-serif text-base text-white">
+                      <p className="flex items-center gap-1.5 truncate text-base font-semibold tracking-tight text-white">
                         <span className="truncate">{user.username}</span>
                         {user.verifiedBadge && <VerifiedBadge />}
                       </p>
@@ -156,16 +157,16 @@ export default function Dashboard() {
                           setTab(item.id);
                           setMobileNavOpen(false);
                         }}
-                        className={`relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition ${
+                        className={`relative flex items-center gap-3 px-3.5 py-2.5 text-sm font-medium transition ${
                           tab === item.id
-                            ? "bg-orange-500/10 text-white"
+                            ? "rounded-xl bg-violet-500/10 text-white"
                             : "text-white/55 hover:bg-white/5 hover:text-white"
                         }`}
                       >
                         {tab === item.id && (
                           <motion.span
                             layoutId="dash-tab"
-                            className="absolute left-0 h-6 w-[3px] rounded-full bg-gradient-to-b from-orange-400 to-orange-300"
+                            className="absolute left-0 h-6 w-[2px] bg-gradient-to-b from-[var(--site-accent)] to-[var(--site-primary)]"
                           />
                         )}
                         <item.icon size={17} />
@@ -176,14 +177,14 @@ export default function Dashboard() {
 
                   <Link
                     to="/"
-                    className="rounded-xl border border-white/10 px-3.5 py-2.5 text-center text-sm font-medium text-white/60 transition hover:border-white/20 hover:text-white"
+                    className="rounded-xl border border-white/10 px-3.5 py-2.5 text-center text-sm font-medium text-white/60 transition hover:border-violet-300/35 hover:text-white"
                   >
                     {t("Back to site")}
                   </Link>
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/5 px-3.5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/10"
+                    className="flex items-center justify-center gap-2 border border-red-500/20 bg-red-500/5 px-3.5 py-2.5 text-sm font-medium text-red-300 transition hover:bg-red-500/10"
                   >
                     <LogOut size={16} />
                     {t("Log out")}
@@ -875,7 +876,7 @@ function LinkedAccounts({
         linked={discordLinked}
         onLink={onLinkDiscord}
         linking={linkingDiscord}
-        color="bg-[#5865F2]/15 text-[#8891FF] border-[#5865F2]/30"
+        color="bg-[var(--site-primary)]/15 text-[var(--site-brand-300)] border-[var(--site-accent)]/30"
       />
       <ProviderCard
         name="Steam"

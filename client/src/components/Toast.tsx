@@ -1,5 +1,4 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 
 type Toast = { id: string; kind: "success" | "error" | "info"; message: string };
@@ -37,15 +36,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
       {/* Toasts */}
       <div className="pointer-events-none fixed bottom-4 right-4 z-[200] flex w-[min(380px,calc(100vw-2rem))] flex-col gap-2">
-        <AnimatePresence>
           {toasts.map((t) => (
-            <motion.div
+            <div
               key={t.id}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 30 }}
-              transition={{ duration: 0.3 }}
-              className={`pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur ${
+              className={`toast-enter pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur ${
                 t.kind === "success"
                   ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
                   : t.kind === "error"
@@ -58,23 +52,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               {t.kind === "info" && <Info size={18} className="mt-0.5 shrink-0" />}
               <p className="flex-1 text-sm">{t.message}</p>
               <button onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))} className="text-white/50 hover:text-white"><X size={14} /></button>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
       </div>
 
       {/* Confirm modal */}
-      <AnimatePresence>
         {confirmState.open && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[190] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          <div
+            className="modal-fade-in fixed inset-0 z-[190] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
             onClick={() => dismissConfirm(false)}
           >
-            <motion.div
-              initial={{ scale: 0.9, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 10 }}
+            <div
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
+              className="modal-panel-in w-full max-w-md rounded-2xl border border-white/10 bg-[#0a0710] p-6 shadow-2xl"
             >
               <h3 className="font-serif text-lg text-white">{confirmState.title}</h3>
               {confirmState.message && <p className="mt-2 text-sm text-white/60">{confirmState.message}</p>}
@@ -82,10 +72,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 <button onClick={() => dismissConfirm(false)} className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/5">Cancel</button>
                 <button onClick={() => dismissConfirm(true)} className="rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2 text-sm font-semibold text-white">{confirmState.confirmText}</button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
     </Ctx.Provider>
   );
 }

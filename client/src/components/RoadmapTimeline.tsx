@@ -56,7 +56,7 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto mt-10 max-w-xl rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
+      <div className="mx-auto mt-10 max-w-xl border border-dashed border-white/10 bg-white/[0.02] p-8 text-center text-sm text-white/45">
         {t("No story milestones are published yet.")}
       </div>
     );
@@ -74,22 +74,22 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
 
   return (
     <div className="mt-14">
-      <div className="mb-5 flex items-center justify-center gap-3">
+      <div className="mb-5 flex items-center justify-end gap-2 border-b border-white/10 pb-4">
         <button
           type="button"
           onClick={() => scroll(-1)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-[#8a7ac4]/60 hover:bg-[#60519b]/20 hover:text-white"
+          className="flex h-10 w-10 items-center justify-center border border-white/10 bg-white/[0.025] text-white/70 transition hover:border-[var(--site-accent)]/60 hover:bg-[var(--site-accent)]/10 hover:text-white"
           aria-label="Scroll roadmap left"
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="rounded-full border border-[#60519b]/35 bg-[#60519b]/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.28em] text-[#cfc5ff]">
+        <div className="mr-auto border-l-2 border-[var(--site-accent)] px-4 py-2 font-display text-xs font-bold uppercase tracking-[0.24em] text-white/72">
           {t("Scroll roadmap")}
         </div>
         <button
           type="button"
           onClick={() => scroll(1)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/70 transition hover:border-[#8a7ac4]/60 hover:bg-[#60519b]/20 hover:text-white"
+          className="flex h-10 w-10 items-center justify-center border border-white/10 bg-white/[0.025] text-white/70 transition hover:border-[var(--site-accent)]/60 hover:bg-[var(--site-accent)]/10 hover:text-white"
           aria-label="Scroll roadmap right"
         >
           <ChevronRight size={18} />
@@ -105,7 +105,7 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
         onPointerUp={stopDrag}
         onPointerCancel={stopDrag}
         onPointerLeave={(event) => { if (drag.current.active) stopDrag(event); }}
-        className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[#60519b]/50 cursor-grab touch-pan-x select-none overflow-x-auto overscroll-x-contain pb-6"
+        className="scrollbar-thin scrollbar-track-transparent scrollbar-thumb-[var(--site-accent)]/40 cursor-grab touch-pan-x select-none overflow-x-auto overscroll-x-contain pb-6"
       >
         <div
           className="relative mx-auto h-[340px] min-w-[900px]"
@@ -118,9 +118,9 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
             <path d={mainCurve} fill="none" stroke="url(#roadmapGlow)" strokeWidth="2.8" strokeLinecap="round" />
             <defs>
               <linearGradient id="roadmapGlow" x1="0" x2="1" y1="0" y2="0">
-                <stop stopColor="#34d399" />
-                <stop offset="0.55" stopColor="#60519b" />
-                <stop offset="1" stopColor="#f97316" />
+                <stop stopColor="var(--site-accent)" />
+                <stop offset="0.55" stopColor="var(--site-primary)" />
+                <stop offset="1" stopColor="#f5f8ff" />
               </linearGradient>
             </defs>
           </svg>
@@ -147,7 +147,7 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true, margin: "-80px" }}
                   transition={{ duration: 0.45, delay: index * 0.05 }}
-                  className={`absolute z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-[#080808] ${active ? "bg-orange-400 shadow-[0_0_0_6px_rgba(249,115,22,0.16),0_0_22px_rgba(249,115,22,0.9)]" : "bg-emerald-400 shadow-[0_0_0_6px_rgba(52,211,153,0.12),0_0_18px_rgba(52,211,153,0.75)]"}`}
+                  className={`roadmap-node absolute z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rotate-45 border-2 border-[#080808] ${active ? "roadmap-node-active" : "roadmap-node-upcoming"}`}
                   style={{ left: point.x, top: point.y }}
                 />
                 <motion.article
@@ -159,9 +159,9 @@ export default function RoadmapTimeline({ items }: { items: JourneyItem[] }) {
                   style={{ left: point.x, top: labelTop }}
                   dir="auto"
                 >
-                  <h3 className={`text-sm font-bold ${active ? "text-orange-300" : "text-white/88"}`}>{t(item.title)}</h3>
+                  <h3 className={`font-display text-base font-bold uppercase tracking-[.04em] ${active ? "text-[var(--site-brand-300)]" : "text-white/88"}`}>{t(item.title)}</h3>
                   {item.desc && <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/42">{t(item.desc)}</p>}
-                  <span className={`mt-2 inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${active ? "border-orange-300/35 bg-orange-400/10 text-orange-300" : "border-white/15 bg-white/[0.04] text-white/70"}`}>
+                  <span className={`mt-2 inline-flex border px-2.5 py-0.5 font-mono text-[10px] font-bold ${active ? "border-[var(--site-primary)]/40 bg-[var(--site-primary)]/10 text-[var(--site-brand-200)]" : "border-white/15 bg-white/[0.04] text-white/70"}`}>
                     {item.year}
                   </span>
                 </motion.article>

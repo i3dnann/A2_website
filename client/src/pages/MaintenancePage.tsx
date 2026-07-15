@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
 import { Pause, Play, RotateCcw, ShieldCheck, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useSite } from "../context/SiteContext";

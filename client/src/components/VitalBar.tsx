@@ -120,7 +120,7 @@ export function VitalRing({
   const radius = (size - 8) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
-  const stroke = tone === "red" ? "#fb7185" : "#38bdf8";
+  const stroke = tone === "red" ? "#fb7185" : "var(--site-accent)";
   const trackColor = "rgba(255,255,255,0.08)";
 
   return (

@@ -10,12 +10,15 @@ export function launchLoginFireworks() {
 
   const duration = 5 * 1000;
   const animationEnd = Date.now() + duration;
+  const siteStyles = window.getComputedStyle(document.documentElement);
+  const primary = siteStyles.getPropertyValue("--site-primary").trim() || "#60519b";
+  const accent = siteStyles.getPropertyValue("--site-accent").trim() || "#8a7ac4";
   const defaults = {
     startVelocity: 30,
     spread: 360,
     ticks: 60,
     zIndex: 9999,
-    colors: ["#ffffff", "#c7b8ff", "#60519b", "#8f7fe0"],
+    colors: ["#ffffff", accent, primary, accent],
   };
 
   const interval = window.setInterval(() => {

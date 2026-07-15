@@ -41,7 +41,7 @@ import { useToast, Skeleton } from "../components/Toast";
 import FileUpload from "../components/FileUpload";
 import VerifiedBadge from "../components/VerifiedBadge";
 import AdminContracts from "../components/contracts/AdminContracts";
-import MagicCard from "../components/magicui/MagicCard";
+import { TextAnimate } from "../components/ui/text-animate";
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -69,9 +69,9 @@ const ADMIN_TABS = [
 ];
 
 const stClass =
-  "mb-1 text-xs font-semibold uppercase tracking-wider text-white/40";
+  "mb-1 text-xs font-medium text-white/40";
 const inpClass =
-  "w-full rounded-lg border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-orange-400/50 transition";
+  "w-full rounded-xl border border-white/10 bg-black/30 px-3.5 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-violet-300/45 transition";
 const USER_ROLE_OPTIONS = [
   "Player",
   "Support",
@@ -211,9 +211,7 @@ export default function AdminPanel() {
       <div className="flex min-h-screen items-center justify-center px-4 pt-28">
         <div className="text-center max-w-md">
           <AlertTriangle size={40} className="mx-auto text-orange-300" />
-          <h1 className="mt-4 font-serif text-2xl text-white">
-            {t("Access Denied")}
-          </h1>
+          <TextAnimate as="h1" by="word" animation="blurInUp" startOnView={false} once className="magic-text mt-4 text-4xl font-semibold tracking-tight text-white">{t("Access Denied")}</TextAnimate>
           <p className="mt-2 text-white/50">
             {t("You need admin permissions to view this page.")}
           </p>
@@ -233,9 +231,7 @@ export default function AdminPanel() {
       <div className="w-full px-4 sm:px-6 2xl:px-10">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="font-serif text-3xl text-white">
-              {t("Admin Panel")}
-            </h1>
+            <TextAnimate as="h1" by="word" animation="blurInUp" startOnView={false} once className="magic-text text-5xl font-semibold leading-none tracking-[-.045em] text-white sm:text-6xl">{t("Admin Panel")}</TextAnimate>
             <p className="mt-1 text-sm text-white/45">
               Welcome back,{" "}
               <span className="text-orange-300">{user.username}</span> ·{" "}
@@ -298,10 +294,10 @@ export default function AdminPanel() {
               onMouseLeave={() => setSidebarExpanded(false)}
               animate={{ width: sidebarExpanded ? 268 : 78 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-              className="sticky top-28 flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#08050d]/72 p-3 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl"
+                className="sticky top-28 flex max-h-[calc(100vh-8rem)] flex-col overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#080a0f]/88 p-3 shadow-[0_18px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl"
             >
-              <div className="mb-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-2">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#60519b]/25 text-[#cfc5ff]">
+              <div className="mb-3 flex items-center gap-3 border border-white/10 bg-white/[0.035] p-2">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-[var(--site-primary)]/20 text-[var(--site-brand-300)]">
                   <Shield size={17} />
                 </div>
                 <motion.div
@@ -309,7 +305,7 @@ export default function AdminPanel() {
                   className="min-w-0"
                 >
                   <p className="truncate text-sm font-semibold text-white">
-                    Command Center
+                    COMMAND CENTER
                   </p>
                   <p className="truncate text-[11px] text-white/40">
                     {user.role}
@@ -3654,8 +3650,8 @@ const permissionSections = [
 function permissionLabel(permission: string) {
   return permission
     .replace(/^(manage|review|view)_/, "")
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 }
 
 function PermissionPicker({
@@ -3768,10 +3764,10 @@ function EditableSection({
 }) {
   const { t } = useLanguage();
   return (
-    <MagicCard className="mb-5 rounded-2xl p-4 sm:p-6">
+    <section className="mb-5 rounded-2xl border border-white/10 bg-[#0b0d15]/75 p-4 shadow-[0_22px_70px_rgba(0,0,0,.2)] sm:p-6">
       <h3 className="mb-4 font-serif text-base text-white">{t(title)}</h3>
       <div className="flex flex-col gap-3">{children}</div>
-    </MagicCard>
+    </section>
   );
 }
 function EField({
@@ -3883,6 +3879,51 @@ function HomeEditor({ content, update }: any) {
             value={content.storeLink}
             onChange={(v) => update({ storeLink: v })}
           />
+        </div>
+      </EditableSection>
+      <EditableSection title="Homepage Live Server Card">
+        <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[.025] p-3 text-sm text-white/75">
+          <input
+            type="checkbox"
+            checked={content.heroCardEnabled !== false}
+            onChange={(event) => update({ heroCardEnabled: event.target.checked })}
+            className="accent-violet-500"
+          />
+          Show this card in the homepage hero
+        </label>
+        <p className="text-xs leading-5 text-white/40">
+          The Online, Offline, and Reconnecting badge is automatic and uses the real FiveM server status.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <EField
+            label="Card Header"
+            value={content.heroCardLabel || ""}
+            onChange={(value) => update({ heroCardLabel: value })}
+          />
+          <EField
+            label="Card Eyebrow Text"
+            value={content.heroCardEyebrow || ""}
+            onChange={(value) => update({ heroCardEyebrow: value })}
+          />
+        </div>
+        <EField
+          label="Card Title"
+          value={content.heroCardTitle || ""}
+          onChange={(value) => update({ heroCardTitle: value })}
+        />
+        <EField
+          label="Card Image URL"
+          value={content.heroCardImage || ""}
+          onChange={(value) => update({ heroCardImage: value })}
+        />
+        <div className="grid max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d14] p-4">
+          <div className="flex items-center justify-between text-xs text-white/50">
+            <span>{content.heroCardLabel || "Live server"}</span>
+            <span className="text-emerald-300">● Live status</span>
+          </div>
+          {content.heroCardImage ? <img src={content.heroCardImage} alt="Live server card preview" className="mt-3 aspect-[4/3] w-full rounded-xl object-cover" /> : null}
+          <span className="mt-3 text-xs text-violet-200/70">{content.heroCardEyebrow || "Now live"}</span>
+          <strong className="mt-1 text-base text-white">{content.heroCardTitle || "Season 4: Gotham Nights"}</strong>
         </div>
       </EditableSection>
       <EditableSection title="Sticky Banner">

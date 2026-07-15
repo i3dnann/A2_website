@@ -123,6 +123,7 @@ app.get("/health", async (_req, res) => {
 });
 
 app.get("/api/live", async (_req, res) => {
+  res.set("Cache-Control", "public, max-age=5, stale-while-revalidate=10");
   res.json(await getFiveMLiveState());
 });
 

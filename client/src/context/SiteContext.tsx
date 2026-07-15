@@ -33,6 +33,11 @@ export type SiteContent = {
   heroTitle2: string;
   heroDescription: string;
   heroBackgroundImage?: string;
+  heroCardEnabled: boolean;
+  heroCardLabel: string;
+  heroCardEyebrow: string;
+  heroCardTitle: string;
+  heroCardImage?: string;
   logoUrl?: string;
   serverIp: string;
   discordLink: string;
@@ -80,6 +85,7 @@ export type SiteContent = {
   darkBgHex: string;
   spotlightColor: string;
   maintenanceMode: boolean;
+  performanceMode: boolean;
 };
 
 const DEFAULT_CONTENT: SiteContent = {
@@ -88,8 +94,13 @@ const DEFAULT_CONTENT: SiteContent = {
   heroTitle1: "Enter",
   heroTitle2: "Gotham City",
   heroDescription: "A premium dark FiveM roleplay city built for serious stories, creator energy, deep systems, and players who want every scene to matter.",
-  heroBackgroundImage: "/images/gotham-banner-static.jpg",
-  logoUrl: "/images/gotham-emblem-static.jpg",
+  heroBackgroundImage: "/images/hero-city.avif",
+  heroCardEnabled: true,
+  heroCardLabel: "Live server",
+  heroCardEyebrow: "Now live",
+  heroCardTitle: "Season 4: Gotham Nights",
+  heroCardImage: "/images/gotham-banner-static.jpg",
+  logoUrl: "/assets/gotham-logo.png",
   serverIp: "connect play.gothamcityrp.gg",
   discordLink: "/",
   fivemLink: "/server",
@@ -145,6 +156,7 @@ const DEFAULT_CONTENT: SiteContent = {
   darkBgHex: "#080808",
   spotlightColor: "#8a7ac4",
   maintenanceMode: false,
+  performanceMode: true,
 };
 
 type SiteContextType = {
@@ -185,11 +197,8 @@ export function SiteProvider({ children }: { children: ReactNode }) {
     let cancel = false;
     const loadSettings = async () => {
       try {
-        const [settingsResult, homeResult] = await Promise.all([
-          api<{ settings: any }>("/api/public/settings"),
-          api<{ team?: any[]; famous?: any[]; news?: any[]; journey?: any[]; careers?: any[] }>("/api/public/home"),
-        ]);
-        const settings = settingsResult.settings || {};
+        const homeResult = await api<{ settings?: any; team?: any[]; famous?: any[]; news?: any[]; journey?: any[]; careers?: any[] }>("/api/public/home");
+        const settings = homeResult.settings || {};
         const team = (homeResult.team || []).map((member) => ({
           name: member.name || "Team Member",
           role: member.role_title || member.category || "Staff",
@@ -249,6 +258,7 @@ export function SiteProvider({ children }: { children: ReactNode }) {
           fivemLink: settings.heroSecondaryButtonLink || prev.fivemLink,
           storeLink: settings.storeButtonLink || prev.storeLink,
           maintenanceMode: Boolean(settings.maintenanceMode),
+          performanceMode: settings.performanceMode !== false,
           roster: team,
           // The database-backed Famous Characters manager is the source of truth.
           // Keeping the legacy siteContent value when the table is empty caused an

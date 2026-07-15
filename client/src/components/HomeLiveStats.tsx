@@ -1,45 +1,56 @@
-import { useEffect, useState } from "react";
 import { Activity, Gauge, Radio, Users } from "lucide-react";
-import { createLiveSubscriber, type LiveState } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
+import { useLiveStatus } from "../context/LiveStatusContext";
+import { NumberTicker } from "./ui/number-ticker";
 
 export default function HomeLiveStats() {
   const { t } = useLanguage();
-  const [state, setState] = useState<LiveState | null>(null);
-
-  useEffect(() => {
-    const subscription = createLiveSubscriber(setState);
-    return () => subscription.stop();
-  }, []);
+  const { state, loading } = useLiveStatus();
 
   const online = state?.status === "online";
-  const unavailable = state?.configured === false || state?.status === "not_configured";
+  const unavailable = loading || state?.configured === false || state?.status === "not_configured" || state?.status === "offline";
+  const statusText = loading
+    ? t("Checking server")
+    : online
+      ? t("Server Online")
+      : state?.status === "reconnecting"
+        ? t("Reconnecting")
+      : state?.configured === false || state?.status === "not_configured"
+        ? t("Status not configured")
+        : t("Server Offline");
   const values = [
-    { icon: Users, label: t("Online"), value: unavailable ? "—" : String(state?.count ?? 0), color: "text-emerald-300" },
-    { icon: Activity, label: t("Max Players"), value: unavailable ? "—" : String(state?.maxplayers ?? 0), color: "text-violet-300" },
-    { icon: Radio, label: t("Queue"), value: unavailable ? "—" : String(state?.queue ?? 0), color: "text-cyan-300" },
-    { icon: Gauge, label: t("Latency"), value: state?.latency == null ? "—" : `${state.latency} ms`, color: "text-orange-300" },
+    { icon: Users, label: t("Online"), value: state?.count ?? 0, unavailable, suffix: "", color: "text-emerald-300" },
+    { icon: Activity, label: t("Max Players"), value: state?.maxplayers ?? 0, unavailable, suffix: "", color: "text-violet-300" },
+    { icon: Radio, label: t("Queue"), value: state?.queue ?? 0, unavailable, suffix: "", color: "text-cyan-300" },
+    { icon: Gauge, label: t("Latency"), value: state?.latency ?? 0, unavailable: state?.latency == null, suffix: " ms", color: "text-blue-300" },
   ];
 
   return (
-    <section className="border-y border-white/10 bg-[#07070a] py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="spotlight-card overflow-hidden rounded-2xl border border-emerald-400/20 bg-[linear-gradient(110deg,rgba(16,185,129,.07),rgba(96,81,155,.05),rgba(255,255,255,.02))] p-5 shadow-[0_18px_50px_rgba(0,0,0,.3)] sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
+      <div className="section-rise mx-auto max-w-[90rem]">
+        <div className="grid overflow-hidden rounded-[1.75rem] border border-white/[.09] bg-[#0b0d14]/88 shadow-[0_24px_80px_rgba(0,0,0,.25)] lg:grid-cols-[19rem_1fr]">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[.08] p-6 lg:border-b-0 lg:border-r">
             <div>
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.16em] text-emerald-200">
-                <span className={`h-2 w-2 rounded-full ${online ? "bg-emerald-400 shadow-[0_0_12px_#34d399]" : "bg-white/30"}`} />
-                {online ? t("Server Online") : t("Server Status")}
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-200">
+                <span className={`h-2 w-2 rounded-full ${online ? "bg-emerald-400 shadow-[0_0_14px_#34d399]" : "bg-white/30"}`} />
+                {statusText}
               </div>
-              <h2 className="mt-2 font-serif text-xl text-white sm:text-2xl">{t(state?.serverName || "Gotham City")}</h2>
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-white">{t(state?.serverName || "Gotham City")}</h2>
+              <p className="mt-1 text-xs text-white/60">Gotham City · CFW Roleplay</p>
             </div>
-            <p className="text-xs text-white/40">Gotham City · CFW Roleplay</p>
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-            {values.map(({ icon: Icon, label, value, color }) => (
-              <div key={label} className="spotlight-card flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-3">
-                <Icon size={17} className={color} />
-                <div><p className={`font-serif text-lg leading-none ${color}`}>{value}</p><p className="mt-1 text-[10px] uppercase tracking-wider text-white/40">{label}</p></div>
+          <div className="grid grid-cols-2 gap-px bg-white/[.07] sm:grid-cols-4">
+            {values.map(({ icon: Icon, label, value, unavailable: isUnavailable, suffix, color }) => (
+              <div key={label} className="flex items-center gap-3 bg-[#0b0d14]/95 px-4 py-6 transition hover:bg-[#111522] sm:px-6">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[.08] bg-white/[.035]">
+                  <Icon size={16} className={color} />
+                </span>
+                <div>
+                  <p className={`text-xl font-semibold leading-none tracking-tight ${color}`}>
+                    {isUnavailable ? "—" : <><NumberTicker value={value} className={`tracking-tight ${color}`} />{suffix}</>}
+                  </p>
+                  <p className="mt-1.5 text-xs text-white/60">{label}</p>
+                </div>
               </div>
             ))}
           </div>

@@ -1,5 +1,4 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import type { Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -9,4 +8,16 @@ const firebaseConfig = {
 };
 
 export const firebaseConfigured = Object.values(firebaseConfig).every(Boolean);
-export const firebaseAuth = firebaseConfigured ? getAuth(initializeApp(firebaseConfig)) : null;
+
+let authPromise: Promise<Auth | null> | null = null;
+
+export function getFirebaseAuth() {
+  if (!firebaseConfigured) return Promise.resolve(null);
+  if (!authPromise) {
+    authPromise = Promise.all([import("firebase/app"), import("firebase/auth")]).then(([appModule, authModule]) => {
+      const app = appModule.getApps()[0] || appModule.initializeApp(firebaseConfig);
+      return authModule.getAuth(app);
+    });
+  }
+  return authPromise;
+}

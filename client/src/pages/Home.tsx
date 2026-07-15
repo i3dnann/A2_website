@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import Hero from "../components/Hero";
 import PartnerBar from "../components/PartnerBar";
-import Features from "../components/Features";
-import Roster from "../components/Roster";
-import Journey from "../components/Journey";
-import News from "../components/News";
-import Careers from "../components/Careers";
-import Faq from "../components/Faq";
-import CtaSection from "../components/CtaSection";
 import HomeLiveStats from "../components/HomeLiveStats";
+import CinematicInterlude from "../components/CinematicInterlude";
+
+const Features = lazy(() => import("../components/Features"));
+const Roster = lazy(() => import("../components/Roster"));
+const Journey = lazy(() => import("../components/Journey"));
+const News = lazy(() => import("../components/News"));
+const Careers = lazy(() => import("../components/Careers"));
+const Faq = lazy(() => import("../components/Faq"));
+const CtaSection = lazy(() => import("../components/CtaSection"));
 
 function DeferredHomeSections() {
   const markerRef = useRef<HTMLDivElement | null>(null);
@@ -35,7 +37,7 @@ function DeferredHomeSections() {
   }
 
   return (
-    <>
+    <Suspense fallback={<div className="min-h-[40vh]" aria-hidden="true" />}>
       <Features />
       <Roster />
       <Journey />
@@ -43,7 +45,7 @@ function DeferredHomeSections() {
       <Careers />
       <Faq />
       <CtaSection />
-    </>
+    </Suspense>
   );
 }
 
@@ -53,6 +55,7 @@ export default function Home() {
       <Hero />
       <HomeLiveStats />
       <PartnerBar />
+      <CinematicInterlude />
       <DeferredHomeSections />
     </main>
   );

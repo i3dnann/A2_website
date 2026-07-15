@@ -2,6 +2,10 @@ import { fetch } from "undici";
 import { env } from "../config/env.js";
 
 const FIVE_SECONDS = 5000;
+const LIVE_CACHE_MS = 10000;
+let cachedLiveState = null;
+let cachedUntil = 0;
+let liveRequest = null;
 
 function baseEndpoint() {
   if (!env.FIVEM_SERVER_IP) return "";
@@ -42,7 +46,7 @@ async function fetchJson(url) {
   }
 }
 
-export async function getFiveMLiveState() {
+async function loadFiveMLiveState() {
   if (!hasEndpointConfig()) {
     return {
       players: [],
@@ -90,4 +94,22 @@ export async function getFiveMLiveState() {
     lastUpdate: Date.now(),
     error: online ? "" : "fivem_status_unavailable"
   };
+}
+
+export async function getFiveMLiveState() {
+  const now = Date.now();
+  if (cachedLiveState && now < cachedUntil) return cachedLiveState;
+  if (liveRequest) return liveRequest;
+
+  liveRequest = loadFiveMLiveState()
+    .then((state) => {
+      cachedLiveState = state;
+      cachedUntil = Date.now() + LIVE_CACHE_MS;
+      return state;
+    })
+    .finally(() => {
+      liveRequest = null;
+    });
+
+  return liveRequest;
 }

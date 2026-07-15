@@ -43,7 +43,7 @@ export default function Register() {
     <AuthShell title="Create your account" subtitle="Join Gotham City and step into the city.">
       <form onSubmit={onSubmit} className="flex flex-col gap-4">
         <div>
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+          <label className="mb-1.5 block text-xs font-medium text-white/50">
             {t("Username")}
           </label>
           <div className="relative">
@@ -53,13 +53,13 @@ export default function Register() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="JohnDoe"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+          <label className="mb-1.5 block text-xs font-medium text-white/50">
             {t("Email Address")}
           </label>
           <div className="relative">
@@ -70,14 +70,14 @@ export default function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
-              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+            <label className="mb-1.5 block text-xs font-medium text-white/50">
               {t("Password")}
             </label>
             <div className="relative">
@@ -88,11 +88,13 @@ export default function Register() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-9 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-9 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
+                aria-label={t(showPassword ? "Hide passwords" : "Show passwords")}
+                aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
               >
                 {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -100,7 +102,7 @@ export default function Register() {
             </div>
           </div>
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-white/50">
+            <label className="mb-1.5 block text-xs font-medium text-white/50">
               {t("Confirm")}
             </label>
             <div className="relative">
@@ -111,7 +113,7 @@ export default function Register() {
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
-                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-orange-400/50 focus:bg-white/[0.07]"
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/25 outline-none transition focus:border-violet-300/45 focus:bg-white/[0.07]"
               />
             </div>
           </div>
@@ -121,8 +123,10 @@ export default function Register() {
           <button
             type="button"
             onClick={() => setAgree((a) => !a)}
+            aria-label={t("Agree to community rules and terms")}
+            aria-pressed={agree}
             className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border transition ${
-              agree ? "border-orange-400 bg-orange-500" : "border-white/20 bg-white/5"
+              agree ? "border-violet-300 bg-violet-500" : "border-white/20 bg-white/5"
             }`}
           >
             {agree && <Check size={11} className="text-white" />}
@@ -134,7 +138,7 @@ export default function Register() {
           <motion.p
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300"
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300"
           >
             {error}
           </motion.p>
@@ -143,7 +147,9 @@ export default function Register() {
         <ShimmerButton
           type="submit"
           disabled={loading}
-          className="mt-1 rounded-xl py-3.5 text-sm font-semibold"
+          borderRadius="14px"
+          background="linear-gradient(135deg, var(--site-primary), var(--site-accent))"
+          className="mt-1 gap-2 py-3.5 text-sm font-semibold"
         >
           {loading ? (
             <>
@@ -157,7 +163,7 @@ export default function Register() {
 
       <p className="mt-8 text-center text-sm text-white/50">
         {t("Already have an account?")}{" "}
-        <Link to="/login" className="font-medium text-orange-300 hover:text-orange-200">
+        <Link to="/login" className="font-medium text-violet-300 hover:text-violet-200">
           {t("Sign in")}
         </Link>
       </p>

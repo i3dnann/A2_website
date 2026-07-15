@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = {
   heroSubtitle: "Premium FiveM community",
   heroDescription:
     "A serious, story-driven CFW roleplay community with active departments, events, support, careers, and player account tools.",
-  heroBackgroundImage: "/images/gotham-banner-static.jpg",
+  heroBackgroundImage: "/images/hero-city.jpg",
   heroBackgroundVideo: "",
   heroOverlayOpacity: 78,
   heroPrimaryButtonText: "Join Discord",

@@ -4,27 +4,28 @@ import { Plus } from "lucide-react";
 import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
 import { Reveal } from "./Reveal";
+import { TextAnimate } from "./ui/text-animate";
 
 export default function Faq() {
   const { content } = useSite();
   const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   return (
-    <section id="faq" className="relative py-28">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-orange-400">{t(content.faqSubtitle)}</p>
-          <h2 className="mt-4 font-serif text-4xl text-white sm:text-5xl">{t(content.faqTitle)}</h2>
+    <section id="faq" className="relative py-24 sm:py-32">
+      <div className="mx-auto max-w-[90rem] px-5 sm:px-8 lg:px-12">
+        <Reveal className="max-w-3xl">
+          <p className="text-sm font-medium text-violet-300">{t(content.faqSubtitle)}</p>
+          <TextAnimate as="h2" by="word" animation="blurInUp" once className="magic-text mt-3 text-4xl font-semibold leading-[1.02] tracking-[-.045em] text-white sm:text-6xl">{t(content.faqTitle)}</TextAnimate>
         </Reveal>
-        <div className="mt-14 flex flex-col gap-3">
+        <div className="mt-14 ml-auto flex max-w-4xl flex-col gap-2">
           {content.faqs.map((f, i) => {
             const isOpen = openIndex === i;
             return (
               <Reveal key={f.q} delay={i * 0.06}>
-                <div className="spotlight-card overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+                <div className="overflow-hidden rounded-[1.4rem] border border-white/[.08] bg-white/[.025] shadow-[0_18px_50px_rgba(0,0,0,.15)]">
                   <button onClick={() => setOpenIndex(isOpen ? null : i)} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left">
-                    <span className="font-serif text-base text-white sm:text-lg">{t(f.q)}</span>
-                    <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500/10 text-orange-300"><Plus size={16} /></motion.span>
+                    <span className="text-lg font-semibold tracking-tight text-white sm:text-xl">{t(f.q)}</span>
+                    <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-400/10 text-violet-200"><Plus size={16} /></motion.span>
                   </button>
                   <AnimatePresence initial={false}>
                     {isOpen && (

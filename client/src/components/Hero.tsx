@@ -1,137 +1,148 @@
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Copy, PlayCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useSite } from "../context/SiteContext";
+import { ArrowRight, Copy, PlayCircle, Radio } from "lucide-react";
+import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
-import BorderBeam from "./magicui/BorderBeam";
-import AnimatedGridPattern from "./magicui/AnimatedGridPattern";
-
-function Counter({ value, suffix }: { value: number; suffix: string }) {
-  const [display, setDisplay] = useState(0);
-  const reducedMotion = useReducedMotion();
-  useEffect(() => {
-    if (reducedMotion || window.innerWidth < 768) {
-      setDisplay(value);
-      return;
-    }
-    let raf: number;
-    const duration = 1600;
-    const start = performance.now();
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(eased * value));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [reducedMotion, value]);
-  return <span>{display.toLocaleString()}{suffix}</span>;
-}
+import { useLiveStatus } from "../context/LiveStatusContext";
+import { useSite } from "../context/SiteContext";
+import { NumberTicker } from "./ui/number-ticker";
+import { ShimmerButton } from "./ui/shimmer-button";
 
 export default function Hero() {
   const { content } = useSite();
   const { t, isArabic } = useLanguage();
+  const { state: liveState, loading: liveLoading } = useLiveStatus();
   const [copied, setCopied] = useState(false);
+
   const copyIp = () => {
     navigator.clipboard?.writeText(content.serverIp);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
+    window.setTimeout(() => setCopied(false), 1800);
   };
 
+  const connect = () => {
+    window.location.assign(content.fivemLink && content.fivemLink !== "#" ? content.fivemLink : "/server");
+  };
+  const configuredHeroImage = content.heroBackgroundImage || "";
+  const legacyHeavyHero = /\/(gotham-banner\.gif|gotham-banner-static\.jpg|hero-city\.jpg)$/i.test(configuredHeroImage);
+  const heroImage = !configuredHeroImage || (content.performanceMode && legacyHeavyHero)
+    ? "/images/hero-city.avif"
+    : configuredHeroImage;
+  const serverOnline = liveState?.status === "online";
+  const serverUnavailable = liveState?.configured === false || liveState?.status === "not_configured";
+  const statusLabel = liveLoading
+    ? t("Checking")
+    : serverUnavailable
+      ? t("Unavailable")
+      : liveState?.status === "reconnecting"
+        ? t("Reconnecting")
+      : serverOnline
+        ? t("Online")
+        : t("Offline");
+  const statusTone = serverOnline ? "text-emerald-300" : liveLoading || liveState?.status === "reconnecting" ? "text-amber-200" : "text-rose-300";
+  const statusDot = serverOnline ? "bg-emerald-300" : liveLoading || liveState?.status === "reconnecting" ? "bg-amber-200" : "bg-rose-300";
+
   return (
-    <section id="home" className="relative flex min-h-screen items-center overflow-hidden pt-32 pb-20">
-      <div className="absolute inset-0 -z-10">
-        <img src={content.heroBackgroundImage || "/images/gotham-banner-static.jpg"} alt="Gotham City" className="h-full w-full object-cover opacity-70" fetchPriority="high" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(96,81,155,0.12),transparent_34rem)]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080808]/35 via-[#080808]/72 to-[#080808]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808]" />
-        <div className="absolute inset-0 opacity-[0.09] mix-blend-screen [background-image:linear-gradient(rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.08)_1px,transparent_1px)] [background-size:42px_42px]" />
+    <section
+      id="home"
+      className="relative isolate flex min-h-[100svh] items-end overflow-hidden pb-8 pt-32 sm:pb-12 sm:pt-36"
+    >
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <img
+          src={heroImage}
+          alt="Gotham City skyline"
+          className="h-full w-full scale-[1.03] object-cover object-center opacity-[.88]"
+          fetchPriority="high"
+          decoding="async"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(115,82,255,.14),transparent_38%),linear-gradient(90deg,#06070b_0%,rgba(6,7,11,.9)_33%,rgba(6,7,11,.3)_72%,rgba(6,7,11,.72)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(6,7,11,.15),rgba(6,7,11,.28)_52%,#06070b_100%)]" />
       </div>
-      <AnimatedGridPattern className="opacity-40" />
 
-      <div className="mx-auto grid w-full max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:px-8">
-        <div>
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-orange-400/30 bg-orange-500/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-orange-200">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-            </span>
-            Server Online · CFW Roleplay
-          </div>
+      <div aria-hidden className="absolute inset-0 -z-[5] bg-[linear-gradient(rgba(255,255,255,.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.035)_1px,transparent_1px)] bg-[size:54px_54px] [mask-image:linear-gradient(to_bottom,white,transparent_76%)]" />
 
-          <h1 className="font-serif text-4xl leading-[1.05] text-white sm:text-5xl lg:text-6xl">
-            {t(content.heroTitle1)}
-            <span className="block bg-gradient-to-r from-orange-400 via-orange-300 to-orange-200 bg-clip-text text-transparent drop-shadow-[0_0_22px_rgba(96,81,155,0.35)]">
-              {t(content.heroTitle2)}
-            </span>
-          </h1>
+      <div className="mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
+        <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-14">
+          <div>
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-4 py-2 text-xs font-medium text-white/70 shadow-[0_12px_45px_rgba(0,0,0,.25)] backdrop-blur-xl">
+              <span className="relative flex h-2 w-2">
+                {serverOnline ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-45" /> : null}
+                <span className={`relative inline-flex h-2 w-2 rounded-full ${statusDot}`} />
+              </span>
+              {liveLoading ? t("Checking server status") : serverOnline ? t("Gotham is online") : t("Server status unavailable")}
+            </div>
 
-          <p className="mt-6 max-w-xl text-base text-white/60 sm:text-lg">
-            {t(content.heroDescription)}
-          </p>
-
-          <div className="mt-9 flex flex-wrap items-center gap-4">
-            <a
-              href={content.fivemLink && content.fivemLink !== "#" ? content.fivemLink : "/server"}
-              className="magic-shimmer-button group inline-flex items-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold"
-            >
-              <PlayCircle size={18} /> {t("Connect Now")}
-              <ArrowRight size={16} className={`transition-transform ${isArabic ? "rotate-180 group-hover:-translate-x-1" : "group-hover:translate-x-1"}`} />
-            </a>
-            <button
-              onClick={copyIp}
-              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3.5 text-sm font-semibold text-white/85 backdrop-blur transition hover:border-white/30 hover:bg-white/10"
-            >
-              <Copy size={16} />
-              {copied ? t("Copied!") : content.serverIp}
-            </button>
-          </div>
-
-          <div className="mt-14 grid grid-cols-2 gap-6 sm:grid-cols-4">
-            {content.stats.map((s) => (
-              <div key={s.label}>
-                <div className="font-serif text-2xl text-white sm:text-3xl">
-                  <Counter value={s.value} suffix={s.suffix} />
-                </div>
-                <div className="mt-1 text-xs uppercase tracking-wider text-white/40">{t(s.label)}</div>
+            <div className="max-w-5xl text-[clamp(3.7rem,8.8vw,8.3rem)] font-semibold leading-[.88] tracking-[-.065em] text-white">
+              <h1 className="magic-text hero-title-in block">{t(content.heroTitle1)}</h1>
+              <div className="magic-text hero-rise block [--rise-delay:120ms]">
+                <span className="site-gradient-text bg-clip-text text-transparent">{t(content.heroTitle2)}</span>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, rotate: 4 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 0.9, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="relative hidden lg:block"
-        >
-          <div className="relative overflow-hidden rounded-3xl border border-orange-400/20 bg-[#111111]/80 p-2 shadow-[0_24px_70px_rgba(0,0,0,0.55)]">
-            <BorderBeam duration={9} size={120} />
-            <img
-              src={content.logoUrl === "/assets/gotham-logo.png" ? "/assets/gotham-logo-512.webp" : content.logoUrl || "/images/gotham-emblem-static.jpg"}
-              alt="Gotham City emblem"
-              loading="lazy"
-              width="512"
-              height="512"
-              className="h-[520px] w-full rounded-2xl object-cover"
-            />
-            <div className="absolute inset-2 rounded-2xl bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-            <div className="absolute bottom-6 left-6 right-6 rounded-xl border border-white/10 bg-black/50 p-4 backdrop-blur-md">
-              <p className="text-xs uppercase tracking-widest text-orange-300">{t("Now Live")}</p>
-              <p className="mt-1 font-serif text-lg text-white">{t("Season 4: Gotham Nights")}</p>
+            <div className="hero-rise mt-7 max-w-3xl rounded-[1.75rem] border border-white/10 bg-black/30 p-4 shadow-[0_24px_80px_rgba(0,0,0,.28)] backdrop-blur-xl [--rise-delay:180ms] sm:p-5">
+              <p className="max-w-2xl text-base leading-7 text-white/64 sm:text-lg">
+                {t(content.heroDescription)}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <ShimmerButton
+                  type="button"
+                  onClick={connect}
+                  borderRadius="14px"
+                  background="linear-gradient(135deg, var(--site-primary), var(--site-accent))"
+                  shimmerDuration="2.6s"
+                  className="gap-2 px-5 py-3 text-sm font-semibold shadow-[0_14px_40px_rgba(99,102,241,.24)]"
+                >
+                  <PlayCircle size={17} />
+                  {t("Connect Now")}
+                  <ArrowRight
+                    size={15}
+                    className={`transition-transform group-hover:translate-x-1 ${isArabic ? "rotate-180 group-hover:-translate-x-1" : ""}`}
+                  />
+                </ShimmerButton>
+                <button
+                  type="button"
+                  onClick={copyIp}
+                  className="inline-flex items-center gap-2 rounded-[14px] border border-white/12 bg-white/[.055] px-5 py-3 text-sm font-medium text-white/75 backdrop-blur transition hover:border-violet-300/35 hover:bg-white/[.09] hover:text-white"
+                >
+                  <Copy size={15} />
+                  {copied ? t("Copied!") : content.serverIp}
+                </button>
+              </div>
             </div>
           </div>
-          <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-orange-600/30 blur-3xl" />
-          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-orange-500/20 blur-3xl" />
-        </motion.div>
-      </div>
 
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }} className="absolute bottom-8 left-1/2 -translate-x-1/2">
-        <div className="flex h-9 w-6 items-start justify-center rounded-full border border-white/20 p-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-white/60" />
+          {content.heroCardEnabled ? <aside className="hero-side-in relative hidden overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0b0d14]/68 p-5 shadow-[0_28px_90px_rgba(0,0,0,.36)] backdrop-blur-2xl lg:block">
+            <div className="flex items-center justify-between text-xs text-white/48">
+              <span className="flex items-center gap-2"><Radio size={14} className="text-violet-300" /> {t(content.heroCardLabel)}</span>
+              <span className={`flex items-center gap-2 ${statusTone}`}><i className={`h-1.5 w-1.5 rounded-full ${statusDot}`} />{statusLabel}</span>
+            </div>
+            <div className="mt-4 overflow-hidden rounded-2xl border border-white/[.08] bg-white/[.025]">
+              <picture>
+                <source media="(min-width: 1024px)" srcSet={content.heroCardImage || content.logoUrl || "/images/gotham-emblem-static.jpg"} />
+                <img
+                  src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+                  alt="Gotham City emblem"
+                  width="512"
+                  height="384"
+                  className="aspect-[4/3] w-full object-cover opacity-90"
+                />
+              </picture>
+            </div>
+            <p className="mt-5 text-sm text-violet-200/75">{t(content.heroCardEyebrow)}</p>
+            <p className="mt-1 text-xl font-semibold tracking-tight text-white">{t(content.heroCardTitle)}</p>
+          </aside> : null}
         </div>
-      </motion.div>
+
+        <div className="hero-rise mt-8 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/[.09] bg-black/25 p-2 shadow-[0_20px_70px_rgba(0,0,0,.2)] backdrop-blur-xl [--rise-delay:240ms] sm:grid-cols-4">
+          {content.stats.map((stat) => (
+            <div key={stat.label} className="rounded-2xl px-4 py-4 transition hover:bg-white/[.055] sm:px-5">
+              <div className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+                <NumberTicker value={stat.value} className="tracking-tight" />
+                <span className="text-violet-200">{stat.suffix}</span>
+              </div>
+                  <p className="mt-1 text-xs text-white/60">{t(stat.label)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

@@ -1,38 +1,42 @@
-import { useEffect } from "react";
-import { AnimatePresence } from "framer-motion";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import AnimatedBackground from "./components/AnimatedBackground";
-import BatSwingIntro from "./components/BatSwingIntro";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import StickyBanner from "./components/StickyBanner";
-import SpotlightSync from "./components/SpotlightSync";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import AuthComplete from "./pages/AuthComplete";
-import Dashboard from "./pages/Dashboard";
-import AdminPanel from "./pages/AdminPanel";
-import ServerPage from "./pages/ServerPage";
-import RosterPage from "./pages/RosterPage";
-import LivePage from "./pages/LivePage";
-import JourneyPage from "./pages/JourneyPage";
-import NewsPage from "./pages/NewsPage";
-import CareersPage from "./pages/CareersPage";
-import CareerApplyPage from "./pages/CareerApplyPage";
-import FaqPage from "./pages/FaqPage";
-import CharactersPage from "./pages/CharactersPage";
-import TermsPage from "./pages/TermsPage";
-import ContractsPage from "./pages/ContractsPage";
-import ContractVerifyPage from "./pages/ContractVerifyPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SiteProvider, useSite } from "./context/SiteContext";
 import { useAuth } from "./context/AuthContext";
-import MaintenancePage from "./pages/MaintenancePage";
 import { LanguageProvider, useLanguage } from "./context/LanguageContext";
 import { ToastProvider } from "./components/Toast";
+import ScrollProgress from "./components/ScrollProgress";
+import { LiveStatusProvider } from "./context/LiveStatusContext";
+
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const AuthComplete = lazy(() => import("./pages/AuthComplete"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const ServerPage = lazy(() => import("./pages/ServerPage"));
+const RosterPage = lazy(() => import("./pages/RosterPage"));
+const LivePage = lazy(() => import("./pages/LivePage"));
+const JourneyPage = lazy(() => import("./pages/JourneyPage"));
+const NewsPage = lazy(() => import("./pages/NewsPage"));
+const CareersPage = lazy(() => import("./pages/CareersPage"));
+const CareerApplyPage = lazy(() => import("./pages/CareerApplyPage"));
+const FaqPage = lazy(() => import("./pages/FaqPage"));
+const CharactersPage = lazy(() => import("./pages/CharactersPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const ContractsPage = lazy(() => import("./pages/ContractsPage"));
+const ContractVerifyPage = lazy(() => import("./pages/ContractVerifyPage"));
+const MaintenancePage = lazy(() => import("./pages/MaintenancePage"));
+
+function RouteFallback() {
+  return <div className="min-h-screen bg-[#06070b]" aria-label="Loading page" />;
+}
 
 function AppShell() {
   const location = useLocation();
@@ -44,22 +48,31 @@ function AppShell() {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, [location.pathname]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--site-primary", content.primaryHex || "#60519b");
+    root.style.setProperty("--site-accent", content.accentHex || "#8a7ac4");
+  }, [content.accentHex, content.primaryHex]);
+
   const showFooter = !["/login", "/register", "/auth/complete", "/dashboard", "/admin"].includes(location.pathname);
   const adminEntry = ["/login", "/auth/complete"].includes(location.pathname);
 
   const isLocalPreview = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-  const maintenancePreview = isLocalPreview && new URLSearchParams(location.search).get("maintenance-preview") === "1";
-  if (!loading && !adminEntry && (maintenancePreview || (content.maintenanceMode && !isAdmin))) return <MaintenancePage />;
+  const maintenancePreview = isLocalPreview ? new URLSearchParams(location.search).get("maintenance-preview") : null;
+  const forceMaintenance = maintenancePreview === "1";
+  const bypassMaintenance = maintenancePreview === "0";
+  if (!loading && !adminEntry && (forceMaintenance || (!bypassMaintenance && content.maintenanceMode && !isAdmin))) {
+    return <Suspense fallback={<RouteFallback />}><MaintenancePage /></Suspense>;
+  }
 
   return (
-    <div dir={dir} className={`relative min-h-screen text-white selection:bg-orange-500/40 ${isArabic ? "font-sans" : ""}`}>
+    <div dir={dir} className={`cinematic-site relative min-h-screen bg-background text-foreground selection:bg-violet-500/35 ${isArabic ? "font-sans" : ""}`}>
+      <ScrollProgress />
       <AnimatedBackground />
-      <SpotlightSync />
-      <BatSwingIntro />
       <Navbar />
       <StickyBanner />
-      <AnimatePresence mode="wait">
-        <RouteErrorBoundary routeKey={location.pathname}>
+      <RouteErrorBoundary routeKey={location.pathname}>
+        <Suspense fallback={<RouteFallback />}>
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Home />} />
             <Route path="/server" element={<ServerPage />} />
@@ -80,8 +93,8 @@ function AppShell() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           </Routes>
-        </RouteErrorBoundary>
-      </AnimatePresence>
+        </Suspense>
+      </RouteErrorBoundary>
       {showFooter && <Footer />}
     </div>
   );
@@ -90,15 +103,17 @@ function AppShell() {
 export default function App() {
   return (
     <LanguageProvider>
-      <SiteProvider>
-        <AuthProvider>
-          <ToastProvider>
-            <BrowserRouter>
-              <AppShell />
-            </BrowserRouter>
-          </ToastProvider>
-        </AuthProvider>
-      </SiteProvider>
+        <SiteProvider>
+          <LiveStatusProvider>
+            <AuthProvider>
+              <ToastProvider>
+                <BrowserRouter>
+                  <AppShell />
+                </BrowserRouter>
+              </ToastProvider>
+            </AuthProvider>
+          </LiveStatusProvider>
+        </SiteProvider>
     </LanguageProvider>
   );
 }

@@ -1,10 +1,10 @@
+import { Globe2, LayoutDashboard, Menu, ShieldCheck, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X, LayoutDashboard, ShieldCheck, Globe2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useSite } from "../context/SiteContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useSite } from "../context/SiteContext";
+import { ShimmerButton } from "./ui/shimmer-button";
 
 const NAV_ROUTES = [
   { path: "/", label: "Home" },
@@ -22,180 +22,146 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, isAdmin } = useAuth();
   const { content } = useSite();
-  const { t, language, isArabic, toggleLanguage } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const location = useLocation();
   const stickyBannerActive = Boolean(content.stickyBannerEnabled && content.stickyBannerText);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const onScroll = () => setScrolled(window.scrollY > 30);
     onScroll();
-    window.addEventListener("scroll", onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => setOpen(false), [location.pathname]);
+
+  const openDiscord = () => {
+    const target = content.discordLink && content.discordLink !== "#" ? content.discordLink : "/";
+    if (target.startsWith("http")) window.open(target, "_blank", "noopener,noreferrer");
+    else window.location.assign(target);
+  };
+
   return (
-    <motion.header
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+    <header
       style={{ top: stickyBannerActive ? 40 : 0 }}
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-        scrolled ? "py-2" : "py-4"
-      }`}
+      className="navbar-enter fixed inset-x-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4"
     >
-      <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${isArabic ? "max-w-[96rem]" : "max-w-7xl"}`}>
+      <div className="mx-auto max-w-[90rem]">
         <div
-          className={`flex items-center justify-between rounded-2xl border px-3 py-3 backdrop-blur-xl transition-all duration-500 sm:px-4 ${
+          className={`relative flex items-center justify-between rounded-2xl border px-3 backdrop-blur-2xl transition-all duration-500 sm:px-4 ${
             scrolled
-              ? "border-orange-500/20 bg-black/60 shadow-[0_0_40px_rgba(0,0,0,0.5)]"
-              : "border-white/5 bg-black/20"
+              ? "h-16 border-white/12 bg-[#080910]/88 shadow-[0_18px_60px_rgba(0,0,0,.42)]"
+              : "h-[4.5rem] border-white/[.09] bg-[#080910]/54 shadow-[0_16px_48px_rgba(0,0,0,.2)]"
           }`}
         >
-          <Link to="/" onClick={() => setOpen(false)} className={`flex shrink-0 items-center ${isArabic ? "gap-2" : "gap-3"}`}>
-            <img src="/images/gotham-emblem-static.jpg" alt={content.siteName} className="h-9 w-9 rounded-full object-cover ring-1 ring-orange-400/25 sm:h-10 sm:w-10" />
-            <span className={`font-serif text-base text-white sm:text-lg ${isArabic ? "tracking-normal" : "tracking-[0.2em]"}`}>
-              {t(content.siteName)}
+          <Link to="/" className="flex shrink-0 items-center gap-3 rounded-xl pr-2">
+            <img
+              src={content.logoUrl === "/assets/gotham-logo.png" ? "/assets/gotham-logo-96.webp" : content.logoUrl || "/images/gotham-emblem-static.jpg"}
+              alt={content.siteName}
+              className="h-10 w-10 rounded-xl object-cover ring-1 ring-white/15"
+            />
+            <span className="hidden leading-tight sm:grid">
+              <strong className="text-sm font-semibold tracking-tight text-white sm:text-base">{t(content.siteName)}</strong>
+              <small className="mt-0.5 text-[10px] text-violet-200/55">Roleplay network</small>
             </span>
           </Link>
 
-          <nav className={`hidden items-center xl:flex ${isArabic ? "gap-0" : "gap-1"}`}>
-            {NAV_ROUTES.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setOpen(false)}
-                className={`relative py-2 font-medium text-white/60 transition-colors hover:text-white ${isArabic ? "px-2 text-xs" : "px-3 text-sm"}`}
-              >
-                {t(link.label)}
-                {location.pathname === link.path && (
-                  <motion.span
-                    layoutId="nav-underline"
-                    className="absolute inset-x-2 -bottom-0.5 h-[2px] rounded-full bg-gradient-to-r from-orange-400 to-orange-300"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </Link>
-            ))}
+          <nav className="hidden items-center rounded-xl border border-white/[.06] bg-white/[.025] p-1 xl:flex">
+            {NAV_ROUTES.map((link) => {
+              const active = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`relative rounded-lg px-3 py-2 text-[13px] font-medium transition-colors ${active ? "text-white" : "text-white/48 hover:text-white/90"}`}
+                >
+                  {active && (
+                    <span className="absolute inset-0 -z-10 rounded-lg border border-white/[.08] bg-white/[.07] shadow-[0_8px_24px_rgba(0,0,0,.2)]" />
+                  )}
+                  {t(link.label)}
+                </Link>
+              );
+            })}
           </nav>
 
-          <div className={`hidden items-center xl:flex ${isArabic ? "gap-2" : "gap-2 sm:gap-3"}`}>
+          <div className="hidden items-center gap-2 xl:flex">
             {isAdmin && (
-              <Link
-                to="/admin"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-orange-400/30 bg-orange-400/10 px-2.5 py-2 text-xs font-medium text-orange-200 transition hover:border-orange-400/50"
-              >
+              <Link to="/admin" className="inline-flex items-center gap-1.5 rounded-xl border border-violet-300/20 bg-violet-400/10 px-3 py-2 text-xs font-medium text-violet-100 transition hover:bg-violet-400/15">
                 <ShieldCheck size={14} /> {t("Admin")}
               </Link>
             )}
             {user ? (
-              <>
-                <Link
-                  to="/characters"
-                  className={`hidden items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white sm:inline-flex ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
-                >
-                  {t("Characters")}
-                </Link>
-                <Link
-                  to="/dashboard"
-                  className={`inline-flex items-center gap-1.5 rounded-xl border border-white/10 py-2 font-medium text-white/85 transition hover:border-orange-400/40 hover:text-white ${isArabic ? "px-2.5 text-xs" : "px-3 text-sm"}`}
-                >
-                  <LayoutDashboard size={15} />
-                  {t("Dashboard")}
-                </Link>
-              </>
+              <Link to="/dashboard" className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[.035] px-3 py-2 text-sm font-medium text-white/78 transition hover:bg-white/[.07] hover:text-white">
+                <LayoutDashboard size={15} /> {t("Dashboard")}
+              </Link>
             ) : (
-              <Link
-                to="/login"
-                className={`rounded-xl border border-white/10 py-2 font-medium text-white/80 transition hover:border-orange-400/40 hover:text-white ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
-              >
+              <Link to="/login" className="rounded-xl px-3 py-2 text-sm font-medium text-white/65 transition hover:bg-white/[.05] hover:text-white">
                 {t("Login")}
               </Link>
             )}
             <button
               type="button"
               onClick={toggleLanguage}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)] transition hover:border-[#b8a9ff]/70 hover:bg-[#60519b]/35 hover:text-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[.035] text-white/62 transition hover:bg-white/[.07] hover:text-white"
               aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
               title={language === "ar" ? "English" : "Arabic"}
             >
-              <Globe2 size={18} />
+              <Globe2 size={17} />
             </button>
-            <a
-              href={content.discordLink || "/"}
-              target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined}
-              rel="noreferrer"
-              className={`magic-shimmer-button group relative overflow-hidden rounded-xl py-2 font-semibold ${isArabic ? "px-3 text-xs" : "px-4 text-sm"}`}
+            <ShimmerButton
+              type="button"
+              onClick={openDiscord}
+              borderRadius="12px"
+              background="linear-gradient(135deg, var(--site-primary), var(--site-accent))"
+              shimmerDuration="2.8s"
+              className="px-4 py-2.5 text-sm font-semibold"
             >
-              <span className="relative z-10 whitespace-nowrap">{t("Join Discord")}</span>
-            </a>
+              {t("Join Discord")}
+            </ShimmerButton>
           </div>
 
           <div className="ml-auto flex items-center gap-2 xl:hidden">
             <button
               type="button"
               onClick={toggleLanguage}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#8a7ac4]/45 bg-[#60519b]/20 text-[#eee9ff] shadow-[0_0_18px_rgba(96,81,155,0.24)]"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[.035] text-white/70"
               aria-label={language === "ar" ? "Switch to English" : "Switch to Arabic"}
-              title={language === "ar" ? "English" : "Arabic"}
             >
               <Globe2 size={18} />
             </button>
-            <button className="text-white" onClick={() => setOpen((o) => !o)} aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-expanded={open}>
-            {open ? <X size={22} /> : <Menu size={22} />}
+            <button
+              type="button"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[.035] text-white"
+              onClick={() => setOpen((value) => !value)}
+              aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={open}
+            >
+              {open ? <X size={21} /> : <Menu size={21} />}
             </button>
           </div>
         </div>
 
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.35 }}
-              className="mt-2 overflow-hidden rounded-2xl border border-white/10 bg-black/80 backdrop-blur-xl xl:hidden"
-            >
-              <div className="flex flex-col p-4">
+        {open && (
+            <div className="mobile-menu-in mt-2 overflow-hidden rounded-2xl border border-white/10 bg-[#090a11]/95 p-3 shadow-[0_24px_80px_rgba(0,0,0,.55)] backdrop-blur-2xl xl:hidden">
+              <div className="grid gap-1 sm:grid-cols-2">
                 {NAV_ROUTES.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}
-                    onClick={() => setOpen(false)}
-                    className={`rounded-lg px-4 py-3 text-left text-sm font-medium transition ${
-                      location.pathname === link.path ? "bg-orange-500/10 text-orange-300" : "text-white/70 hover:bg-white/5"
-                    }`}
+                    className={`rounded-xl px-4 py-3 text-sm font-medium transition ${location.pathname === link.path ? "bg-violet-400/12 text-violet-100" : "text-white/65 hover:bg-white/[.05] hover:text-white"}`}
                   >
                     {t(link.label)}
                   </Link>
                 ))}
-                <hr className="my-2 border-white/10" />
-                {isAdmin && (
-                  <Link to="/admin" onClick={() => setOpen(false)} className="rounded-lg px-4 py-3 text-left text-sm font-medium text-orange-200 hover:bg-orange-500/5 flex items-center gap-2">
-                    <ShieldCheck size={16} /> {t("Admin Panel")}
-                  </Link>
-                )}
-                {user ? (
-                  <div className="mt-1 grid gap-2 sm:grid-cols-2">
-                    <Link to="/characters" onClick={() => setOpen(false)} className="rounded-lg border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85">
-                      {t("Characters")}
-                    </Link>
-                    <Link to="/dashboard" onClick={() => setOpen(false)} className="rounded-lg border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85">
-                      {t("Dashboard")}
-                    </Link>
-                  </div>
-                ) : (
-                  <Link to="/login" onClick={() => setOpen(false)} className="rounded-lg border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85 mt-1">
-                    {t("Login")}
-                  </Link>
-                )}
-                <a href={content.discordLink || "/"} target={content.discordLink && content.discordLink !== "#" ? "_blank" : undefined} rel="noreferrer" className="mt-2 rounded-lg bg-[#60519b] px-4 py-3 text-center text-sm font-semibold text-white">
-                  {t("Join Discord")}
-                </a>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <div className="mt-2 grid gap-2 border-t border-white/[.08] pt-3 sm:grid-cols-2">
+                {isAdmin && <Link to="/admin" className="rounded-xl border border-violet-300/20 px-4 py-3 text-center text-sm text-violet-100">{t("Admin Panel")}</Link>}
+                <Link to={user ? "/dashboard" : "/login"} className="rounded-xl border border-white/10 px-4 py-3 text-center text-sm font-medium text-white/85">{t(user ? "Dashboard" : "Login")}</Link>
+                <button type="button" onClick={openDiscord} className="rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 px-4 py-3 text-sm font-semibold text-white sm:col-span-2">{t("Join Discord")}</button>
+              </div>
+            </div>
+        )}
       </div>
-    </motion.header>
+    </header>
   );
 }
