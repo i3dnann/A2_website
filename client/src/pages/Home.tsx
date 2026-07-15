@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import Hero from "../components/Hero";
 import PartnerBar from "../components/PartnerBar";
 import HomeLiveStats from "../components/HomeLiveStats";
-import CinematicInterlude from "../components/CinematicInterlude";
 
 const Features = lazy(() => import("../components/Features"));
 const Roster = lazy(() => import("../components/Roster"));
@@ -55,7 +54,6 @@ export default function Home() {
       <Hero />
       <HomeLiveStats />
       <PartnerBar />
-      <CinematicInterlude />
       <DeferredHomeSections />
     </main>
   );
