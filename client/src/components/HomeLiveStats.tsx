@@ -28,7 +28,7 @@ export default function HomeLiveStats() {
   return (
     <section className="relative px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
       <div className="section-rise mx-auto max-w-[90rem]">
-        <div className="grid overflow-hidden rounded-[1.75rem] border border-white/[.09] bg-[#0b0d14]/88 shadow-[0_24px_80px_rgba(0,0,0,.25)] lg:grid-cols-[19rem_1fr]">
+        <div className="surface-flat grid overflow-hidden rounded-[1.75rem] border border-white/[.09] lg:grid-cols-[19rem_1fr]">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[.08] p-6 lg:border-b-0 lg:border-r">
             <div>
               <div className="flex items-center gap-2 text-xs font-medium text-emerald-200">
@@ -41,7 +41,7 @@ export default function HomeLiveStats() {
           </div>
           <div className="grid grid-cols-2 gap-px bg-white/[.07] sm:grid-cols-4">
             {values.map(({ icon: Icon, label, value, unavailable: isUnavailable, suffix, color }) => (
-              <div key={label} className="flex items-center gap-3 bg-[#0b0d14]/95 px-4 py-6 transition hover:bg-[#111522] sm:px-6">
+              <div key={label} className="flex items-center gap-3 bg-[#0b0d14] px-4 py-6 transition hover:bg-[#111522] sm:px-6">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/[.08] bg-white/[.035]">
                   <Icon size={16} className={color} />
                 </span>

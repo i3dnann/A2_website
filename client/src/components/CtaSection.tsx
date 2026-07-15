@@ -15,7 +15,7 @@ export default function CtaSection() {
     <section className="relative py-28">
       <div className="mx-auto max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <Reveal>
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_30px_100px_rgba(0,0,0,.32)]">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10">
             <BorderBeam duration={11} size={150} colorFrom="var(--site-primary)" colorTo="var(--site-accent)" />
             <img src={content.ctaBackgroundImage || "/images/cta-street.jpg"} alt="Join Gotham City" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-45" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,#050608_0%,rgba(5,6,8,.84)_44%,rgba(5,6,8,.42)_100%)]" />

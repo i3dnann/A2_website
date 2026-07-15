@@ -109,7 +109,7 @@ export default function LivePage() {
 
 function MetricCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: number; color: string }) {
   return (
-    <div className="spotlight-card flex min-w-[150px] items-center gap-3 rounded-xl border border-white/10 bg-white/[0.045] px-5 py-4 shadow-[0_12px_35px_rgba(0,0,0,.28)]">
+    <div className="spotlight-card flex min-w-[150px] items-center gap-3 rounded-xl border border-white/10 px-5 py-4">
       <Icon size={21} className={color} />
       <div><p className="font-serif text-xl leading-none text-white">{value.toLocaleString()}</p><p className="mt-1 text-xs text-white/45">{label}</p></div>
     </div>
@@ -138,7 +138,7 @@ function StreamerCard({ streamer }: { streamer: Streamer }) {
   const viewers = Number(streamer.stream?.viewerCount || 0);
 
   return (
-    <div className="spotlight-card group overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] shadow-[0_18px_40px_rgba(0,0,0,0.28)] transition hover:border-[#8a7ac4]/50 hover:bg-[#60519b]/10">
+    <div className="spotlight-card group overflow-hidden rounded-2xl border border-white/10 transition hover:border-[#8a7ac4]/50">
       <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-[#161022] via-[#0b0810] to-black">
         {embedUrl ? (
           <iframe
@@ -164,7 +164,7 @@ function StreamerCard({ streamer }: { streamer: Streamer }) {
       </div>
       <div className="p-4">
         <div className="flex items-center gap-3">
-          <div className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#100b18] shadow-lg">
+          <div className="relative z-10 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-[#090b10]">
             {avatar ? <img src={avatar} alt={name} className="h-full w-full object-cover" loading="lazy" /> : <span className="font-serif text-2xl text-[#c8bcff]">{name.slice(0, 1).toUpperCase()}</span>}
           </div>
           <div className="min-w-0">

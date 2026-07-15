@@ -62,7 +62,7 @@ export default function Hero() {
       <div className="mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12">
         <div className="grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_21rem] xl:gap-14">
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/35 px-4 py-2 text-xs font-medium text-white/70 shadow-[0_12px_45px_rgba(0,0,0,.25)] backdrop-blur-xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#0b0d14] px-4 py-2 text-xs font-medium text-white/70">
               <span className="relative flex h-2 w-2">
                 {serverOnline ? <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-45" /> : null}
                 <span className={`relative inline-flex h-2 w-2 rounded-full ${statusDot}`} />
@@ -77,7 +77,7 @@ export default function Hero() {
               </div>
             </div>
 
-            <div className="hero-rise mt-7 max-w-3xl rounded-[1.75rem] border border-white/10 bg-black/30 p-4 shadow-[0_24px_80px_rgba(0,0,0,.28)] backdrop-blur-xl [--rise-delay:180ms] sm:p-5">
+            <div className="surface-flat hero-rise mt-7 max-w-3xl rounded-[1.75rem] border border-white/10 p-4 [--rise-delay:180ms] sm:p-5">
               <p className="max-w-2xl text-base leading-7 text-white/64 sm:text-lg">
                 {t(content.heroDescription)}
               </p>
@@ -109,7 +109,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {content.heroCardEnabled ? <aside className="hero-side-in relative hidden overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0b0d14]/68 p-5 shadow-[0_28px_90px_rgba(0,0,0,.36)] backdrop-blur-2xl lg:block">
+          {content.heroCardEnabled ? <aside className="surface-flat hero-side-in relative hidden overflow-hidden rounded-[1.75rem] border border-white/10 p-5 lg:block">
             <div className="flex items-center justify-between text-xs text-white/48">
               <span className="flex items-center gap-2"><Radio size={14} className="text-violet-300" /> {t(content.heroCardLabel)}</span>
               <span className={`flex items-center gap-2 ${statusTone}`}><i className={`h-1.5 w-1.5 rounded-full ${statusDot}`} />{statusLabel}</span>
@@ -131,7 +131,7 @@ export default function Hero() {
           </aside> : null}
         </div>
 
-        <div className="hero-rise mt-8 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/[.09] bg-black/25 p-2 shadow-[0_20px_70px_rgba(0,0,0,.2)] backdrop-blur-xl [--rise-delay:240ms] sm:grid-cols-4">
+        <div className="surface-flat hero-rise mt-8 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/[.09] p-2 [--rise-delay:240ms] sm:grid-cols-4">
           {content.stats.map((stat) => (
             <div key={stat.label} className="rounded-2xl px-4 py-4 transition hover:bg-white/[.055] sm:px-5">
               <div className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">

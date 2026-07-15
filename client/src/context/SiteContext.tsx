@@ -38,6 +38,7 @@ export type SiteContent = {
   heroCardEyebrow: string;
   heroCardTitle: string;
   heroCardImage?: string;
+  partnerBarSpeed: number;
   logoUrl?: string;
   serverIp: string;
   discordLink: string;
@@ -100,6 +101,7 @@ const DEFAULT_CONTENT: SiteContent = {
   heroCardEyebrow: "Now live",
   heroCardTitle: "Season 4: Gotham Nights",
   heroCardImage: "/images/gotham-banner-static.jpg",
+  partnerBarSpeed: 60,
   logoUrl: "/assets/gotham-logo.png",
   serverIp: "connect play.gothamcityrp.gg",
   discordLink: "/",

@@ -22,7 +22,7 @@ export default function Faq() {
             const isOpen = openIndex === i;
             return (
               <Reveal key={f.q} delay={i * 0.06}>
-                <div className="overflow-hidden rounded-[1.4rem] border border-white/[.08] bg-white/[.025] shadow-[0_18px_50px_rgba(0,0,0,.15)]">
+                <div className="surface-flat overflow-hidden rounded-[1.4rem] border border-white/[.08]">
                   <button onClick={() => setOpenIndex(isOpen ? null : i)} className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left">
                     <span className="text-lg font-semibold tracking-tight text-white sm:text-xl">{t(f.q)}</span>
                     <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: 0.3 }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-400/10 text-violet-200"><Plus size={16} /></motion.span>

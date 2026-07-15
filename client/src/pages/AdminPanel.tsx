@@ -374,24 +374,27 @@ export default function AdminPanel() {
                   <HomeEditor content={content} update={updateContent} />
                 )}
                 {tab === "partners" && (
-                  <ResourceAdmin
-                    title="Homepage Partners"
-                    resource="partners"
-                    blank={{
-                      partner_name: "New Partner",
-                      logo_url: "",
-                      website_url: "",
-                      sort_order: 50,
-                      is_visible: true,
-                    }}
-                    fields={[
-                      "partner_name",
-                      "logo_url",
-                      "website_url",
-                      "sort_order",
-                      "is_visible",
-                    ]}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <PartnerDisplaySettings content={content} update={updateContent} />
+                    <ResourceAdmin
+                      title="Homepage Partners"
+                      resource="partners"
+                      blank={{
+                        partner_name: "New Partner",
+                        logo_url: "",
+                        website_url: "",
+                        sort_order: 50,
+                        is_visible: true,
+                      }}
+                      fields={[
+                        "partner_name",
+                        "logo_url",
+                        "website_url",
+                        "sort_order",
+                        "is_visible",
+                      ]}
+                    />
+                  </div>
                 )}
                 {tab === "server" && (
                   <ServerEditor content={content} update={updateContent} />
@@ -4041,6 +4044,40 @@ function HomeEditor({ content, update }: any) {
         </div>
       </EditableSection>
     </div>
+  );
+}
+
+function PartnerDisplaySettings({ content, update }: any) {
+  const speed = Math.min(100, Math.max(10, Number(content.partnerBarSpeed) || 60));
+
+  return (
+    <EditableSection title="Partner Bar Motion">
+      <div className="flex items-start justify-between gap-6">
+        <div>
+          <p className="text-sm font-medium text-white">Scrolling speed</p>
+          <p className="mt-1 text-xs leading-5 text-white/45">
+            Higher values move partner cards faster. Save with the main Save All Changes button.
+          </p>
+        </div>
+        <span className="rounded-lg border border-white/10 bg-[#11131b] px-3 py-1.5 text-sm font-semibold text-white">
+          {speed}
+        </span>
+      </div>
+      <input
+        type="range"
+        min="10"
+        max="100"
+        step="5"
+        value={speed}
+        aria-label="Partner bar scrolling speed"
+        onChange={(event) => update({ partnerBarSpeed: Number(event.target.value) })}
+        className="mt-4 w-full cursor-pointer accent-violet-500"
+      />
+      <div className="flex justify-between text-[11px] font-medium uppercase tracking-[.12em] text-white/35">
+        <span>Slower</span>
+        <span>Faster</span>
+      </div>
+    </EditableSection>
   );
 }
 

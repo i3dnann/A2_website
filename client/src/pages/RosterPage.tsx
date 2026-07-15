@@ -79,9 +79,8 @@ function RosterCircle({ member, onClick }: { member: RosterItem; onClick: () => 
       onClick={onClick}
       className="group flex min-w-0 flex-col items-center text-center focus:outline-none"
     >
-        <div className="spotlight-card relative rounded-full">
-        <div className="absolute inset-0 rounded-full bg-[#60519b]/30 blur-xl opacity-0 transition group-hover:opacity-100" />
-        <div className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-gradient-to-br from-[#1a1328] to-black shadow-[0_18px_40px_rgba(0,0,0,0.36)] transition group-hover:border-[#8a7ac4]/65 sm:h-32 sm:w-32">
+      <div className="relative rounded-full">
+        <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-white/12 bg-[#090b10] transition group-hover:border-[#8a7ac4]/65 sm:h-32 sm:w-32">
           {member.avatar ? (
             <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" loading="lazy" />
           ) : (
@@ -123,7 +122,7 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           exit={{ opacity: 0, y: 18, scale: 0.98 }}
           transition={{ duration: 0.22 }}
           onClick={(event) => event.stopPropagation()}
-          className="spotlight-card relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08060d] shadow-2xl"
+          className="spotlight-card relative w-full max-w-xl overflow-hidden rounded-2xl border border-white/10 bg-[#08060d]"
         >
           <button onClick={onClose} className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-black/50 text-white/70 transition hover:text-white">
             <X size={16} />
@@ -137,7 +136,7 @@ function RosterProfile({ member, onClose }: { member: RosterItem | null; onClose
           </div>
           <div className="px-5 pb-6 sm:px-6">
             <div className="-mt-16 flex flex-col items-center text-center">
-              <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#15101f] shadow-[0_18px_45px_rgba(0,0,0,0.45)]">
+              <div className="relative flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[#08060d] bg-[#090b10]">
                 {member.avatar ? <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" /> : <Icon size={40} className="text-[#c8bcff]" />}
               </div>
               <h2 className="mt-4 font-serif text-3xl text-white">{t(member.name)}</h2>

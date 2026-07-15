@@ -24,7 +24,7 @@ export default function News() {
           {content.news.map((n) => {
             const Icon = getIcon(n.icon);
             return (
-              <motion.a href="/news" key={n.id || n.title} variants={staggerItem} whileHover={{ y: -6 }} className="group flex min-h-72 flex-col rounded-[1.5rem] border border-white/[.08] bg-white/[.025] p-7 shadow-[0_22px_60px_rgba(0,0,0,.18)] transition-colors hover:border-violet-300/20 hover:bg-violet-400/[.04]">
+              <motion.a href="/news" key={n.id || n.title} variants={staggerItem} whileHover={{ y: -6 }} className="surface-flat group flex min-h-72 flex-col rounded-[1.5rem] border border-white/[.08] p-7 transition-colors hover:border-violet-300/20">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-400/10 text-violet-200"><Icon size={20} /></div>
                 <p className="mt-5 text-xs text-white/38">{n.date}</p>
                 <h3 className="mt-3 text-xl font-semibold leading-tight tracking-tight text-white">{t(n.title)}</h3>

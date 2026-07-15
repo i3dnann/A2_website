@@ -22,7 +22,7 @@ export default function Features() {
             const Icon = getIcon(f.icon);
             return (
               <motion.div key={f.title} variants={staggerItem} whileHover={{ y: -6 }} className="rounded-[1.5rem]">
-                <MagicCard gradientColor="#121625" gradientFrom="var(--site-primary)" gradientTo="var(--site-accent)" gradientOpacity={0.6} className="group h-full rounded-[1.5rem] bg-[#0b0d14]/72 p-7 shadow-[0_22px_65px_rgba(0,0,0,.2)] sm:p-8">
+                <MagicCard gradientColor="#121625" gradientFrom="var(--site-primary)" gradientTo="var(--site-accent)" gradientOpacity={0.35} className="surface-flat group h-full rounded-[1.5rem] p-7 sm:p-8">
                   <div className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-400/10 text-violet-200 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6">
                     <Icon size={22} />
                   </div>

@@ -43,7 +43,7 @@ export default function TermsPage() {
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.55 }}
-        className="spotlight-card mx-auto max-w-4xl rounded-2xl border border-white/10 bg-black/45 p-6 shadow-[0_0_40px_rgba(96,81,155,0.12)] backdrop-blur sm:p-8"
+        className="spotlight-card mx-auto max-w-4xl rounded-2xl border border-white/10 p-6 sm:p-8"
       >
         <div className="mb-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.18em] text-white/40">
           {terms?.version && <span>{t("Version")} {terms.version}</span>}

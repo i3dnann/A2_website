@@ -25,7 +25,7 @@ export default function Careers() {
                 {t("No career positions are posted right now.")}
               </div>
             ) : content.careers.map((c) => (
-              <motion.div key={c.role} variants={staggerItem} whileHover={{ x: 6 }} className="flex items-center justify-between gap-4 rounded-[1.4rem] border border-white/[.08] bg-white/[.025] px-6 py-5 shadow-[0_18px_50px_rgba(0,0,0,.16)] transition-colors hover:border-violet-300/20 hover:bg-violet-400/[.04]">
+              <motion.div key={c.role} variants={staggerItem} whileHover={{ x: 6 }} className="surface-flat flex items-center justify-between gap-4 rounded-[1.4rem] border border-white/[.08] px-6 py-5 transition-colors hover:border-violet-300/20">
                 <div className="flex items-center gap-4"><div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-300/15 bg-violet-400/10 text-violet-200"><Briefcase size={20} /></div>
                   <div><p className="text-lg font-semibold tracking-tight text-white">{t(c.role)}</p><p className="text-xs text-white/40">{t(c.dept)}</p></div>
                 </div>

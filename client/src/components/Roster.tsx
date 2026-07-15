@@ -24,10 +24,9 @@ export default function Roster() {
           {content.roster.map((r) => {
             const Icon = getIcon(r.icon);
             return (
-              <motion.div key={r.name} variants={staggerItem} whileHover={{ y: -5, scale: 1.015 }} className="group flex min-w-0 flex-col rounded-[1.5rem] border border-white/[.08] bg-white/[.025] p-3 text-left shadow-[0_18px_45px_rgba(0,0,0,.16)]">
+              <motion.div key={r.name} variants={staggerItem} whileHover={{ y: -5, scale: 1.015 }} className="surface-flat group flex min-w-0 flex-col rounded-[1.5rem] border border-white/[.08] p-3 text-left">
                 <div className="relative">
-                  <div className="absolute inset-2 rounded-2xl bg-violet-500/20 blur-xl opacity-0 transition group-hover:opacity-100" />
-                  <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#10141c] to-black transition group-hover:border-violet-300/35">
+                  <div className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#090b10] transition group-hover:border-violet-300/35">
                     {r.avatar ? (
                       <img src={r.avatar} alt={r.name} className="h-full w-full object-cover" loading="lazy" />
                     ) : (

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { ExternalLink } from "lucide-react";
 import { api } from "../api/client";
 import { useLanguage } from "../context/LanguageContext";
+import { useSite } from "../context/SiteContext";
 import { Marquee } from "./ui/marquee";
 
 type Partner = {
@@ -14,6 +15,9 @@ type Partner = {
 export default function PartnerBar() {
   const [partners, setPartners] = useState<Partner[]>([]);
   const { t } = useLanguage();
+  const { content } = useSite();
+  const speed = Math.min(100, Math.max(10, Number(content.partnerBarSpeed) || 60));
+  const duration = Math.round(70 - speed * 0.6);
 
   useEffect(() => {
     let cancel = false;
@@ -33,7 +37,7 @@ export default function PartnerBar() {
 
   return (
     <section className="relative overflow-hidden px-5 py-12 sm:px-8 sm:py-16 lg:px-12">
-      <div className="mx-auto max-w-[90rem] overflow-hidden rounded-[1.75rem] border border-white/[.08] bg-white/[.025] py-7 shadow-[0_24px_80px_rgba(0,0,0,.2)]">
+      <div className="surface-flat mx-auto max-w-[90rem] overflow-hidden rounded-[1.75rem] border border-white/[.08] py-7">
         <div className="section-rise mb-5 flex items-end justify-between gap-4 px-6 sm:px-8">
           <div>
             <p className="text-xs font-medium text-violet-300">{t("Partners")}</p>
@@ -47,7 +51,12 @@ export default function PartnerBar() {
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[#0a0b11] to-transparent sm:w-28" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[#0a0b11] to-transparent sm:w-28" />
-          <Marquee pauseOnHover repeat={4} className="[--duration:34s] [--gap:.75rem] py-2">
+          <Marquee
+            pauseOnHover
+            repeat={4}
+            className="[--gap:.75rem] py-2"
+            style={{ "--duration": `${duration}s` } as CSSProperties}
+          >
             {partners.map((partner) => <PartnerCard key={partner.id} partner={partner} />)}
           </Marquee>
         </div>
@@ -60,8 +69,8 @@ function PartnerCard({ partner }: { partner: Partner }) {
   const { t } = useLanguage();
   const name = partner.partner_name || "Partner";
   const content = (
-    <div className="group flex h-20 w-64 items-center gap-4 rounded-2xl border border-white/[.08] bg-[#0d0f18]/85 px-4 shadow-[0_14px_30px_rgba(0,0,0,.2)] transition hover:-translate-y-0.5 hover:border-violet-300/25 hover:bg-violet-400/[.07]">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/25">
+    <div className="surface-flat group flex h-20 w-64 items-center gap-4 rounded-2xl border border-white/[.08] px-4 transition hover:-translate-y-0.5 hover:border-violet-300/25">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#07080d]">
         {partner.logo_url ? (
           <img src={partner.logo_url} alt={name} className="h-full w-full object-contain p-1.5" loading="lazy" />
         ) : (
