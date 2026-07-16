@@ -93,6 +93,8 @@ export async function uploadBufferToCloudinary(buffer, options = {}) {
           folder: options.folder || "gotham-city/contracts",
           public_id: options.publicId,
           resource_type: options.resourceType || "raw",
+          type: options.type,
+          access_mode: options.accessMode,
           overwrite: Boolean(options.overwrite),
           unique_filename: !options.publicId,
           use_filename: false,
@@ -110,6 +112,16 @@ export async function uploadBufferToCloudinary(buffer, options = {}) {
   } catch (error) {
     throw cloudinaryError(error);
   }
+}
+
+export function privateCloudinaryDownloadUrl(publicId, format = "pdf", options = {}) {
+  if (!publicId || !cloudinaryConfigured()) return "";
+  return cloudinary.utils.private_download_url(publicId, format, {
+    resource_type: options.resourceType || "raw",
+    type: options.type || "upload",
+    attachment: Boolean(options.attachment),
+    expires_at: Math.floor(Date.now() / 1000) + Number(options.expiresIn || 300),
+  });
 }
 
 export async function deleteFromCloudinary(publicId, mimeType = "") {

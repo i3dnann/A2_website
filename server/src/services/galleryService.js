@@ -10,6 +10,8 @@ async function ensureGalleryTable() {
   await query(`CREATE TABLE IF NOT EXISTS gallery_photos (
     id VARCHAR(64) PRIMARY KEY,
     image_url TEXT NOT NULL,
+    storage_public_id VARCHAR(255) NULL,
+    storage_resource_type VARCHAR(32) NULL,
     status VARCHAR(32) DEFAULT 'Pending',
     submitted_by VARCHAR(64) NULL,
     uploader_username VARCHAR(255) NULL,
@@ -22,6 +24,8 @@ async function ensureGalleryTable() {
     updated_at DATETIME NULL,
     deleted_at DATETIME NULL
   )`);
+  await query("ALTER TABLE gallery_photos ADD COLUMN IF NOT EXISTS storage_public_id VARCHAR(255) NULL").catch(() => null);
+  await query("ALTER TABLE gallery_photos ADD COLUMN IF NOT EXISTS storage_resource_type VARCHAR(32) NULL").catch(() => null);
   tableChecked = true;
 }
 
@@ -32,6 +36,15 @@ function now() {
 function normalize(row) {
   if (!row) return row;
   return { ...row, id: String(row.id) };
+}
+
+export function publicGalleryPhoto(row = {}) {
+  return {
+    id: String(row.id),
+    image_url: row.image_url || "",
+    status: row.status || "Approved",
+    created_at: row.created_at || null
+  };
 }
 
 function userMeta(user = {}) {
@@ -81,6 +94,8 @@ export async function createGalleryPhoto(payload, actor, forcedStatus = "Approve
   const row = {
     id: randomUUID(),
     image_url: payload.image_url,
+    storage_public_id: payload.storage_public_id || null,
+    storage_resource_type: payload.storage_resource_type || "image",
     status: forcedStatus,
     ...userMeta(payload.user || actor),
     reviewed_by: forcedStatus === "Pending" ? null : actor?.id || null,
@@ -93,8 +108,8 @@ export async function createGalleryPhoto(payload, actor, forcedStatus = "Approve
   };
   if (databaseEnabled) {
     const result = await query(
-      `INSERT INTO gallery_photos (id, image_url, status, submitted_by, uploader_username, uploader_discord_id, reviewed_by, reviewed_at, created_by, updated_by, created_at, updated_at, deleted_at)
-       VALUES (:id, :image_url, :status, :submitted_by, :uploader_username, :uploader_discord_id, :reviewed_by, :reviewed_at, :created_by, :updated_by, :created_at, :updated_at, :deleted_at)`,
+      `INSERT INTO gallery_photos (id, image_url, storage_public_id, storage_resource_type, status, submitted_by, uploader_username, uploader_discord_id, reviewed_by, reviewed_at, created_by, updated_by, created_at, updated_at, deleted_at)
+       VALUES (:id, :image_url, :storage_public_id, :storage_resource_type, :status, :submitted_by, :uploader_username, :uploader_discord_id, :reviewed_by, :reviewed_at, :created_by, :updated_by, :created_at, :updated_at, :deleted_at)`,
       row
     );
     if (result) return row;

@@ -24,7 +24,6 @@ export function ownsTicket(user, ticket) {
   return (
     same(ticket.user_id, user.id) ||
     same(ticket.created_by, user.id) ||
-    same(ticket.updated_by, user.id) ||
     same(ticket.discord_id, user.discord_id) ||
     same(ticket.steam_id, user.steam_id)
   );

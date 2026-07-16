@@ -2,16 +2,39 @@ import { randomUUID } from "node:crypto";
 import { query } from "../config/db.js";
 import { databaseEnabled } from "../config/env.js";
 import { DEFAULT_SETTINGS, RESOURCE_MAP, SEED_DATA } from "../data/catalog.js";
-import { pickAllowed, safeJson, toBoolean } from "../utils/sanitize.js";
+import { pickAllowed, safeJson, sanitizeUrlFields, toBoolean } from "../utils/sanitize.js";
 
 const state = {
   settings: { ...DEFAULT_SETTINGS },
+  secretSettings: new Set(),
   settingsLoaded: false,
   secretSettingsLoaded: false,
   resources: new Map(Object.entries(SEED_DATA).map(([key, rows]) => [key, rows.map((row) => addTimestamps(row))])),
   tableColumns: new Map(),
   famousSchemaChecked: false
 };
+
+export function isSecretSettingKey(key) {
+  const normalized = String(key || "").toLowerCase();
+  return normalized.startsWith("webhook_") || normalized.includes("webhookurl") || normalized.includes("webhook_url");
+}
+
+export function redactSecrets(value) {
+  if (Array.isArray(value)) return value.map((item) => redactSecrets(item));
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      isSecretSettingKey(key) ? "[redacted]" : redactSecrets(item)
+    ])
+  );
+}
+
+function publicSettingsSnapshot(settings) {
+  return Object.fromEntries(
+    Object.entries(sanitizeUrlFields(redactSecrets(settings))).filter(([key]) => !state.secretSettings.has(key) && !isSecretSettingKey(key))
+  );
+}
 
 function safeTableName(table) {
   if (!/^[a-zA-Z0-9_]+$/.test(String(table || ""))) throw new Error("Unsafe table name");
@@ -192,7 +215,8 @@ export async function getSettings({ includeSecrets = false } = {}) {
     if (rows) {
       const dbSettings = {};
       rows.forEach((row) => {
-        if (row.is_secret && !includeSecrets) return;
+        if (row.is_secret || isSecretSettingKey(row.setting_key)) state.secretSettings.add(row.setting_key);
+        if ((row.is_secret || state.secretSettings.has(row.setting_key)) && !includeSecrets) return;
         const value = safeJson(row.setting_value, row.setting_value);
         dbSettings[row.setting_key] = row.setting_key === "siteContent" ? withoutLegacyManagedContent(value) : value;
       });
@@ -203,7 +227,7 @@ export async function getSettings({ includeSecrets = false } = {}) {
   }
 
   if (!includeSecrets) {
-    return Object.fromEntries(Object.entries(state.settings).filter(([key]) => !key.toLowerCase().includes("webhookurl")));
+    return publicSettingsSnapshot(state.settings);
   }
   return { ...state.settings };
 }
@@ -212,21 +236,25 @@ export async function updateSettings(patch, actor, { secretKeys = [] } = {}) {
   const before = await getSettings({ includeSecrets: true });
   const safePatch = { ...(patch || {}) };
   if ("siteContent" in safePatch) safePatch.siteContent = withoutLegacyManagedContent(safePatch.siteContent);
+  const sanitizedPatch = sanitizeUrlFields(safePatch);
+  Object.keys(sanitizedPatch).forEach((key) => {
+    if (secretKeys.includes(key) || isSecretSettingKey(key)) state.secretSettings.add(key);
+  });
   state.settings = {
     ...state.settings,
-    ...safePatch,
+    ...sanitizedPatch,
     updated_by: actor?.id || null,
     updated_at: new Date().toISOString()
   };
 
   if (databaseEnabled) {
     await Promise.all(
-      Object.entries(safePatch).map(async ([key, value]) => {
+      Object.entries(sanitizedPatch).map(async ([key, value]) => {
         const data = await filterExistingColumns("web_settings", {
           id: `setting-${key}`,
           setting_key: key,
           setting_value: JSON.stringify(value),
-          is_secret: secretKeys.includes(key) ? 1 : 0,
+          is_secret: state.secretSettings.has(key) ? 1 : 0,
           updated_by: actor?.id || null
         });
         const keys = Object.keys(data);
@@ -381,6 +409,8 @@ export async function deleteResource(resourceKey, id, actor) {
 }
 
 export async function addAuditLog(entry) {
+  const before = entry.before ? redactSecrets(entry.before) : null;
+  const after = entry.after ? redactSecrets(entry.after) : null;
   return createResource(
     "auditLogs",
     {
@@ -391,8 +421,8 @@ export async function addAuditLog(entry) {
       target_id: entry.targetId,
       reason: entry.reason || "",
       ip: entry.ip || "",
-      before_json: entry.before ? JSON.stringify(entry.before).slice(0, 6000) : null,
-      after_json: entry.after ? JSON.stringify(entry.after).slice(0, 6000) : null,
+      before_json: before ? JSON.stringify(before).slice(0, 6000) : null,
+      after_json: after ? JSON.stringify(after).slice(0, 6000) : null,
       status: entry.status || "success"
     },
     entry.staff

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { highestRoleRank, isMasterAdmin } from "../data/permissions.js";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
@@ -23,6 +24,29 @@ import {
 const router = Router();
 
 router.use(requireAuth, requirePermission("manage_users"));
+
+function canManageTargetUser(actor, target) {
+  if (!target) return true;
+  if (isMasterAdmin(actor)) return true;
+  return highestRoleRank(target) === 0;
+}
+
+function rejectProtectedTarget(res) {
+  return res.status(403).json({ error: "target_admin_rank_too_high" });
+}
+
+async function requireManageableTarget(req, res) {
+  const user = await getUserById(req.params.id);
+  if (!user) {
+    res.status(404).json({ error: "user_not_found" });
+    return null;
+  }
+  if (!canManageTargetUser(req.user, user)) {
+    rejectProtectedTarget(res);
+    return null;
+  }
+  return user;
+}
 
 router.get(
   "/users",
@@ -151,8 +175,8 @@ router.post(
     const provider = String(req.params.provider || "").toLowerCase();
     if (!["discord", "steam"].includes(provider))
       return res.status(422).json({ error: "unsupported_provider" });
-    const before = await getUserById(req.params.id);
-    if (!before) return res.status(404).json({ error: "user_not_found" });
+    const before = await requireManageableTarget(req, res);
+    if (!before) return;
     const user = await unlinkProviderForUser(req.params.id, provider, req.user);
     await auditAction({
       req,
@@ -171,8 +195,8 @@ router.post(
 router.post(
   "/users/:id/ban",
   asyncHandler(async (req, res) => {
-    const user = await getUserById(req.params.id);
-    if (!user) return res.status(404).json({ error: "user_not_found" });
+    const user = await requireManageableTarget(req, res);
+    if (!user) return;
     const reason = req.body?.reason || "Banned by admin";
     await blockUserIdentity(user, req.user, reason);
     const banned = await upsertWebUserFromAdmin(
@@ -196,8 +220,8 @@ router.post(
 router.post(
   "/users/:id/unban",
   asyncHandler(async (req, res) => {
-    const user = await getUserById(req.params.id);
-    if (!user) return res.status(404).json({ error: "user_not_found" });
+    const user = await requireManageableTarget(req, res);
+    if (!user) return;
     await unblockUserIdentity(user);
     const active = await upsertWebUserFromAdmin(
       { ...user, account_status: "active", admin_status: "active" },
@@ -220,8 +244,8 @@ router.post(
 router.post(
   "/users/:id/activate",
   asyncHandler(async (req, res) => {
-    const user = await getUserById(req.params.id);
-    if (!user) return res.status(404).json({ error: "user_not_found" });
+    const user = await requireManageableTarget(req, res);
+    if (!user) return;
     const active = await upsertWebUserFromAdmin(
       { ...user, account_status: "active", admin_status: "active" },
       req.user,
@@ -243,7 +267,8 @@ router.post(
 router.post(
   "/users/:id/deactivate",
   asyncHandler(async (req, res) => {
-    const before = await getUserById(req.params.id);
+    const before = await requireManageableTarget(req, res);
+    if (!before) return;
     const user = await deactivateWebUser(req.params.id, req.user);
     if (!user) return res.status(404).json({ error: "user_not_found" });
     await auditAction({
@@ -271,7 +296,8 @@ router.post(
           error: "weak_password",
           message: "Password must be at least 8 characters.",
         });
-    const before = await getUserById(req.params.id);
+    const before = await requireManageableTarget(req, res);
+    if (!before) return;
     const user = await resetUserPassword(req.params.id, password, req.user);
     if (!user) return res.status(404).json({ error: "user_not_found" });
     await auditAction({
@@ -299,7 +325,8 @@ router.delete(
           message: "You cannot delete your own account while logged in.",
         });
     }
-    const before = await getUserById(req.params.id);
+    const before = await requireManageableTarget(req, res);
+    if (!before) return;
     await blockUserIdentity(
       before,
       req.user,
@@ -322,3 +349,4 @@ router.delete(
 );
 
 export default router;
+export const __adminUsersExtraTest = { canManageTargetUser };

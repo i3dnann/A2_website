@@ -82,7 +82,10 @@ function requireImage(req, res, next) {
 }
 
 function requireGalleryImage(req, res, next) {
-  if (req.file && !String(req.file.mimetype || "").startsWith("image/")) return res.status(400).json({ error: "only_images_allowed" });
+  if (req.file && !String(req.file.mimetype || "").startsWith("image/")) {
+    fs.promises.unlink(req.file.path).catch(() => {});
+    return res.status(400).json({ error: "only_images_allowed" });
+  }
   if (!req.file && !req.body?.image_url) return res.status(400).json({ error: "image_required" });
   return next();
 }
@@ -164,19 +167,26 @@ app.delete("/api/media/delete", requireAuth, requirePermission("manage_home"), a
 
 app.get(`/api/public${photoPath}`, async (req, res) => {
   const rows = await shots.listGalleryPhotos({ status: "Approved", q: req.query.q || "", limit: req.query.limit || 100 });
-  res.json({ rows, total: rows.length });
+  const publicRows = rows.map(shots.publicGalleryPhoto);
+  res.json({ rows: publicRows, total: publicRows.length });
 });
 
 app.get(`/api/public${photoPath}/:id`, async (req, res) => {
   const row = await shots.getGalleryPhoto(req.params.id);
   if (!row || row.status !== "Approved") return res.status(404).json({ error: "photo_not_found" });
-  res.json({ row });
+  res.json({ row: shots.publicGalleryPhoto(row) });
 });
 
 app.post(`/api/public${photoPath}`, requireAuth, upload.single("file"), requireGalleryImage, async (req, res) => {
-  const imageUrl = req.file ? (await uploadToCloudinary(req.file, "gotham-city/gallery")).url : req.body.image_url;
-  const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, "Pending");
-  res.status(201).json({ row, message: "Image sent for admin review." });
+  const uploaded = req.file ? await uploadToCloudinary(req.file, "gotham-city/gallery") : null;
+  const imageUrl = uploaded?.url || req.body.image_url;
+  const row = await shots.createGalleryPhoto({
+    image_url: imageUrl,
+    storage_public_id: uploaded?.publicId || null,
+    storage_resource_type: uploaded?.resourceType || "image",
+    user: req.user
+  }, req.user, "Pending");
+  res.status(201).json({ row: shots.publicGalleryPhoto(row), message: "Image sent for admin review." });
 });
 
 app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (req, res) => {
@@ -185,8 +195,14 @@ app.get(`/api/admin${photoPath}`, requirePermission("manage_gallery"), async (re
 });
 
 app.post(`/api/admin${photoPath}`, requirePermission("manage_gallery"), upload.single("file"), requireGalleryImage, async (req, res) => {
-  const imageUrl = req.file ? (await uploadToCloudinary(req.file, "gotham-city/gallery")).url : req.body.image_url;
-  const row = await shots.createGalleryPhoto({ image_url: imageUrl, user: req.user }, req.user, req.body?.status || "Approved");
+  const uploaded = req.file ? await uploadToCloudinary(req.file, "gotham-city/gallery") : null;
+  const imageUrl = uploaded?.url || req.body.image_url;
+  const row = await shots.createGalleryPhoto({
+    image_url: imageUrl,
+    storage_public_id: uploaded?.publicId || null,
+    storage_resource_type: uploaded?.resourceType || "image",
+    user: req.user
+  }, req.user, req.body?.status || "Approved");
   res.status(201).json({ row });
 });
 
@@ -194,12 +210,18 @@ app.patch(`/api/admin${photoPath}/:id`, requirePermission("manage_gallery"), asy
   const status = req.body?.status === "Denied" ? "Denied" : "Approved";
   const result = await shots.reviewGalleryPhoto(req.params.id, status, req.user);
   if (!result) return res.status(404).json({ error: "photo_not_found" });
+  if (status === "Denied" && result.after?.storage_public_id) {
+    await deleteFromCloudinary(result.after.storage_public_id, `${result.after.storage_resource_type || "image"}/`).catch(() => null);
+  }
   res.json({ row: result.after });
 });
 
 app.delete(`/api/admin${photoPath}/:id`, requirePermission("manage_gallery"), async (req, res) => {
   const before = await shots.deleteGalleryPhoto(req.params.id, req.user);
   if (!before) return res.status(404).json({ error: "photo_not_found" });
+  if (before.storage_public_id) {
+    await deleteFromCloudinary(before.storage_public_id, `${before.storage_resource_type || "image"}/`).catch(() => null);
+  }
   res.json({ ok: true });
 });
 

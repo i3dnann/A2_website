@@ -27,3 +27,8 @@ Thumbs.db
 .wrangler
 .dev.vars*
 !.dev.vars.example
+.codex-security-work/
+.finding016/
+.finding022/
+.vscode/
+security-scans/

@@ -7,7 +7,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { authLimiter } from "../middleware/security.js";
 import { cookieOptions, requireAuth } from "../middleware/auth.js";
 import { discordAuthorizeUrl, discordConfigured, exchangeDiscordCode, getDiscordUser } from "../services/discord.js";
-import { getUserById, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateFirebaseUser, loginOrCreateProviderUser, registerEmailUser, saveTermsAgreement, verifyUserToken } from "../services/users.js";
+import { getUserById, isUserTokenCurrent, linkProvider, listProvidersForUser, loginEmailUser, loginOrCreateFirebaseUser, loginOrCreateProviderUser, registerEmailUser, revokeUserSessions, saveTermsAgreement, signUser, verifyUserToken } from "../services/users.js";
 import { verifyFirebaseToken } from "../services/firebaseAuth.js";
 import { assertAccountNotBlocked, recordUserIp } from "../services/accountBlocks.js";
 import { env } from "../config/env.js";
@@ -18,10 +18,9 @@ const router = Router();
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const SESSION_EXPIRES_IN = "30d";
 const OAUTH_STATE_EXPIRES_IN = "15m";
-const LEGACY_STATE_SECRETS = [
-  "change_me_to_a_long_random_session_secret",
-  "change_me_to_a_long_random_secret"
-];
+const OAUTH_STATE_TTL_MS = 15 * 60 * 1000;
+const PROCESS_OAUTH_STATE_SECRET = randomBytes(32).toString("hex");
+const oauthTransactions = new Map();
 
 const registerSchema = z.object({
   username: z.string().min(2).max(80),
@@ -36,14 +35,22 @@ const loginSchema = z.object({
 });
 
 function stateSecrets() {
-  return [env.OAUTH_STATE_SECRET, env.SESSION_SECRET, env.JWT_SECRET, ...LEGACY_STATE_SECRETS]
+  return [env.OAUTH_STATE_SECRET, PROCESS_OAUTH_STATE_SECRET]
     .filter(Boolean)
     .filter((value, index, list) => list.indexOf(value) === index);
 }
 
 function createState(payload) {
+  const nonce = randomUUID();
+  const expiresAt = Date.now() + OAUTH_STATE_TTL_MS;
+  oauthTransactions.set(nonce, {
+    provider: payload.provider,
+    mode: payload.mode,
+    userId: payload.userId || null,
+    expiresAt
+  });
   return jwt.sign(
-    { ...payload, nonce: randomUUID() },
+    { nonce },
     stateSecrets()[0],
     { expiresIn: OAUTH_STATE_EXPIRES_IN }
   );
@@ -52,10 +59,29 @@ function createState(payload) {
 function readState(state) {
   for (const secret of stateSecrets()) {
     try {
-      return jwt.verify(String(state || ""), secret);
+      const payload = jwt.verify(String(state || ""), secret);
+      const nonce = String(payload?.nonce || "");
+      const transaction = oauthTransactions.get(nonce);
+      oauthTransactions.delete(nonce);
+      if (!transaction || transaction.expiresAt < Date.now()) return null;
+      return transaction;
     } catch {}
   }
   return null;
+}
+
+function sameUser(left, right) {
+  return left && right && String(left) === String(right);
+}
+
+function validateLinkState(req, res, oauthState, provider) {
+  if (oauthState?.mode !== "link") return true;
+  if (oauthState.provider !== provider) return false;
+  if (!sameUser(oauthState.userId, req.user?.id)) {
+    oauthError(res, provider === "steam" ? "invalid_steam_state" : "invalid_oauth_state");
+    return false;
+  }
+  return true;
 }
 
 function oauthError(res, code) {
@@ -65,16 +91,16 @@ function oauthError(res, code) {
 }
 
 function setSession(res, user) {
-  const token = jwt.sign({ sub: user.id }, env.JWT_SECRET, { expiresIn: SESSION_EXPIRES_IN });
+  const token = signUser(user);
   res.cookie("a2_session", token, { ...cookieOptions, maxAge: SESSION_MAX_AGE_MS });
   return token;
 }
 
 async function finishOAuth(req, res, user, action) {
   await recordUserIp(user.id, req.ip);
-  const token = setSession(res, user);
+  setSession(res, user);
   await auditAction({ req: { ...req, user }, action, targetType: "web_users", targetId: user.id, webhookCategory: "security" });
-  return res.redirect(`${env.FRONTEND_URL}/auth/complete?token=${encodeURIComponent(token)}`);
+  return res.redirect(`${env.FRONTEND_URL}/auth/complete`);
 }
 
 router.get("/providers", (_req, res) => {
@@ -166,6 +192,8 @@ router.get(
     };
     await assertAccountNotBlocked({ provider: "discord", providerUserId: discordUser.id, ipAddress: req.ip });
 
+    if (!validateLinkState(req, res, oauthState, "discord")) return;
+
     if (oauthState.mode === "link") {
       const user = await linkProvider(oauthState.userId, "discord", discordUser.id, profile);
       return finishOAuth(req, res, user, "discord_link");
@@ -230,6 +258,8 @@ router.get(
     const profile = { username: `Steam ${steamId}`, steam_id: steamId };
     await assertAccountNotBlocked({ provider: "steam", providerUserId: steamId, ipAddress: req.ip });
 
+    if (!validateLinkState(req, res, oauthState, "steam")) return;
+
     if (oauthState.mode === "link") {
       const user = await linkProvider(oauthState.userId, "steam", steamId, profile);
       return finishOAuth(req, res, user, "steam_link");
@@ -269,6 +299,7 @@ router.post(
     if (!payload?.sub) return res.status(401).json({ error: "invalid_login_token", message: "The login token could not be verified. Restart the backend with the same JWT_SECRET used for OAuth." });
     const user = await getUserById(payload.sub);
     if (!user) return res.status(404).json({ error: "user_not_found", message: "The login token is valid, but the user account could not be found." });
+    if (!isUserTokenCurrent(user, payload)) return res.status(401).json({ error: "invalid_login_token", message: "The login token has expired. Please sign in again." });
     res.cookie("a2_session", req.body.token, { ...cookieOptions, maxAge: SESSION_MAX_AGE_MS });
     const providers = await listProvidersForUser(user.id);
     res.json({ user, providers });
@@ -294,9 +325,11 @@ router.get("/csrf", (_req, res) => {
 });
 
 router.post("/logout", requireAuth, asyncHandler(async (req, res) => {
+  await revokeUserSessions(req.user.id);
   res.clearCookie("a2_session");
   await auditAction({ req, action: "logout", targetType: "web_users", targetId: req.user.id, webhookCategory: "security" });
   res.json({ ok: true });
 }));
 
 export default router;
+export const __authTest = { createState, readState, validateLinkState, oauthTransactions };

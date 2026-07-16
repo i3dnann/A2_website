@@ -89,3 +89,38 @@ export function hasPermission(user, permission) {
   const permissions = user?.permissions || [];
   return permissions.includes("master_access") || permissions.includes(permission);
 }
+
+export function isDisabledAdmin(user) {
+  const permissions = user?.permissions || [];
+  const isAdmin = permissions.some((permission) => permission !== "view_player_portal");
+  return isAdmin && ["frozen", "disabled", "removed"].includes(user?.admin_status);
+}
+
+export function hasActivePermission(user, permission) {
+  if (isDisabledAdmin(user) && permission !== "view_player_portal") return false;
+  return hasPermission(user, permission);
+}
+
+export function isMasterAdmin(user) {
+  return hasActivePermission(user, "master_access") || (user?.roles || []).includes("Master Admin");
+}
+
+export function highestRoleRank(userOrPayload = {}) {
+  const roles = userOrPayload.roles || [];
+  if (roles.includes("Master Admin")) return 5;
+  if (roles.includes("Super Admin")) return 4;
+  if (roles.includes("Admin")) return 3;
+  if (roles.includes("Moderator")) return 2;
+  if (roles.includes("Support")) return 1;
+  const permissions = userOrPayload.permissions || [];
+  if (permissions.includes("master_access")) return 5;
+  if (permissions.some((permission) => permission !== "view_player_portal")) return 3;
+  return 0;
+}
+
+export function includesMasterAuthority(payload = {}) {
+  return (
+    (payload.roles || []).includes("Master Admin") ||
+    (payload.permissions || []).includes("master_access")
+  );
+}

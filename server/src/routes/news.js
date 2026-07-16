@@ -168,12 +168,13 @@ router.post(
     const body = String(req.body?.body || "").trim();
     if (body.length < 2) return res.status(422).json({ error: "comment_required", message: "Write a comment first." });
     const verified = userIsVerified(req.user);
+    const identity = await resolveUserIdentity({ user_id: req.user.id });
     const comment = await createResource(
       "newsComments",
       {
         news_id: post.id,
         user_id: req.user.id,
-        author_name: String(req.body?.author_name || req.user.username || "Community Member").slice(0, 80),
+        author_name: String(identity?.label || req.user.username || req.user.email || "Community Member").slice(0, 80),
         author_verified: verified ? 1 : 0,
         body: body.slice(0, 1000),
         status: verified ? "approved" : "pending",
@@ -191,7 +192,7 @@ router.post(
   asyncHandler(async (req, res) => {
     if (!req.user) return res.status(401).json({ error: "login_required", message: "Login to vote." });
     const post = await getResource("news", req.params.id);
-    if (!post) return res.status(404).json({ error: "news_not_found", message: "News post not found." });
+    if (!post || !published(post)) return res.status(404).json({ error: "news_not_found", message: "News post not found." });
     const voteType = req.params.kind === "like" ? "like" : "dislike";
     const savedVote = await saveUserVote(post.id, req.user.id, voteType);
     const counts = await voteCounts(post.id, post);

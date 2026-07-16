@@ -35,6 +35,23 @@ function compactObject(value = {}) {
   return parts.length ? parts.join("\n") : "Details saved in audit logs";
 }
 
+export function safeDiscordWebhookUrl(value = "") {
+  try {
+    const parsed = new URL(String(value).trim());
+    const host = parsed.hostname.toLowerCase();
+    if (parsed.protocol !== "https:") return "";
+    if (!["discord.com", "discordapp.com"].includes(host)) return "";
+    if (!/^\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+\/?$/.test(parsed.pathname)) return "";
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return "";
+  }
+}
+
 function formatValue(value) {
   if (value === undefined || value === null || value === "") return "None";
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -59,10 +76,11 @@ function buildFields(payload = {}) {
 export async function sendWebhook(category, payload = {}) {
   const envName = webhookEnvByCategory[category] || category;
   const settings = await getSettings({ includeSecrets: true });
-  const url = settings[envName] || env[envName];
+  const configuredUrl = settings[envName] || env[envName];
+  const url = safeDiscordWebhookUrl(configuredUrl);
   if (!url) {
     console.warn(`[webhook] ${envName} is not configured; event saved without Discord delivery.`);
-    return { skipped: true, reason: "webhook_not_configured" };
+    return { skipped: true, reason: configuredUrl ? "invalid_webhook_url" : "webhook_not_configured" };
   }
 
   const body = {
@@ -83,7 +101,7 @@ export async function sendWebhook(category, payload = {}) {
   };
 
   try {
-    const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+    const response = await fetch(url, { method: "POST", redirect: "error", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
     if (!response.ok) throw new Error(`Discord webhook returned ${response.status}`);
     return { ok: true };
   } catch (error) {

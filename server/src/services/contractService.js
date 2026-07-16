@@ -1,7 +1,10 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
+import { lookup } from "node:dns/promises";
+import { isIP } from "node:net";
 import PDFDocument from "pdfkit";
 import { getPool } from "../config/db.js";
+import { safeUrl } from "../utils/sanitize.js";
 import { uploadBufferToCloudinary } from "./cloudinaryService.js";
 
 export const CONTRACT_TYPES = [
@@ -523,10 +526,24 @@ export async function getAuthorizedContract(id, user, admin = false) {
       )
     )
       throw Object.assign(new Error("forbidden"), { status: 403 });
-    return b;
+    return admin ? b : publicContractView(b);
   } finally {
     c.release();
   }
+}
+
+function publicContractView(bundle) {
+  if (!bundle) return bundle;
+  const { version, ...rest } = bundle;
+  return {
+    ...rest,
+    version: version
+      ? {
+          ...version,
+          internal_admin_notes: "",
+        }
+      : version,
+  };
 }
 
 export async function signContract(id, input, user) {
@@ -698,10 +715,21 @@ export async function adminTransition(id, action, reason, actor) {
 
 async function contractImage(source, fallback) {
   if (!source) return fallback;
+  const safeSource = source.startsWith("data:image/") ? source : safeUrl(source, { allowRelative: false, allowFivem: false });
+  if (!safeSource) return fallback;
+  const hostname = safeSource.startsWith("data:image/") ? "" : new URL(safeSource).hostname.toLowerCase();
+  const privateAddress = (address = "") => /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(String(address).toLowerCase()) ||
+    address === "::1" ||
+    String(address).toLowerCase().startsWith("fc") ||
+    String(address).toLowerCase().startsWith("fd") ||
+    String(address).toLowerCase().startsWith("fe80:");
+  if (hostname === "localhost" || hostname.endsWith(".localhost") || (isIP(hostname) && privateAddress(hostname))) return fallback;
   try {
-    if (source.startsWith("data:image/"))
-      return Buffer.from(source.split(",")[1], "base64");
-    const response = await fetch(source, { signal: AbortSignal.timeout(5000) });
+    if (safeSource.startsWith("data:image/"))
+      return Buffer.from(safeSource.split(",")[1], "base64");
+    const addresses = await lookup(hostname, { all: true, verbatim: true });
+    if (addresses.some((entry) => privateAddress(entry.address))) return fallback;
+    const response = await fetch(safeSource, { signal: AbortSignal.timeout(5000), redirect: "error" });
     if (!response.ok) return fallback;
     const buffer = Buffer.from(await response.arrayBuffer());
     return buffer.length <= 5 * 1024 * 1024 ? buffer : fallback;
@@ -1209,6 +1237,8 @@ export async function generatePdf(id, actorId) {
         folder: "gotham-city/contracts/final",
         publicId: `gotham-city-contract-${b.contract_number}-r2`,
         resourceType: "raw",
+        type: "authenticated",
+        accessMode: "authenticated",
         overwrite: true,
       });
     const row = {
@@ -1276,3 +1306,5 @@ export async function verification(code) {
     c.release();
   }
 }
+
+export const __contractTest = { publicContractView, contractImage };

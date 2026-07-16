@@ -125,6 +125,9 @@ router.post("/tickets/:id/status", requirePermission("manage_tickets"), asyncHan
   const allowed = new Set(["Waiting for Support", "Waiting for staff", "Waiting for player", "Claimed", "On Hold", "Closed", "Open"]);
   const status = String(req.body?.status || "").trim();
   if (!allowed.has(status)) return res.status(422).json({ error: "invalid_ticket_status", message: "Choose a valid ticket status." });
+  if (status === "Closed" && !req.user?.permissions?.includes("close_tickets") && !req.user?.permissions?.includes("master_access")) {
+    return res.status(403).json({ error: "missing_permission", permission: "close_tickets" });
+  }
   const patch = { status };
   if (status === "Claimed") patch.assigned_to = req.user.id;
   if (status === "Closed") {

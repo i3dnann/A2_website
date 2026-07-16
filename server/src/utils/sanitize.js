@@ -22,3 +22,35 @@ export function pickAllowed(input, allowedKeys) {
     Object.entries(input || {}).filter(([key, value]) => allowedKeys.includes(key) && value !== undefined)
   );
 }
+
+export function isUrlLikeKey(key) {
+  return /(^|_)(url|link|href)$/i.test(String(key || "")) || /(Url|Link|Href)$/.test(String(key || ""));
+}
+
+export function safeUrl(value, { allowRelative = true, allowFivem = true } = {}) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (/[\u0000-\u001f\u007f]/.test(raw)) return "";
+  if (/^\/(?!\/)/.test(raw)) return allowRelative ? raw : "";
+  try {
+    const parsed = new URL(raw);
+    const protocol = parsed.protocol.toLowerCase();
+    if (protocol === "http:" || protocol === "https:") return parsed.toString();
+    if (allowFivem && protocol === "fivem:") return raw;
+    if (protocol === "mailto:") return raw;
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+export function sanitizeUrlFields(value) {
+  if (Array.isArray(value)) return value.map((item) => sanitizeUrlFields(item));
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      isUrlLikeKey(key) ? safeUrl(item) : sanitizeUrlFields(item)
+    ])
+  );
+}

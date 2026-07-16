@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import { query } from "../config/db.js";
 import { databaseEnabled } from "../config/env.js";
 
-export async function changeOwnPassword({ userId, currentPassword = "", newPassword }) {
+export async function changeOwnPassword({ userId, currentPassword = "", newPassword, allowInitialWithoutCurrent = false }) {
   if (!userId) throw Object.assign(new Error("login_required"), { status: 401 });
   if (!newPassword || String(newPassword).length < 8) throw Object.assign(new Error("new_password_too_short"), { status: 422 });
 
@@ -17,6 +17,8 @@ export async function changeOwnPassword({ userId, currentPassword = "", newPassw
   if (user.password_hash) {
     const ok = await bcrypt.compare(String(currentPassword || ""), user.password_hash);
     if (!ok) throw Object.assign(new Error("current_password_invalid"), { status: 401 });
+  } else if (!allowInitialWithoutCurrent) {
+    throw Object.assign(new Error("recent_reauthentication_required"), { status: 401 });
   }
 
   const password_hash = await bcrypt.hash(String(newPassword), 12);

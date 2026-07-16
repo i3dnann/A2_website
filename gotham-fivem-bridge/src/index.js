@@ -63,6 +63,10 @@ function cleanIdentifier(value = "") {
   return raw;
 }
 
+function escapeLike(value = "") {
+  return String(value).replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 function parseJson(value, fallback) {
   try {
     return value ? JSON.parse(value) : fallback;
@@ -96,7 +100,7 @@ function characterFromRow(row = {}) {
 async function findCharactersBy(field, value) {
   const identifier = cleanIdentifier(value);
   if (!identifier) return [];
-  const like = `%${identifier}%`;
+  const like = `%${escapeLike(identifier)}%`;
   const allowedFields = {
     discord: ["metadata", "license", "name"],
     steam: ["license", "name", "metadata"],
@@ -104,7 +108,7 @@ async function findCharactersBy(field, value) {
     citizenid: ["citizenid"]
   };
   const fields = allowedFields[field] || [];
-  const clauses = fields.map((column) => column === "citizenid" ? `${column} = :identifier` : `${column} LIKE :like`);
+  const clauses = fields.map((column) => column === "citizenid" ? `${column} = :identifier` : `${column} LIKE :like ESCAPE '\\\\'`);
   const [rows] = await pool.execute(
     `SELECT citizenid, cid, license, name, money, charinfo, job, gang, metadata, last_updated, updated_at, last_login
      FROM players
@@ -118,11 +122,15 @@ async function findCharactersBy(field, value) {
 async function banStatus(identifier) {
   const clean = cleanIdentifier(identifier);
   if (!clean) return { status: "Unknown", reason: "" };
-  const like = `%${clean}%`;
+  const like = `%${escapeLike(clean)}%`;
   const [rows] = await pool.execute(
     `SELECT id, reason, expire, expires_at, name
      FROM bans
-     WHERE license LIKE :like OR discord LIKE :like OR steam LIKE :like OR ids LIKE :like OR citizenid LIKE :like
+     WHERE license LIKE :like ESCAPE '\\\\'
+        OR discord LIKE :like ESCAPE '\\\\'
+        OR steam LIKE :like ESCAPE '\\\\'
+        OR ids LIKE :like ESCAPE '\\\\'
+        OR citizenid LIKE :like ESCAPE '\\\\'
      ORDER BY id DESC LIMIT 1`,
     { like }
   );

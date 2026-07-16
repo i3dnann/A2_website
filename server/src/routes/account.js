@@ -4,7 +4,7 @@ import { requireAuth, requirePermission } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { auditAction } from "../services/audit.js";
 import { changeOwnPassword } from "../services/passwordService.js";
-import { updateOwnEmail } from "../services/users.js";
+import { revokeUserSessions, updateOwnEmail } from "../services/users.js";
 import { createVerificationRequest, getVerificationEligibility } from "../services/verificationService.js";
 
 const router = Router();
@@ -71,11 +71,15 @@ router.post(
   "/password",
   asyncHandler(async (req, res) => {
     const body = credentialSchema.parse(req.body || {});
+    const issuedAt = Number(req.authTokenPayload?.iat || 0);
+    const sessionAge = issuedAt ? Math.floor(Date.now() / 1000) - issuedAt : Number.POSITIVE_INFINITY;
     await changeOwnPassword({
       userId: req.user.id,
       currentPassword: body.currentCredential,
-      newPassword: body.newCredential
+      newPassword: body.newCredential,
+      allowInitialWithoutCurrent: sessionAge >= 0 && sessionAge <= 10 * 60
     });
+    await revokeUserSessions(req.user.id);
     await auditAction({ req, action: "change_password", targetType: "web_users", targetId: req.user.id, webhookCategory: "security" });
     res.json({ ok: true });
   })

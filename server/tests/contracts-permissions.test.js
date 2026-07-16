@@ -54,9 +54,22 @@ test("a frozen administrator cannot administer contracts", () => {
 test("a Discord-authenticated Gotham session can reauthenticate a signer", async () => {
   const method = await verifySigningReauthentication({
     user: { id: "user-1", discord_id: "123456789" },
+    authTokenPayload: { iat: Math.floor(Date.now() / 1000) },
     body: { reauthProvider: "gotham_session" },
   });
   assert.equal(method, "discord_session");
+});
+
+test("a stale Gotham session cannot reauthenticate contract signing", async () => {
+  await assert.rejects(
+    verifySigningReauthentication({
+      user: { id: "user-1", discord_id: "123456789" },
+      authTokenPayload: { iat: Math.floor(Date.now() / 1000) - 3600 },
+      body: { reauthProvider: "gotham_session" },
+    }),
+    (error) =>
+      error.status === 401 && error.message === "reauthentication_required",
+  );
 });
 
 test("an unlinked session cannot bypass signing reauthentication", async () => {

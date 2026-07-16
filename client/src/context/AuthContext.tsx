@@ -53,7 +53,7 @@ type AuthContextType = {
   logout: () => void;
   loginDiscord: () => void;
   loginSteam: () => void;
-  completeOAuth: (token: string) => Promise<void>;
+  completeOAuth: (token?: string | null) => Promise<void>;
   linkDiscord: () => Promise<void>;
   linkSteam: () => Promise<void>;
   updateEmail: (email: string) => Promise<void>;
@@ -259,12 +259,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const completeOAuth = async (token: string) => {
+  const completeOAuth = async (token?: string | null) => {
     clearStoredAuth();
-    localStorage.setItem("a2_token", token);
+    if (token) localStorage.setItem("a2_token", token);
     let r: { user: BackendUser | null; providers: ProviderRow[] };
     try {
-      r = await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/complete-session", { method: "POST", body: { token } });
+      r = token
+        ? await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/complete-session", { method: "POST", body: { token } })
+        : await api<{ user: BackendUser | null; providers: ProviderRow[] }>("/api/auth/me");
     } catch (error) {
       localStorage.removeItem("a2_token");
       throw error;

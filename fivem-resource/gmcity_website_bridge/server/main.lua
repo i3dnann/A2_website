@@ -1,4 +1,7 @@
 local QBCore = nil
+local pendingUpserts = {}
+local lastUpsertAt = {}
+local MIN_UPSERT_INTERVAL_MS = 30000
 
 local function debugPrint(...)
     if Config.Debug then
@@ -102,20 +105,32 @@ local function upsertLink(source)
     end)
 end
 
-RegisterNetEvent('QBCore:Server:PlayerLoaded', function(player)
-    local source = player and player.PlayerData and player.PlayerData.source or source
-    if source then
-        SetTimeout(1500, function()
-            upsertLink(source)
-        end)
+local function scheduleUpsert(source, delay)
+    source = tonumber(source)
+    if not source or source <= 0 then return end
+
+    local now = GetGameTimer()
+    if pendingUpserts[source] then return end
+    if lastUpsertAt[source] and (now - lastUpsertAt[source]) < MIN_UPSERT_INTERVAL_MS then
+        return
     end
+
+    pendingUpserts[source] = true
+    SetTimeout(delay or 1500, function()
+        pendingUpserts[source] = nil
+        lastUpsertAt[source] = GetGameTimer()
+        upsertLink(source)
+    end)
+end
+
+RegisterNetEvent('QBCore:Server:PlayerLoaded', function(player)
+    local src = player and player.PlayerData and player.PlayerData.source or source
+    if source ~= 0 and src ~= source then return end
+    scheduleUpsert(src, 1500)
 end)
 
 AddEventHandler('playerJoining', function()
-    local source = source
-    SetTimeout(6000, function()
-        upsertLink(source)
-    end)
+    scheduleUpsert(source, 6000)
 end)
 
 AddEventHandler('onResourceStart', function(resourceName)
@@ -123,7 +138,11 @@ AddEventHandler('onResourceStart', function(resourceName)
     SetTimeout(2500, function()
         getCore()
         for _, source in ipairs(GetPlayers()) do
-            upsertLink(tonumber(source))
+            scheduleUpsert(source, 0)
         end
     end)
+end)
+
+AddEventHandler('playerDropped', function()
+    pendingUpserts[source] = nil
 end)

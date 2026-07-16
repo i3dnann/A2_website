@@ -11,6 +11,7 @@ import { safeJson } from "../utils/sanitize.js";
 
 const users = new Map();
 const providers = new Map();
+const sessionVersions = new Map();
 
 export async function listCommunityAvatars(limit = 6) {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 6, 6));
@@ -46,13 +47,15 @@ function unique(values = []) {
 
 function isMasterCandidate({
   email = "",
+  emailVerified = false,
   discord_id = "",
   steam_id = "",
 } = {}) {
   return (
-    envList("MASTER_ADMIN_EMAILS")
+    (emailVerified &&
+      envList("MASTER_ADMIN_EMAILS")
       .map((value) => value.toLowerCase())
-      .includes(String(email).toLowerCase()) ||
+      .includes(String(email).toLowerCase())) ||
     envList("MASTER_ADMIN_DISCORD_IDS").includes(String(discord_id)) ||
     envList("MASTER_ADMIN_STEAM_IDS").includes(String(steam_id))
   );
@@ -119,6 +122,7 @@ function normalizeUser(row) {
     last_login_at: row.last_login_at || null,
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
+    session_version: sessionVersions.get(String(row.id)) || Number(row.session_version || 0),
   };
 }
 
@@ -131,8 +135,11 @@ function providerKey(provider, providerUserId) {
 }
 
 function saveMemoryUser(user) {
+  const sessionVersion = Number(user.session_version ?? sessionVersions.get(String(user.id)) ?? 0);
+  sessionVersions.set(String(user.id), sessionVersion);
   users.set(user.id, {
     ...user,
+    session_version: sessionVersion,
     roles: normalizeRoles(user.roles),
     permissions: unique([
       ...(user.permissions || []),
@@ -163,7 +170,11 @@ const masterUser = saveMemoryUser({
 });
 
 export function signUser(user) {
-  return jwt.sign({ sub: user.id }, env.JWT_SECRET, { expiresIn: "12h" });
+  return jwt.sign(
+    { sub: user.id, sv: sessionVersions.get(String(user.id)) || Number(user.session_version || 0) },
+    env.JWT_SECRET,
+    { expiresIn: "12h" },
+  );
 }
 
 export function verifyUserToken(token) {
@@ -185,6 +196,22 @@ function accountCanLogin(user) {
   )
     return false;
   return true;
+}
+
+export function isUserTokenCurrent(user, payload) {
+  if (!user || !payload?.sub) return false;
+  const currentVersion = sessionVersions.get(String(user.id)) || Number(user.session_version || 0);
+  return Number(payload.sv || 0) === currentVersion;
+}
+
+export async function revokeUserSessions(userId) {
+  const id = String(userId || "");
+  if (!id) return 0;
+  const nextVersion = (sessionVersions.get(id) || 0) + 1;
+  sessionVersions.set(id, nextVersion);
+  const existing = users.get(id);
+  if (existing) users.set(id, { ...existing, session_version: nextVersion, updated_at: nowIso() });
+  return nextVersion;
 }
 
 export async function getUserById(id) {
@@ -456,7 +483,7 @@ export async function registerEmailUser({
   if (existing)
     throw Object.assign(new Error("email_already_registered"), { status: 409 });
   const password_hash = await bcrypt.hash(password, 12);
-  const roles = rolesForIdentity({ email });
+  const roles = rolesForIdentity({ email, emailVerified: false });
   const user = await upsertUser({
     id: randomUUID(),
     username,
@@ -524,7 +551,7 @@ export async function loginOrCreateFirebaseUser({
       status: 404,
     });
 
-  const roles = rolesForIdentity({ email });
+  const roles = rolesForIdentity({ email, emailVerified });
   const user = await upsertUser({
     id: randomUUID(),
     username: username || email.split("@")[0],
@@ -591,6 +618,7 @@ export async function linkProvider(
       user.admin_status !== "removed" &&
       isMasterCandidate({
         email: user.email,
+        emailVerified: Boolean(user.email_verified_at),
         discord_id: provider === "discord" ? providerUserId : user.discord_id,
         steam_id: provider === "steam" ? providerUserId : user.steam_id,
       })
@@ -696,6 +724,7 @@ export async function unlinkProviderForUser(userId, provider, actor) {
       providers.delete(key);
   }
 
+  await revokeUserSessions(userId);
   return upsertUser(patch);
 }
 
@@ -742,6 +771,7 @@ export async function loginOrCreateProviderUser(
 
   const roles = rolesForIdentity({
     email: profile.email,
+    emailVerified: Boolean(profile.emailVerified || profile.email_verified || profile.verified_email),
     discord_id: provider === "discord" ? providerUserId : "",
     steam_id: provider === "steam" ? providerUserId : "",
   });
@@ -852,12 +882,14 @@ export async function upsertWebUserFromAdmin(payload, actor) {
     await linkProvider(user.id, "steam", payload.steam_id, {
       username: payload.steam_persona || "",
     }).catch(() => user);
+  if (existing?.id) await revokeUserSessions(user.id);
   return user;
 }
 
 export async function updateAdminStatus(id, status, actor) {
   const existing = await getUserById(id);
   if (!existing) return null;
+  await revokeUserSessions(id);
   return upsertUser({
     ...existing,
     admin_status: status,
@@ -869,6 +901,7 @@ export async function resetUserPassword(id, password, actor) {
   const existing = await getInternalUserById(id);
   if (!existing) return null;
   const password_hash = await bcrypt.hash(String(password || ""), 12);
+  await revokeUserSessions(id);
   return upsertUser({
     ...existing,
     password_hash,
@@ -889,6 +922,7 @@ export async function updateOwnEmail(userId, email, actor) {
   if (taken && String(taken.id) !== String(userId)) {
     throw Object.assign(new Error("email_already_registered"), { status: 409 });
   }
+  await revokeUserSessions(userId);
   return upsertUser({
     ...existing,
     email: normalized,
@@ -900,6 +934,7 @@ export async function updateOwnEmail(userId, email, actor) {
 export async function deactivateWebUser(id, actor) {
   const existing = await getUserById(id);
   if (!existing) return null;
+  await revokeUserSessions(id);
   return upsertUser({
     ...existing,
     account_status: "disabled",
@@ -911,6 +946,7 @@ export async function deactivateWebUser(id, actor) {
 export async function removeAdminAccess(id, actor) {
   const existing = await getInternalUserById(id);
   if (!existing) return null;
+  await revokeUserSessions(id);
   return upsertUser({
     ...existing,
     roles: ["Player"],
@@ -984,3 +1020,5 @@ export async function saveTermsAgreement({ userId, termsVersion, ipAddress }) {
 export async function getDevUser() {
   return masterUser;
 }
+
+export const __usersTest = { isMasterCandidate, rolesForIdentity };

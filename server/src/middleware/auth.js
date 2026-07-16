@@ -1,5 +1,6 @@
 import { cookieSameSite, cookieSecure } from "../config/env.js";
-import { getUserById, verifyUserToken } from "../services/users.js";
+import { isDisabledAdmin } from "../data/permissions.js";
+import { getUserById, isUserTokenCurrent, verifyUserToken } from "../services/users.js";
 
 export const cookieOptions = {
   httpOnly: true,
@@ -23,7 +24,10 @@ export async function optionalAuth(req, _res, next) {
   if (!payload?.sub) return next();
 
   const user = await getUserById(payload.sub);
-  if (user?.account_status === "active") req.user = user;
+  if (user?.account_status === "active" && isUserTokenCurrent(user, payload)) {
+    req.user = user;
+    req.authTokenPayload = payload;
+  }
   return next();
 }
 
@@ -35,11 +39,7 @@ export function requireAuth(req, res, next) {
 export function requirePermission(permission) {
   return (req, res, next) => {
     const permissions = req.user?.permissions || [];
-    const isAdminPermission = permission !== "view_player_portal";
-    if (
-      isAdminPermission &&
-      ["frozen", "disabled", "removed"].includes(req.user?.admin_status)
-    ) {
+    if (permission !== "view_player_portal" && isDisabledAdmin(req.user)) {
       return res
         .status(403)
         .json({ error: "admin_account_frozen_or_disabled" });
@@ -54,6 +54,11 @@ export function requirePermission(permission) {
 }
 
 export function requireMaster(req, res, next) {
+  if (isDisabledAdmin(req.user)) {
+    return res
+      .status(403)
+      .json({ error: "admin_account_frozen_or_disabled" });
+  }
   if (req.user?.permissions?.includes("master_access")) return next();
   return res.status(403).json({ error: "master_access_required" });
 }

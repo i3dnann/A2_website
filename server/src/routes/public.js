@@ -2,7 +2,7 @@ import { Router } from "express";
 import { PUBLIC_COLLECTIONS, RESOURCE_MAP } from "../data/catalog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { getResource, getSettings, listResource } from "../services/repository.js";
-import { listGalleryPhotos } from "../services/galleryService.js";
+import { listGalleryPhotos, publicGalleryPhoto } from "../services/galleryService.js";
 import { enrichStreamers } from "../services/streamStatusService.js";
 import { listCommunityAvatars } from "../services/users.js";
 
@@ -26,6 +26,15 @@ function eventStatus(event) {
 
 function publicSummary(row) {
   return { ...row, event_status: row?.starts_at || row?.ends_at ? eventStatus(row) : row?.status };
+}
+
+function publicVisible(row = {}) {
+  const status = String(row.status || "Published").toLowerCase();
+  return !row.deleted_at &&
+    !row.is_hidden &&
+    row.is_visible !== false &&
+    row.is_visible !== 0 &&
+    !["hidden", "draft", "deleted", "unpublished"].includes(status);
 }
 
 router.get("/settings", asyncHandler(async (_req, res) => {
@@ -56,7 +65,7 @@ router.get("/home", asyncHandler(async (_req, res) => {
       return (order[a.event_status] ?? 9) - (order[b.event_status] ?? 9);
     }),
     team: team.rows,
-    gallery,
+    gallery: gallery.map(publicGalleryPhoto),
     careers: careers.rows
   });
 }));
@@ -99,7 +108,7 @@ router.get("/:collection/:id", asyncHandler(async (req, res) => {
   const config = resourceKey ? RESOURCE_MAP[resourceKey] : null;
   if (!config?.public) return res.status(404).json({ error: "public_resource_not_found" });
   const row = await getResource(resourceKey, req.params.id);
-  if (!row || row.deleted_at || row.is_hidden || row.is_visible === false || row.is_visible === 0) return res.status(404).json({ error: "not_found" });
+  if (!row || !publicVisible(row)) return res.status(404).json({ error: "not_found" });
   res.json({ row: resourceKey === "events" ? publicSummary(row) : row, label: config.label, resourceKey });
 }));
 

@@ -1,8 +1,10 @@
 import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import { requireAuth, requirePermission } from "../middleware/auth.js";
+import { hasActivePermission } from "../data/permissions.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { verifyFirebaseToken } from "../services/firebaseAuth.js";
+import { privateCloudinaryDownloadUrl } from "../services/cloudinaryService.js";
 import {
   adminTransition,
   createContract,
@@ -23,9 +25,9 @@ const signatureLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const CONTRACT_SESSION_REAUTH_SECONDS = 10 * 60;
 const isContractAdmin = (req) =>
-  req.user?.permissions?.includes("master_access") ||
-  req.user?.permissions?.includes("manage_contracts");
+  hasActivePermission(req.user, "manage_contracts");
 
 export async function verifySigningReauthentication(req) {
   if (req.body?.reauthToken) {
@@ -42,11 +44,16 @@ export async function verifySigningReauthentication(req) {
     return "firebase";
   }
 
-  // Discord and Steam accounts do not create a Firebase browser user. Their
-  // signed Gotham session has already been resolved server-side to req.user.
+  // Discord and Steam accounts do not create a Firebase browser user. Treat
+  // only a freshly-issued Gotham session as reauthentication instead of trusting
+  // a client-controlled provider flag for long-lived sessions.
+  const issuedAt = Number(req.authTokenPayload?.iat || 0);
+  const sessionAge = issuedAt ? Math.floor(Date.now() / 1000) - issuedAt : Number.POSITIVE_INFINITY;
   if (
     req.body?.reauthProvider === "gotham_session" &&
-    (req.user?.discord_id || req.user?.steam_id)
+    (req.user?.discord_id || req.user?.steam_id) &&
+    sessionAge >= 0 &&
+    sessionAge <= CONTRACT_SESSION_REAUTH_SECONDS
   ) {
     return req.user.discord_id ? "discord_session" : "steam_session";
   }
@@ -169,7 +176,12 @@ router.get(
     if (!contract) return res.status(404).json({ error: "contract_not_found" });
     // This also upgrades legacy stored PDFs on their next authorized download.
     const pdf = await generatePdf(req.params.id, req.user.id);
-    const upstream = await fetch(pdf.file_url);
+    const signedUrl = privateCloudinaryDownloadUrl(pdf.storage_key || pdf.key, "pdf", {
+      resourceType: "raw",
+      type: "authenticated",
+      attachment: true,
+    }) || pdf.file_url;
+    const upstream = await fetch(signedUrl);
     if (!upstream.ok)
       return res.status(502).json({ error: "pdf_storage_unavailable" });
     const data = Buffer.from(await upstream.arrayBuffer());

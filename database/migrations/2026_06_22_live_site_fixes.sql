@@ -46,6 +46,12 @@ CREATE TABLE IF NOT EXISTS player_links (
 
 CALL a2_add_col('web_settings', 'is_secret', 'is_secret TINYINT(1) DEFAULT 0 AFTER setting_value');
 
+UPDATE web_settings
+SET is_secret = 1
+WHERE setting_key LIKE 'WEBHOOK\\_%' ESCAPE '\\'
+   OR LOWER(setting_key) IN ('webhook_url', 'webhookurl')
+   OR LOWER(setting_key) LIKE '%webhook%url%';
+
 CALL a2_add_col('streamers', 'profile_image_url', 'profile_image_url TEXT AFTER display_name');
 CALL a2_add_col('streamers', 'avatar_url', 'avatar_url TEXT AFTER profile_image_url');
 CALL a2_add_col('streamers', 'banner_url', 'banner_url TEXT AFTER avatar_url');

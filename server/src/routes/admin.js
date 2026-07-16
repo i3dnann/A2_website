@@ -6,7 +6,11 @@ import {
   DEFAULT_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
-  hasPermission,
+  hasActivePermission,
+  highestRoleRank,
+  includesMasterAuthority,
+  isDisabledAdmin,
+  isMasterAdmin,
 } from "../data/permissions.js";
 import {
   requireAuth,
@@ -27,6 +31,7 @@ import {
 import { auditAction } from "../services/audit.js";
 import {
   deactivateWebUser,
+  getUserById,
   listWebUsers,
   removeAdminAccess,
   resolveUserIdentity,
@@ -34,7 +39,7 @@ import {
   upsertWebUserFromAdmin,
 } from "../services/users.js";
 import { uploadToCloudinary } from "../services/cloudinaryService.js";
-import { sendWebhook } from "../services/webhook.js";
+import { safeDiscordWebhookUrl, sendWebhook } from "../services/webhook.js";
 import { getFiveMLiveState } from "../services/liveService.js";
 
 const router = Router();
@@ -49,24 +54,58 @@ const webhookKeys = [
 ];
 
 function requireAnyAdmin(req, res, next) {
+  if (isDisabledAdmin(req.user)) {
+    return res.status(403).json({ error: "admin_account_frozen_or_disabled" });
+  }
   if (
-    ADMIN_PERMISSIONS.some((permission) => hasPermission(req.user, permission))
+    ADMIN_PERMISSIONS.some((permission) => hasActivePermission(req.user, permission))
   )
     return next();
   return res.status(403).json({ error: "admin_permission_required" });
+}
+
+function activePermission(req, res, permission) {
+  if (hasActivePermission(req.user, permission)) return true;
+  if (isDisabledAdmin(req.user)) {
+    res.status(403).json({ error: "admin_account_frozen_or_disabled" });
+    return false;
+  }
+  res.status(403).json({ error: "missing_permission", permission });
+  return false;
+}
+
+function assertNoMasterEscalation(req, res, payload = {}) {
+  if (isMasterAdmin(req.user)) return true;
+  if (!includesMasterAuthority(payload)) return true;
+  res.status(403).json({ error: "master_access_required" });
+  return false;
+}
+
+async function assertCanModifyExistingAdmin(req, res, id, payload = {}) {
+  if (!assertNoMasterEscalation(req, res, payload)) return false;
+  if (isMasterAdmin(req.user) || !id) return true;
+  const target = await getUserById(id).catch(() => null);
+  if (target && highestRoleRank(target) >= highestRoleRank(req.user)) {
+    res.status(403).json({ error: "target_admin_rank_too_high" });
+    return false;
+  }
+  return true;
 }
 
 router.use(requireAuth, requireAnyAdmin);
 
 router.get(
   "/dashboard",
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (req, res) => {
+    const canTickets = hasActivePermission(req.user, "manage_tickets");
+    const canCareers = hasActivePermission(req.user, "review_career_applications");
+    const canAudit = hasActivePermission(req.user, "view_audit_logs");
     const [tickets, applications, team, news, audit, live] = await Promise.all([
-      listResource("tickets", { limit: 5 }),
-      listResource("careerApplications", { limit: 5 }),
+      canTickets ? listResource("tickets", { limit: 5 }) : { rows: [], total: 0 },
+      canCareers ? listResource("careerApplications", { limit: 5 }) : { rows: [], total: 0 },
       listResource("team", { limit: 5 }),
       listResource("news", { limit: 5 }),
-      listResource("auditLogs", { limit: 8 }),
+      canAudit ? listResource("auditLogs", { limit: 8 }) : { rows: [], total: 0 },
       getFiveMLiveState(),
     ]);
     res.json({
@@ -81,9 +120,9 @@ router.get(
         { label: "Roster members", value: team.total },
         { label: "News articles", value: news.total },
       ],
-      recentTickets: await Promise.all(tickets.rows.map(enrichOwner)),
-      recentApplications: await Promise.all(applications.rows.map(enrichOwner)),
-      recentLogs: audit.rows,
+      recentTickets: canTickets ? await Promise.all(tickets.rows.map(enrichOwner)) : [],
+      recentApplications: canCareers ? await Promise.all(applications.rows.map(enrichOwner)) : [],
+      recentLogs: canAudit ? audit.rows : [],
       live,
     });
   }),
@@ -102,6 +141,9 @@ router.patch(
   requirePermission("manage_home"),
   asyncHandler(async (req, res) => {
     const patch = settingsSchema.parse(req.body || {});
+    if (Object.keys(patch).some((key) => webhookKeys.includes(key))) {
+      return res.status(403).json({ error: "manage_webhooks_required" });
+    }
     const { before, after } = await updateSettings(patch, req.user);
     await auditAction({
       req,
@@ -122,6 +164,9 @@ router.patch(
   requirePermission("manage_theme"),
   asyncHandler(async (req, res) => {
     const patch = settingsSchema.parse(req.body || {});
+    if (Object.keys(patch).some((key) => webhookKeys.includes(key))) {
+      return res.status(403).json({ error: "manage_webhooks_required" });
+    }
     const { before, after } = await updateSettings(patch, req.user);
     await auditAction({
       req,
@@ -166,6 +211,11 @@ router.patch(
           webhookKeys.includes(key) && typeof value === "string",
       ),
     );
+    for (const [key, value] of Object.entries(patch)) {
+      if (value.trim() && !safeDiscordWebhookUrl(value)) {
+        return res.status(422).json({ error: "invalid_webhook_url", key });
+      }
+    }
     const { before, after } = await updateSettings(patch, req.user, {
       secretKeys: Object.keys(patch),
     });
@@ -292,11 +342,15 @@ router.post(
   requirePermission("manage_admins"),
   asyncHandler(async (req, res) => {
     const roles = req.body?.roles?.length ? req.body.roles : ["Admin"];
+    const payload = {
+      ...req.body,
+      roles,
+      permissions: req.body?.permissions || DEFAULT_ROLE_PERMISSIONS.Admin,
+    };
+    if (!assertNoMasterEscalation(req, res, payload)) return;
     const user = await upsertWebUserFromAdmin(
       {
-        ...req.body,
-        roles,
-        permissions: req.body?.permissions || DEFAULT_ROLE_PERMISSIONS.Admin,
+        ...payload,
         admin_status: "active",
         account_status: "active",
       },
@@ -319,6 +373,7 @@ router.patch(
   "/admins/:id",
   requirePermission("manage_admins"),
   asyncHandler(async (req, res) => {
+    if (!(await assertCanModifyExistingAdmin(req, res, req.params.id, req.body || {}))) return;
     const user = await upsertWebUserFromAdmin(
       { ...req.body, id: req.params.id },
       req.user,
@@ -893,10 +948,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission))
-      return res
-        .status(403)
-        .json({ error: "missing_permission", permission: config.permission });
+    if (!activePermission(req, res, config.permission)) return;
     const { rows, total } = await listResource(req.params.resource, {
       q: req.query.q || "",
       limit: req.query.limit || 25,
@@ -916,10 +968,8 @@ router.post(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission))
-      return res
-        .status(403)
-        .json({ error: "missing_permission", permission: config.permission });
+    if (req.params.resource === "auditLogs") return res.status(403).json({ error: "audit_logs_are_immutable" });
+    if (!activePermission(req, res, config.permission)) return;
     const payload = req.body || {};
     const row = await createResource(req.params.resource, payload, req.user);
     await auditAction({
@@ -940,10 +990,8 @@ router.patch(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission))
-      return res
-        .status(403)
-        .json({ error: "missing_permission", permission: config.permission });
+    if (req.params.resource === "auditLogs") return res.status(403).json({ error: "audit_logs_are_immutable" });
+    if (!activePermission(req, res, config.permission)) return;
     const payload = req.body || {};
     const result = await updateResource(
       req.params.resource,
@@ -971,10 +1019,8 @@ router.delete(
   asyncHandler(async (req, res) => {
     const config = RESOURCE_MAP[req.params.resource];
     if (!config) return res.status(404).json({ error: "resource_not_found" });
-    if (!hasPermission(req.user, config.permission))
-      return res
-        .status(403)
-        .json({ error: "missing_permission", permission: config.permission });
+    if (req.params.resource === "auditLogs") return res.status(403).json({ error: "audit_logs_are_immutable" });
+    if (!activePermission(req, res, config.permission)) return;
     const before = await deleteResource(
       req.params.resource,
       req.params.id,
@@ -995,3 +1041,4 @@ router.delete(
 );
 
 export default router;
+export const __adminTest = { activePermission, assertNoMasterEscalation };

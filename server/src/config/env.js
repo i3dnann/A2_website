@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -87,7 +88,21 @@ const schema = z.object({
   WEBHOOK_USER_ACCOUNTS: z.string().default("")
 });
 
-export const env = schema.parse(process.env);
+const parsedEnv = schema.parse(process.env);
+const unsafeDefaultSecrets = new Set([
+  "change_me_to_a_long_random_secret",
+  "change_me_to_a_long_random_session_secret",
+]);
+
+export const env = {
+  ...parsedEnv,
+  JWT_SECRET: unsafeDefaultSecrets.has(parsedEnv.JWT_SECRET)
+    ? randomBytes(32).toString("hex")
+    : parsedEnv.JWT_SECRET,
+  SESSION_SECRET: unsafeDefaultSecrets.has(parsedEnv.SESSION_SECRET)
+    ? randomBytes(32).toString("hex")
+    : parsedEnv.SESSION_SECRET,
+};
 export const loadedEnvFiles = envFiles;
 
 export const corsOrigins = [

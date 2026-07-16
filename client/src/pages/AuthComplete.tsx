@@ -27,13 +27,7 @@ export default function AuthComplete() {
       setError(messages[oauthError] || t("Could not finish login. Please try again."));
       return;
     }
-    const token = params.get("token");
-    if (!token) {
-      setError(t("Missing login token from the backend."));
-      return;
-    }
-
-    completeOAuth(token)
+    completeOAuth(params.get("token"))
       .then(() => {
         launchLoginFireworks();
         window.setTimeout(() => navigate("/dashboard", { replace: true }), 650);

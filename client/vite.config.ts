@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
-const apiProxyTarget = process.env.VITE_DEV_API_PROXY || "http://31.57.97.59:3010";
+const apiProxyTarget = process.env.VITE_DEV_API_PROXY || "http://localhost:3010";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],

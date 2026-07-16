@@ -176,6 +176,7 @@ router.post(
     const body = ticketReplySchema.parse(req.body || {});
     const ticket = await getAccessibleTicket(req.user, req.params.id);
     if (!ticket) return res.status(404).json({ error: "ticket_not_found", message: "Ticket not found or you do not have access to it." });
+    if (String(ticket.status || "").toLowerCase() === "closed") return res.status(409).json({ error: "ticket_closed" });
     const message = await createResource("ticketMessages", { ticket_id: ticket.id, author_id: req.user.id, author_type: "player", message: body.message, internal_only: false }, req.user);
     await updateResource("tickets", ticket.id, { status: "Waiting for staff", message_preview: body.message.slice(0, 300) }, req.user);
     res.status(201).json({ message });
@@ -221,6 +222,9 @@ router.post(
   asyncHandler(async (req, res) => {
     const job = await getResource("careerJobs", req.params.id);
     if (!job || job.is_open === false || job.is_visible === false) return res.status(404).json({ error: "career_not_open" });
+    if (Array.isArray(req.body?.answers) && req.body.answers.length > 75) {
+      return res.status(422).json({ error: "too_many_answers", message: "Submit 75 answers or fewer." });
+    }
     const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
     const application = await createResource(
       "careerApplications",

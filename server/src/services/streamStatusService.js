@@ -4,6 +4,10 @@ const twitchTokenCache = {
   token: "",
   expiresAt: 0
 };
+const kickStatusCache = new Map();
+const STREAM_STATUS_TTL_MS = 60_000;
+const MAX_STREAMERS_PER_REFRESH = 50;
+const KICK_CONCURRENCY = 4;
 
 function cleanHandle(value) {
   return String(value || "")
@@ -47,7 +51,11 @@ async function getTwitchToken() {
     client_secret: env.TWITCH_CLIENT_SECRET,
     grant_type: "client_credentials"
   });
-  const data = await fetchJson(`https://id.twitch.tv/oauth2/token?${params.toString()}`, { method: "POST" });
+  const data = await fetchJson("https://id.twitch.tv/oauth2/token", {
+    method: "POST",
+    body: params,
+    headers: { "content-type": "application/x-www-form-urlencoded" }
+  });
   twitchTokenCache.token = data.access_token || "";
   twitchTokenCache.expiresAt = Date.now() + Math.max(60, Number(data.expires_in || 3600) - 60) * 1000;
   return twitchTokenCache.token;
@@ -88,6 +96,9 @@ async function getTwitchStatuses(streamers) {
 async function getKickStatus(slug) {
   const handle = cleanHandle(slug);
   if (!handle) return null;
+  const cacheKey = handle.toLowerCase();
+  const cached = kickStatusCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
   const urls = [
     `https://kick.com/api/v2/channels/${encodeURIComponent(handle)}`,
     `https://kick.com/api/v1/channels/${encodeURIComponent(handle)}`
@@ -100,7 +111,7 @@ async function getKickStatus(slug) {
       });
       const live = data.livestream || data.live_stream || data.stream || null;
       const category = live?.categories?.[0] || live?.category || data.category || {};
-      return {
+      const value = {
         online: Boolean(live),
         title: live?.session_title || live?.title || data.recent_livestream?.session_title || "",
         gameName: category?.name || category?.category_name || "",
@@ -109,20 +120,32 @@ async function getKickStatus(slug) {
         startedAt: live?.created_at || live?.start_time || "",
         source: "kick"
       };
+      kickStatusCache.set(cacheKey, { value, expiresAt: Date.now() + STREAM_STATUS_TTL_MS });
+      return value;
     } catch {
       // Try the next public endpoint before giving up.
     }
   }
+  kickStatusCache.set(cacheKey, { value: null, expiresAt: Date.now() + STREAM_STATUS_TTL_MS });
   return null;
 }
 
 export async function enrichStreamers(streamers = []) {
-  const twitchStatuses = await getTwitchStatuses(streamers);
-  const enriched = await Promise.all(streamers.map(async (streamer) => {
+  const limitedStreamers = streamers.slice(0, MAX_STREAMERS_PER_REFRESH);
+  const twitchStatuses = await getTwitchStatuses(limitedStreamers);
+  const kickWork = new Map();
+  const kickHandles = [...new Set(limitedStreamers.map((streamer) => cleanHandle(streamer.kick_username)).filter(Boolean))];
+  for (let index = 0; index < kickHandles.length; index += KICK_CONCURRENCY) {
+    const chunk = kickHandles.slice(index, index + KICK_CONCURRENCY);
+    const results = await Promise.all(chunk.map(async (handle) => [handle.toLowerCase(), await getKickStatus(handle)]));
+    results.forEach(([handle, status]) => kickWork.set(handle, status));
+  }
+
+  const enriched = limitedStreamers.map((streamer) => {
     const twitchLogin = cleanHandle(streamer.twitch_username);
     const kickLogin = cleanHandle(streamer.kick_username);
     const twitchStatus = twitchLogin ? twitchStatuses.get(twitchLogin.toLowerCase()) : null;
-    const kickStatus = kickLogin ? await getKickStatus(kickLogin) : null;
+    const kickStatus = kickLogin ? kickWork.get(kickLogin.toLowerCase()) : null;
     const status = twitchStatus || kickStatus || null;
     const platform = status?.source || (kickLogin ? "kick" : twitchLogin ? "twitch" : "external");
 
@@ -141,7 +164,7 @@ export async function enrichStreamers(streamers = []) {
         source: status?.source || platform
       }
     };
-  }));
+  });
 
   return {
     streamers: enriched,
