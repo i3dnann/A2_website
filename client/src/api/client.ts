@@ -49,6 +49,9 @@ type ApiOptions = {
 
 type ErrorPayload = { error?: string; message?: string };
 
+const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+let cachedCsrfToken = "";
+
 const FRIENDLY_ERRORS: Record<string, string> = {
   resource_not_found: "This admin section is not available on the running backend. Pull the latest backend files and restart PM2.",
   not_found: "That item could not be found. Refresh the page and try again.",
@@ -63,17 +66,59 @@ function requestUrl(path: string, params?: Record<string, unknown>) {
   return url.toString();
 }
 
-async function request<T>(path: string, opts: ApiOptions = {}, form?: FormData): Promise<T> {
+async function getCsrfToken(forceRefresh = false): Promise<string> {
+  if (cachedCsrfToken && !forceRefresh) return cachedCsrfToken;
+
+  const response = await fetch(requestUrl("/api/auth/csrf"), {
+    method: "GET",
+    headers: new Headers({ Accept: "application/json" }),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const text = await response.text();
+  let payload: any = null;
+  if (text) {
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      throw new Error("The API returned an invalid CSRF response.");
+    }
+  }
+
+  if (!response.ok || !payload?.token) {
+    const code = String(payload?.error || "");
+    throw new Error(payload?.message || FRIENDLY_ERRORS[code] || code || "Could not obtain CSRF token.");
+  }
+
+  cachedCsrfToken = String(payload.token);
+  return cachedCsrfToken;
+}
+
+async function request<T>(
+  path: string,
+  opts: ApiOptions = {},
+  form?: FormData,
+  csrfRetry = false,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 15_000);
-  const token = window.localStorage.getItem("a2_token");
-  const headers = new Headers({ Accept: "application/json" });
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  if (!form && opts.body !== undefined) headers.set("Content-Type", "application/json");
+  const method = opts.method || "GET";
 
   try {
+    const token = window.localStorage.getItem("a2_token");
+    const headers = new Headers({ Accept: "application/json" });
+
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    if (!form && opts.body !== undefined) headers.set("Content-Type", "application/json");
+
+    if (UNSAFE_METHODS.has(method)) {
+      const csrfToken = await getCsrfToken(csrfRetry);
+      headers.set("x-csrf-token", csrfToken);
+    }
+
     const response = await fetch(requestUrl(path, opts.params), {
-      method: opts.method || "GET",
+      method,
       headers,
       body: form || (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
       credentials: "include",
@@ -91,15 +136,22 @@ async function request<T>(path: string, opts: ApiOptions = {}, form?: FormData):
       }
     }
 
+    if (response.status === 403 && payload?.error === "csrf_token_required" && !csrfRetry) {
+      cachedCsrfToken = "";
+      return request<T>(path, opts, form, true);
+    }
+
     if (!response.ok) {
       const errorPayload = (payload || {}) as ErrorPayload;
       const code = String(errorPayload.error || "");
       if (response.status === 401 || (response.status === 403 && ["invalid_token", "invalid_session", "account_disabled"].includes(code))) {
         clearStoredAuth();
+        cachedCsrfToken = "";
         window.dispatchEvent(new CustomEvent(AUTH_INVALIDATED_EVENT));
       }
       throw new Error(errorPayload.message || FRIENDLY_ERRORS[code] || code || `Request failed (${response.status})`);
     }
+
     return payload as T;
   } catch (error: any) {
     if (error?.name === "AbortError") throw new Error("The server took too long to respond.");
