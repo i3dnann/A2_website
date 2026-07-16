@@ -545,6 +545,12 @@ function Characters({
   linking: boolean;
 }) {
   const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  const openCharactersPage = () => {
+    navigate("/characters");
+  };
+
   if (!steamLinked) {
     return (
       <div className="spotlight-card flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-20 text-center">
@@ -574,7 +580,17 @@ function Characters({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ y: -4 }}
-            className="spotlight-card rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30"
+            role="button"
+            tabIndex={0}
+            aria-label={`${t("Open character")} ${c.name}`}
+            onClick={openCharactersPage}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openCharactersPage();
+              }
+            }}
+            className="spotlight-card cursor-pointer rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-colors hover:border-orange-400/30 focus:outline-none focus:ring-2 focus:ring-orange-400/60"
           >
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
