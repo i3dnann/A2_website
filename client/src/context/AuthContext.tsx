@@ -33,8 +33,9 @@ export type AppUser = {
   discordLinked: boolean;
   steamLinked: boolean;
   banned: boolean;
-  role: "Citizen" | "Support" | "Moderator" | "Admin" | "Master Admin";
+  role: "Citizen" | "Support" | "Moderator" | "Admin" | "Super Admin" | "Master Admin";
   roles?: string[];
+  permissions?: string[];
   avatarUrl?: string;
   verifiedBadge?: boolean;
   verifiedAt?: string | null;
@@ -71,6 +72,7 @@ type ProviderRow = {
 type BackendUser = Partial<AppUser> & {
   id?: string;
   roles?: string[];
+  permissions?: string[];
   created_at?: string | null;
   account_status?: string;
   discord_id?: string;
@@ -84,6 +86,7 @@ type BackendUser = Partial<AppUser> & {
 function roleFromBackend(raw: BackendUser): AppUser["role"] {
   const roles = raw.roles || [];
   if (roles.includes("Master Admin")) return "Master Admin";
+  if (roles.includes("Super Admin")) return "Super Admin";
   if (roles.includes("Admin")) return "Admin";
   if (roles.includes("Moderator")) return "Moderator";
   if (roles.includes("Support")) return "Support";
@@ -111,6 +114,7 @@ function normalizeUser(raw: BackendUser, providers: ProviderRow[] = []): AppUser
     banned: Boolean(raw.banned || (raw.account_status && raw.account_status !== "active")),
     role: roleFromBackend(raw),
     roles: raw.roles || [roleFromBackend(raw)],
+    permissions: raw.permissions || [],
     avatarUrl: raw.avatarUrl || raw.avatar_url || discordAvatar,
     verifiedBadge: Boolean(raw.verifiedBadge || raw.verified_badge === true || raw.verified_badge === 1 || raw.verified_badge === "1"),
     verifiedAt: raw.verifiedAt || raw.verified_at || null,
@@ -308,7 +312,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTickets((t) => [normalizeTicket(r.ticket), ...t]);
   };
 
-  const isAdmin = user?.role === "Master Admin" || user?.role === "Admin";
+  const isAdmin = Boolean(
+    user?.permissions?.some((permission) => permission !== "view_player_portal"),
+  );
 
   const value: AuthContextType = { user, tickets, characters, loading, isAdmin, login, register, resetPassword, logout, loginDiscord, loginSteam, completeOAuth, linkDiscord, linkSteam, updateEmail, createTicket };
 

@@ -261,6 +261,7 @@ router.post(
   "/users",
   requirePermission("manage_users"),
   asyncHandler(async (req, res) => {
+    if (!assertNoMasterEscalation(req, res, req.body || {})) return;
     const user = await upsertWebUserFromAdmin(req.body || {}, req.user);
     await auditAction({
       req,
@@ -279,6 +280,7 @@ router.patch(
   "/users/:id",
   requirePermission("manage_users"),
   asyncHandler(async (req, res) => {
+    if (!(await assertCanModifyExistingAdmin(req, res, req.params.id, req.body || {}))) return;
     const user = await upsertWebUserFromAdmin(
       { ...req.body, id: req.params.id },
       req.user,

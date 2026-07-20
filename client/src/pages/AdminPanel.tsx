@@ -45,28 +45,28 @@ import { TextAnimate } from "../components/ui/text-animate";
 import ModalPortal from "../components/ModalPortal";
 
 const ADMIN_TABS = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "home", label: "Homepage", icon: Home },
-  { id: "partners", label: "Partners", icon: Globe },
-  { id: "server", label: "Server / Features", icon: Globe },
-  { id: "streamers", label: "Streamers", icon: Radio },
-  { id: "roster", label: "Roster", icon: Users },
-  { id: "famous", label: "Famous Chars", icon: Star },
-  { id: "journey", label: "Journey", icon: Clock },
-  { id: "news", label: "News", icon: FileText },
-  { id: "careers", label: "Careers", icon: Briefcase },
-  { id: "applications", label: "Applications", icon: CheckCircle2 },
-  { id: "faq", label: "FAQ", icon: HelpCircle },
-  { id: "tickets", label: "Tickets", icon: TicketIcon },
-  { id: "contracts", label: "Contracts", icon: ScrollText },
-  { id: "comments", label: "Comments", icon: MessageCircle },
-  { id: "verification", label: "Verification", icon: Star },
-  { id: "theme", label: "Theme & Brand", icon: Palette },
-  { id: "terms", label: "Terms", icon: FileText },
-  { id: "users", label: "Users", icon: Users },
-  { id: "staff", label: "Staff & Roles", icon: Shield },
-  { id: "settings", label: "Settings", icon: Settings },
-  { id: "logs", label: "Audit Logs", icon: Shield },
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, permission: null },
+  { id: "home", label: "Homepage", icon: Home, permission: "manage_home" },
+  { id: "partners", label: "Partners", icon: Globe, permission: "manage_partners" },
+  { id: "server", label: "Server / Features", icon: Globe, permission: "manage_home" },
+  { id: "streamers", label: "Streamers", icon: Radio, permission: "manage_live" },
+  { id: "roster", label: "Roster", icon: Users, permission: "manage_team" },
+  { id: "famous", label: "Famous Chars", icon: Star, permission: "manage_famous" },
+  { id: "journey", label: "Journey", icon: Clock, permission: "manage_journey" },
+  { id: "news", label: "News", icon: FileText, permission: "manage_news" },
+  { id: "careers", label: "Careers", icon: Briefcase, permission: "manage_careers" },
+  { id: "applications", label: "Applications", icon: CheckCircle2, permission: "review_career_applications" },
+  { id: "faq", label: "FAQ", icon: HelpCircle, permission: "manage_faq" },
+  { id: "tickets", label: "Tickets", icon: TicketIcon, permission: "manage_tickets" },
+  { id: "contracts", label: "Contracts", icon: ScrollText, permission: "manage_contracts" },
+  { id: "comments", label: "Comments", icon: MessageCircle, permission: "manage_news" },
+  { id: "verification", label: "Verification", icon: Star, permission: "manage_users" },
+  { id: "theme", label: "Theme & Brand", icon: Palette, permission: "manage_theme" },
+  { id: "terms", label: "Terms", icon: FileText, permission: "manage_terms" },
+  { id: "users", label: "Users", icon: Users, permission: "manage_users" },
+  { id: "staff", label: "Staff & Roles", icon: Shield, permission: "manage_admins" },
+  { id: "settings", label: "Settings", icon: Settings, permission: "manage_home" },
+  { id: "logs", label: "Audit Logs", icon: Shield, permission: "view_audit_logs" },
 ];
 
 const stClass =
@@ -159,6 +159,10 @@ export default function AdminPanel() {
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const grantedPermissions = new Set(user?.permissions || []);
+  const can = (permission: string | null) =>
+    !permission || grantedPermissions.has("master_access") || grantedPermissions.has(permission);
+  const visibleTabs = ADMIN_TABS.filter((item) => can(item.permission));
 
   useEffect(() => {
     let cancel = false;
@@ -207,7 +211,7 @@ export default function AdminPanel() {
     }
   };
 
-  if (!user || (user.role !== "Master Admin" && user.role !== "Admin")) {
+  if (!user || !user.permissions?.some((permission) => permission !== "view_player_portal")) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 pt-28">
         <div className="text-center max-w-md">
@@ -240,7 +244,7 @@ export default function AdminPanel() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            {can("manage_home") && <button
               onClick={handleSave}
               disabled={saving}
               className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-400 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_0_15px_rgba(96,81,155,0.3)] hover:shadow-[0_0_25px_rgba(96,81,155,0.5)] transition disabled:opacity-70"
@@ -251,7 +255,7 @@ export default function AdminPanel() {
                 <Save size={14} />
               )}
               {saving ? t("Saving...") : t("Save All Changes")}
-            </button>
+            </button>}
             <Link
               to="/"
               className="rounded-lg border border-white/10 px-4 py-2.5 text-sm text-white/70 hover:text-white flex items-center gap-2"
@@ -278,6 +282,7 @@ export default function AdminPanel() {
                   setSidebarOpen(false);
                 }}
                 compact={false}
+                items={visibleTabs}
               />
               <button
                 onClick={handleLogout}
@@ -318,6 +323,7 @@ export default function AdminPanel() {
                   tab={tab}
                   setTab={setTab}
                   compact={!sidebarExpanded}
+                  items={visibleTabs}
                 />
               </div>
               <button
@@ -340,7 +346,7 @@ export default function AdminPanel() {
             >
               <span className="flex items-center gap-2">
                 {(() => {
-                  const activeTab = ADMIN_TABS.find((x) => x.id === tab);
+                  const activeTab = visibleTabs.find((x) => x.id === tab);
                   return activeTab ? (
                     <>
                       <activeTab.icon size={16} /> {t(activeTab.label)}
@@ -565,11 +571,11 @@ export default function AdminPanel() {
   );
 }
 
-function SidebarNav({ tab, setTab, compact = false }: any) {
+function SidebarNav({ tab, setTab, compact = false, items = ADMIN_TABS }: any) {
   const { t } = useLanguage();
   return (
     <>
-      {ADMIN_TABS.map((item) => (
+      {items.map((item: any) => (
         <button
           key={item.id}
           onClick={() => setTab(item.id)}
